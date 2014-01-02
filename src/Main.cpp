@@ -1,0 +1,101 @@
+#include "Common.h"
+#include "Colorer.h"
+#include "General.h"
+#include "Obstacle.h"
+#include "Component.h"
+#include "Analyzer.h"
+#include "Solver.h"
+
+void printUsage()
+{
+    Colorer::print<YELLOW>(
+        "Usage:\n"
+        "MortalCoil.exe\n"
+        "MortalCoil.exe row col [--special component-id]\n"
+        "\n"
+    );
+}
+
+bool readArguments(int argc, char* argv[], int* row, int* col, int* firstComponentId)
+{
+    if (argc == 3)
+    {
+        if (sscanf(argv[1], "%d", row) != 1)
+        {
+            return false;
+        }
+
+        if (sscanf(argv[2], "%d", col) != 1)
+        {
+            return false;
+        }
+    }
+    else if (argc >= 4)
+    {
+        // starting from component with given index
+        if (sscanf(argv[3], "%d", firstComponentId) != 1)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+int main(int argc, char* argv[])
+{
+    clock_t start_time = clock();
+
+    int row = -1, col = -1;
+    int firstComponentId = -1;
+
+    if (!readArguments(argc, argv, &row, &col, &firstComponentId))
+    {
+        printUsage();
+        return 0;
+    }
+
+
+    Level level("mortal_coil.txt");
+
+    Colorer::print<RED>("Preprocessing...\n");
+
+    Analyzer analyzer(&level);
+    Solver solver(&level, "output.txt");
+    analyzer.preprocess();
+
+    //TRACE
+    //(
+        printf("Free cells: %d\n", level.Free);
+        printf("Components: %d\n", level.getObstacleCount());
+
+        //level.traceComponent();
+
+        if (level.Ends > 0)
+        {
+            printf("Initial tails: %d\n", level.Ends);
+            for (int e = 0; e < level.Ends; e++)
+            {
+                printf("Tail%d: %d %d\n", e + 1, level.EndX[e], level.EndY[e]);
+            }
+        }
+
+    //);
+
+    Colorer::print<RED>("Analyzing...\n");
+
+    analyzer.analyzeComponents();
+
+    Colorer::print<RED>("Solving...\n");
+
+    int firstRow = (row != -1) ? row : 1;
+    int firstCol = (col != -1) ? col : 1;
+    solver.solve(firstRow, firstCol, firstComponentId);
+    
+    TRACE(Colorer::print<WHITE>(level.Solved ? "SOLVED\n" : "FAILED TO SOLVE\n"));
+
+    clock_t finish_time = clock();
+    printf("Time elapsed: %lf\n", double(finish_time - start_time) / CLOCKS_PER_SEC);
+
+    return 0;
+}
