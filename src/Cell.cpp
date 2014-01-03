@@ -44,7 +44,7 @@ bool Cell::isOccupied() const
     return free == false;
 }
 
-bool Cell::isEnd() const
+bool Cell::isTemporaryEnd() const
 {
     if (!free)
     {
@@ -134,16 +134,24 @@ int Cell::getNextMask() const
     return nextMask;
 }
 
-const std::set<Exit>& Cell::getExits() const
+const std::vector<Exit>& Cell::getExits() const
 {
     return exits;
 }
 
 void Cell::addExit(const Exit& exit)
 {
-    exits.insert(exit);
+    assert(exits.size() < 4);
+    exits.push_back(exit);
     exitMask |= 1 << exit.getDir();
-    exitsByDirection[exit.getDir()] = &*(exits.find(exit)); // TODO: this one seems to be slow
+    exitsByDirection[exit.getDir()] = &*(std::find(exits.begin(), exits.end(), exit)); // TODO: this one seems to be slow
+}
+
+void Cell::setOpposingExit(const Exit* exit, const Exit* opposingExit)
+{
+    std::vector<Exit>::iterator e = find(exits.begin(), exits.end(), *exit);
+    assert(e != exits.end());
+    e->setOpposingExit(opposingExit);
 }
 
 void Cell::setType(bool obstacle)
@@ -196,8 +204,18 @@ void Cell::setMark(int mark)
 Exit::Exit(const Cell* cell, int dir)
     : Cell(*cell)
     , dir(dir)
-    , opposite(NULL)
+    , opposingExit(NULL)
 {
+}
+
+const Exit* Exit::getOpposingExit() const
+{
+    return opposingExit;
+}
+
+void Exit::setOpposingExit(const Exit* opposingExit)
+{
+    this->opposingExit = opposingExit;
 }
 
 //const Exit* Exit::getOpposite() const

@@ -29,15 +29,16 @@ class Level
     std::deque<Cell*> solution; // Sequence of Cells forming valid solution
 
     std::set<const Component*> specialComponents;
+    std::set<int> specialComponentsIds;
+
+    std::set<const Cell*> temporaryEnds;
 
 public:
 
     int componentsFullyTraversed;
 
     int Free; // Number of unvisited cells left
-    int Ends; // Number of pits currently on the board
-    int EndX[2]; // Coordinates of those ends
-    int EndY[2];
+    std::vector<const Cell*> initialEnds;
 
     bool Solved; // True if any solution has been found
     bool Analyzed; // True if any solution to currently being considered component has been found
@@ -65,16 +66,22 @@ public:
     int getComponentCount() const;
     int getObstacleCount() const;
 
+    const std::set<const Cell*>& getTemporaryEnds() const;
+
     int getSolutionStartX() const;
     int getSolutionStartY() const;
 
     const std::set<const Component*>& getSpecialComponents() const;
+    const std::set<int>& getSpecialComponentIds() const;
 
     void setSolutionStartXY(int startX, int startY);
     void setMostCells(int index);
     void setBiggest(int index);
 
-    void addSpecialComponent(const Component* comp);
+    void addTemporaryEnd(const Cell* cell);
+    void removeTemporaryEnd(const Cell* cell);
+
+    void addSpecialComponent(const Component* comp, int index);
 
     void prependSolutionCell(Cell* cell, int dir);
     void prepareSolution();

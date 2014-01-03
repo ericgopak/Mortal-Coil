@@ -5,7 +5,6 @@
 class Analyzer : public Simulator
 {
     std::vector<const Exit*> previousExit;
-    //SolutionMap* solutionIterator;
     std::vector<Path> solutionHolder;
     int componentCurrentIndex;
 

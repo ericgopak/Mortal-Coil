@@ -22,20 +22,18 @@
 // -- Reorder exits in Component::exits in CW or CCW order (e.g. use atan2()?)
 //      then filter solutions if pits appear (exits are split into separated sets)
 
-//#define DEBUG
-
-#ifdef DEBUG
+#ifdef _DEBUG
 #   define TRACE(x) x;
 #else
 #   define TRACE(x)
 #endif
 //#define TRACE_STATISTICS
-//#define VALIDATE_SOLUTION
-//#define TEMPORARY
+//#define VALIDATE_SOLUTIONF
 
 #define MAX_BOARD_SIDE 200 // Max dimension of the board
 #define MAX_SOLUTION_LENGTH 1000000 // Max length of the solution
 #define MAX_EXPECTED_COMPONENTS 50000 // Max number of components
+#define MAX_EXPECTED_COMPONENT_EXITS 20 // Max number of exits in a single component
 
 #define FOREACH(x, it) for (decltype((x).begin()) it = (x).begin(); it != (x).end(); it++)
 #define FOREACH_CONST(x, it) for (decltype((x).cbegin()) it = (x).cbegin(); it != (x).cend(); it++)
@@ -43,10 +41,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <assert.h>
 #include <Windows.h>
 #include <map>
 #include <set>
+#include <vector>
 #include <stack>
+#include <algorithm>
 
 #include "Cell.h"
 

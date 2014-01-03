@@ -66,27 +66,11 @@ Simulator::TraceInfo::TraceInfo()
 
 void Simulator::occupy(Cell* cell, int dir) const
 {
-#ifdef DEBUG
-    if (cell->isFree() == false)
-    {
-        throw std::exception("Occupying already non-free cell!");
-    }
-#endif
+    assert(cell->isFree() && "Occupying already non-free cell!");
 
     cell->setFree(false);
     level->Free--;
     level->getComponents()[cell->getComponentId()].decrementSize();
-
-    // Break bonds with neighbours
-    /*Disconnect(cell, Left[dir]);
-    Disconnect(cell, Right[dir]);*/
-    //if (cell->Next[Left[dir]]->isFree()) Disconnect(cell, Left[dir]);
-    //if (cell->Next[Right[dir]]->isFree()) Disconnect(cell, Right[dir]);
-
-    // Consider touching components
-    //r |= CheckTouches(cell);
-
-    //return r;
 }
 
 //void Simulator::Restore(Cell*& cell, int dir)
@@ -299,6 +283,20 @@ void Simulator::updateTouchingObstacles(Cell* cell, bool inc) const
     }
 }
 
+void Simulator::findOpposingExits() const
+{
+    FOREACH(level->getComponents(), comp)
+    {
+        FOREACH(comp->getExits(), e)
+        {
+            const Exit* exit = *e;
+            Cell* cell = level->getCell(exit->getY(), exit->getX());
+            int dir = exit->getDir();
+            cell->setOpposingExit(exit, exit->getNextCell(dir)->getExit(dir ^ 2));
+        }
+    }
+}
+
 void Simulator::findNeighbours() const
 {
     for (int i = 1; i <= level->getHeight(); i++)
@@ -330,7 +328,6 @@ void Simulator::createBonds() const
                 if (0 <= i + dy[dir] && i + dy[dir] <= level->getHeight() + 1)
                 if (0 <= j + dx[dir] && j + dx[dir] <= level->getWidth() + 1)
                 {
-                    printf("Setting nextCell for (%d,%d,%d)\n", i, j, dir);
                     level->getCell(i, j)->setNextCell(dir, level->getCell(i + dy[dir], j + dx[dir]));
                 }
             }
@@ -346,9 +343,7 @@ void Simulator::countEnds() const
         {
             if (level->getCell(i, j)->isObstacle() == false && level->getCell(i, j)->isPit())
             {
-                level->EndX[level->Ends] = j;
-                level->EndY[level->Ends] = i;
-                level->Ends++;
+                level->initialEnds.push_back(level->getCell(i, j));
             }
         }
     }
@@ -433,7 +428,6 @@ void Simulator::floodComponent(int x, int y, int num) const
         FOREACH(cell->getExits(), e)
         {
             level->getComponents()[num].addExit(&*e);
-            printf("Adding (%d,%d,%d) to component %d\n", e->getX(), e->getY(), e->getDir(), num);
         }
     }
 }
@@ -544,354 +538,6 @@ bool Simulator::stopBacktracking() const
 {
     return level->Solved;
 }
-
-//void Solver::Solve(Cell* cell, int from)
-//{
-//    /*if (Debug::traceFlag && cell->getX() == 8 && cell->getY() == 2)
-//    {
-//        int alpha = 0733;
-//    }*/
-//
-//    /*SolverDepth++;*/
-//
-//    if (level->Free == 0) // no free cells left
-//    {
-//        level->Solved = true;
-//        return;
-//    }
-//
-//    // Trying both orthogonal directions
-//    for (int dir = !(from & 1); dir < 4; dir += 2)
-//    {
-//        if (!(cell->next & P[dir])) // An obstacle
-//        {
-//            continue;
-//        }
-//
-//        int rdir = dir ^ 2; // opposite direction
-//
-//        // Remove bond from a neighbour 'from behind'
-//        if (cell->next & P[rdir])
-//        {
-//            cell->Next[rdir]->next ^= P[dir];
-//            if (cell->Next[rdir]->isPit())
-//            {
-//                level->Ends++;
-//            }
-//        }
-//
-//        Cell* ncell = cell->Next[dir]; // Second cell in the row
-//
-//        bool separated = false;
-//        bool entranceIsSpecial = false;
-//
-//        int left = Left[dir];
-//        int right = Right[dir];
-//
-//        int line = 1; // number of cells in the line
-//
-//        int nends = 0; // new 'ends' along the line
-//
-//        while (ncell->next & P[dir]) // Not considering last cell
-//        {
-//#ifdef TEMPORARY
-//            if (ncell->getComponentId() != CurrentComponent)
-//            {
-//                CurrentComponent = ncell->getComponentId();
-//                if (Components[CurrentComponent].Occupied() == 0 && ncell->mayBeFirst() == false)
-//                {
-//                    entranceIsSpecial = true;
-//                }
-//            }
-//            Components[CurrentComponent].IncrementOccupied();
-//#endif
-//
-//            ncell->setFree(false);
-//
-//            // Checking orthogonal directions
-//            if (ncell->next & P[left])
-//            {
-//                ncell->Next[left]->next ^= P[right];
-//                if (ncell->Next[left]->isPit())
-//                {
-//                    nends++;
-//                }
-//            }
-//
-//            if (ncell->next & P[right])
-//            {
-//                ncell->Next[right]->next ^= P[left];
-//                if (ncell->Next[right]->isPit())
-//                {
-//                    nends++;
-//                }
-//            }
-//
-//            // Consider touching components
-//            for (int t = 0; t < ncell->touch; t++) // At most 4 times (absolutely rarely)
-//            {
-//                Obstacle& c = level->getObstacles()[ncell->Touch[t]];
-//                c.IncrementTouched();
-//
-//                if (c.Touched() > 1)
-//                {
-//                    // Is there any same-component-touching cell that has been visited before?
-//                    bool ok = false;
-//                    for (int k = 0; k < ncell->nexttouch[t]; k++)
-//                    {
-//                        if (!(ncell->NextTouch[t][k]->isFree())) // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! try to avoid using FREE/NOT FREE
-//                        {
-//                            ok = true;
-//                            break;
-//                        }
-//                    }
-//                    // If not then we have just separated some cells
-//                    if (ok == false)
-//                    {
-//                        separated = true;
-//                    }
-//                }
-//            }
-//
-//            ncell = ncell->Next[dir]; // Moving forward
-//
-//            line++;
-//        }
-//
-//        // Consider last cell
-//
-//        ncell->setFree(false);
-//
-//        // Last cell: consider touching components
-//        for (int t = 0; t < ncell->touch; t++)
-//        {
-//            Obstacle& c = level->getObstacles()[ncell->Touch[t]];
-//            c.IncrementTouched();
-//
-//            if (c.Touched() > 1)
-//            {
-//                // Is there any same-component-touching cell that has been visited before?
-//                bool ok = false;
-//                for (int k = 0; k < ncell->nexttouch[t]; k++)
-//                {
-//                    if (!(ncell->NextTouch[t][k]->isFree())) // Try to avoid using FREE / UNFREE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//                    {
-//                        ok = true;
-//                        break;
-//                    }
-//                }
-//                if (ok == false)
-//                {
-//                    separated = true;
-//                }
-//            }
-//        }
-//
-//#ifdef TEMPORARY
-//        if (ncell->getComponentId() != CurrentComponent)
-//        {
-//            CurrentComponent = ncell->getComponentId();
-//            if (Components[CurrentComponent].Occupied() == 0 && ncell->mayBeFirst() == false)
-//            {
-//                entranceIsSpecial = true;
-//            }
-//        }
-//        Components[CurrentComponent].IncrementOccupied();
-//#endif
-//
-//#ifdef TEMPORARY
-//        if (entranceIsSpecial && nends == 0)
-//        {
-//            // Assuming that special entrance adds at least one additional end
-//            nends++;
-//        }
-//#endif
-//
-//        level->Free -= line;
-//
-//        if (level->Ends + nends <= 1)
-//        {
-//            if (!separated)
-//            {
-//                level->Ends += nends;
-//
-//                TRACE
-//                (
-//                    level->traceComponent();
-//                    printf("tracer.depth = %d\n", tracer.depth);
-//                    system("pause");
-//                );
-//
-//                //ncell->setMark(1);
-//                /*if (Debug::traceFlag)
-//                {
-//                    Component::Trace();
-//                }*/
-//
-//                Solve(ncell, dir); // Recursing
-//                //ncell->setMark(0);
-//
-//                if (level->Solved)
-//                {
-//                    /*TRACE
-//                    (
-//                        level->traceComponent();
-//                        printf("tracer.depth = %d\n", tracer.depth);
-//                        system("pause");
-//                    );*/
-//
-//                    level->Answer[level->ans++] = Direction[dir]; // Accumulating answer in reversed order
-//                    return;
-//                }
-//                level->Ends -= nends;
-//            }
-//        }
-//
-//        // --------------------------------- Recover ---------------------------------
-//        level->Free += line;
-//
-//        // Last cell
-//#ifdef TEMPORARY
-//        Components[CurrentComponent].DecrementOccupied();
-//        if (ncell->getComponentId() != CurrentComponent)
-//        {
-//            CurrentComponent = ncell->getComponentId();
-//        }
-//#endif
-//        ncell->setFree(true);
-//        for (int t = 0; t < ncell->touch; t++)
-//        {
-//            Obstacle& c = level->getObstacles()[ncell->Touch[t]];
-//            c.DecrementTouched();
-//        }
-//
-//        ncell = ncell->Next[rdir];
-//
-//        while (ncell != cell) // All cells except for the first and the last ones
-//        {
-//#ifdef TEMPORARY
-//            Components[CurrentComponent].DecrementOccupied();
-//            if (ncell->getComponentId() != CurrentComponent)
-//            {
-//                CurrentComponent = ncell->getComponentId();
-//            }
-//#endif
-//
-//            if (ncell->next & P[left])
-//            {
-//                ncell->Next[left]->next ^= P[right];
-//            }
-//            if (ncell->next & P[right])
-//            {
-//                ncell->Next[right]->next ^= P[left];
-//            }
-//            ncell->setFree(true);
-//            // Recovering touches
-//            for (int t = 0; t < ncell->touch; t++)
-//            {
-//                Obstacle& c = level->getObstacles()[ncell->Touch[t]];
-//                c.DecrementTouched();
-//            }
-//
-//            ncell = ncell->Next[rdir];
-//        }
-//
-//        // First cell: recover the bond from a neighbour 'from behind'
-//        if (cell->next & P[rdir])
-//        {
-//            if (cell->Next[rdir]->isPit())
-//            {
-//                level->Ends--;
-//            }
-//
-//            cell->Next[rdir]->next ^= P[dir];
-//        }
-//    }
-//    //SolverDepth--;
-//}
-
-//void Simulator::backtrack(Cell* cell, int direction, Simulator* engine)
-//{
-//    tracer.depth++;
-//
-//    if (tracer.depth >= 146)
-//    {
-//        level->traceComponent();
-//    }
-//
-//    if (!engine->shouldConsider(cell, direction))
-//    {
-//        return;
-//    }
-//
-//    if (cell->Next[direction]->isFree()) // Forward
-//    {
-//        cell = moveForward(cell, direction);
-//
-//if (Debug::traceFlag) level->traceComponent();
-//
-//        if (engine->potentialSolution(cell, direction))
-//        {
-//            if (engine->reachedFinalCell(cell, direction))
-//            {
-//                engine->solutionFound(cell, direction);
-//            }
-//            else
-//            {
-//                backtrack(cell, direction, engine);
-//            }
-//        }
-//
-//        cell = moveBackwards(cell, direction);
-//    }
-//    else
-//    {
-//        // Turn left
-//        int leftDirection = Left[direction];
-//        if (cell->Next[leftDirection]->isFree())
-//        {
-//            cell = moveForward(cell, leftDirection);
-//if (Debug::traceFlag) level->traceComponent();
-//            if (engine->potentialSolution(cell, leftDirection))
-//            {
-//                if (engine->reachedFinalCell(cell, leftDirection))
-//                {
-//                    engine->solutionFound(cell, leftDirection);
-//                }
-//                else
-//                {
-//                    backtrack(cell, leftDirection, engine);
-//                }
-//            }
-//
-//            cell = moveBackwards(cell, leftDirection);
-//        }
-//        
-//        // Turn right
-//        int rightDirection = Right[direction];
-//        if (cell->Next[rightDirection]->isFree())
-//        {
-//            cell = moveForward(cell, rightDirection);
-//if (Debug::traceFlag) level->traceComponent();
-//            if (engine->potentialSolution(cell, rightDirection))
-//            {
-//                if (engine->reachedFinalCell(cell, rightDirection))
-//                {
-//                    engine->solutionFound(cell, rightDirection);
-//                }
-//                else
-//                {
-//                    backtrack(cell, rightDirection, engine);
-//                }
-//            }
-//
-//            cell = moveBackwards(cell, rightDirection);
-//        }
-//    }
-//
-//    tracer.depth--;
-//}
-
 
 void Simulator::trySolving(int startX, int startY)
 {

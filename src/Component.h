@@ -38,6 +38,7 @@ public:
 class Component : public AbstractComponent
 {
     int occupied;
+    //SolutionMap solutions;
     SolutionMap solutions;
     int solutionCount;
     std::set<const Exit*> exits;
@@ -54,6 +55,8 @@ public:
     const SolutionMap* getSolutions() const;
     const std::set<const Exit*>& getExits() const;
     const SolutionMap* getRemainingSolutions() const;
+    const Exit* getExitByIndex(int index) const;
+    int getFreeExitsMask() const;
 
     void addExit(const Exit* e);
     void addSolution(SolutionMap* newSolution);

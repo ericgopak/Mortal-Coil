@@ -7,8 +7,6 @@
 Analyzer::Analyzer(Level* currentLevel)
     : Simulator(currentLevel)
     , componentCurrentIndex(-1)
-    /*, depth(0)
-    , prevDepth(0)*/
 {
 }
 
@@ -65,9 +63,9 @@ void Analyzer::analyzeComponents()
             level->traceComponent(i);
             printf("CONSIDERING %d (%d)\n", i, component.getSize());
 
-            Analyzer::analyzeComponent(component);
-
-            Colorer::print<WHITE>("Found %d solutions\n", component.getSolutionCount());
+            analyzeComponent(component);
+            
+            Colorer::print<WHITE>("Found %d solution%c\n", component.getSolutionCount(), component.getSolutionCount() == 1 ? ' ' : 's');
 
             if (component.getSolutionCount() == 1)
             {
@@ -79,12 +77,7 @@ void Analyzer::analyzeComponents()
 
                 level->traceComponent(i);
 
-                level->addSpecialComponent(&component);
-
-                /*FOREACH_CONST(comp.getExits(), e)
-                {
-                    level->getCell((*e)->getY(), (*e)->getX())->SetMayBeFirst();
-                }*/
+                level->addSpecialComponent(&component, i);
             }
         }
     }
@@ -129,24 +122,11 @@ void Analyzer::analyzeComponent(Component& component)
         }
         else
         {
-            throw new std::exception("Not supposed to happen!");
+            assert(false && "Not supposed to happen!");
         }
-        //level->traceComponent(getComponentCurrentIndex());
-
-        //Analyzed = true;
-        /*
-        component.addSolution(solution); // TODO: populate 'solution'
-        */
-        
-        //level->getCell(tracer.currentY, tracer.currentX)->SetMayBeFirst();
-
-        /*Component::Trace();
-        printf("\n");*/
-        //system("pause");
     }
     else
     {
-        //tracer.depth++;
         FOREACH(component.getExits(), it)
         {
             const Exit* e = *it;
@@ -155,26 +135,10 @@ void Analyzer::analyzeComponent(Component& component)
                 continue;
             }
 
-            //for (int dir = 0; dir < 4; dir++)
-            //{
             int dir = e->getDir();
-                //if (e->getDir() == dir)
-                //{
-            //printf("Exit: (%d %d -> %d)\n", (*e)->getX(), (*e)->getY(), dir);
-            //if (tracer.depth == 1)
-            //{
-            //    tracer.currentX = e->getX();
-            //    tracer.currentY = e->getY();
-            //    //tracer.currentDir = dir ^ 2;
-
-            //    level->Analyzed = false;
-            //}
-
-            //if (!level->Analyzed)
-            //{
+            
             Cell* cell = level->getCell(e->getY(), e->getX());
-            //previousExit = e;
-
+            
             int lastDepthCopy = prevDepth;
             prevDepth = depth;
 
@@ -183,262 +147,11 @@ void Analyzer::analyzeComponent(Component& component)
             previousExit.pop_back();
 
             prevDepth = lastDepthCopy;
-            //}
-                //}
-            //}
         }
-        //tracer.depth--;
     }
 }
 
-//void Analyzer::analyzeSolve(Cell* cell, int from)
-//{
-//    //Component::Trace(cell->getComponentId());
-//
-//    if (level->Analyzed)
-//    {
-//        return;
-//    }
-//
-//    static int depth = 0;
-//    depth++;
-//
-///*#ifdef DEBUG
-//    printf("AnalyzeSolve:\n");
-//    printf("%d %d  %d  from %d\n", cell->getX(), cell->getY(), cell->getComponentId(), from);
-//#endif*/
-//
-//
-//    //if (level->getComponents()[current_component].Size() == 0) // no free cells left
-//    //{
-//    //    Analyzed = true;
-//    //    printf("Found a possible solution for component[%d]\n", current_component);
-//    //    return;
-//    //}
-//
-//    // Trying both orthogonal directions
-//    for (int dir = !(from & 1); dir < 4; dir += 2)
-//    {
-//        //printf("Dir = %d  depth=%d\n", dir, depth);
-//
-//        //if (!(cell->next & P[dir]))
-//        if (cell->Next[dir]->isObstacle())
-//        {
-//            //printf("Obstacle at (%d,%d)\n", cell->Next[dir]->getX(), cell->Next[dir]->getY());
-//            continue; // An obstacle, better luck next time
-//        }
-//        // TODO: This is WORKAROUND due to BUGS
-//        if (cell->Next[dir]->isOccupied())
-//            continue;
-//
-//        // Don't allow to leave the component
-//        if (cell->Next[dir]->getComponentId() != level->componentCurrentIndex)
-//        {
-//            continue;
-//        }
-//
-//        // Reconnect with previously detached neighbour
-//        Reconnect(cell, dir);
-//
-//        Cell* ncell = cell->Next[dir]; // Second cell in the row
-//        Cell* exit = NULL;
-//
-//        unsigned int flags = 0;
-//
-//        //while (ncell->next & P[dir]) // Not considering last cell
-//        while (ncell->Next[dir]->isFree() && ncell->Next[dir]->getComponentId() == level->componentCurrentIndex)
-//        {
-//            Simulator::MoveForward(ncell, dir);
-//        }
-//
-//        // Process last cell
-//        //if (ncell->isFree())
-//        //{
-//            //flags |= Occupy(ncell, dir);
-//            Occupy(ncell, dir);
-//            /*if (ncell->is_exit)
-//            {
-//                exit = ncell;
-//            }*/
-//        //}
-//
-//        // ------------------------ Goind deeper --------------------------------
-////#ifdef DEBUG
-////        printf("%%%%%%%%%% Component[%d].Size() = %d\n", current_component, level->getComponents()[current_component].Size());
-////        Component::Trace();
-//
-////        int cnt = 0;
-////        for (int i = 1; i <= H; i++) for (int j = 1; j <= W; j++) if (Grid[i][j].getComponentId() == current_component && Grid[i][j].free) cnt++;
-////        if (cnt != level->getComponents()[current_component].Size())
-////        {
-////            printf("WOOOOOOOOOOOOOOOOOOOOOOOOOW!\n");
-////            printf("cnt=%d vs size=%d\n", cnt, level->getComponents()[current_component].Size());
-////            system("pause");
-////        }
-//
-////        //system("pause");
-////#endif
-//        if (flags & SEPARATED)
-//        {
-//            printf("Got separated... stopped at (%d, %d)\n", ncell->getX(), ncell->getY());
-//        }
-//        /*else if (Ends > 2)
-//        {
-//            printf("Too many ends: %d\n", Ends);
-//        }*/
-//        else if (ncell->is_exit)
-//        {
-//            //printf("Good! Now we can go deeper!\n");
-//
-//            //if (!(ncell->next & P[dir])) // Obstacle ahead
-//            //if (ncell->Next[dir]->isObstacle()) // Obstacle ahead
-//            {
-//                //printf("STAYING IN THE COMPONENT\n");
-//                // Try staying in the component
-//                analyzeSolve(ncell, dir);
-//            }
-//            // Suppose we have gone out of the component
-//            analyzeComponent(level->getComponents()[level->componentCurrentIndex]);
-//        }
-//        else
-//        {
-//            analyzeSolve(ncell, dir);
-//
-//            //if (Analyzed)
-//            //{
-//            //    //Answer[ans++] = Direction[dir]; // Accumulating answer in reversed order
-//            //    printf("Analyzed!\n");
-//            //    return;
-//            //}
-//        }
-//
-//        // --------------------------------- Recover ---------------------------------
-//
-//        //printf("Recovering... (%d, %d)\n", ncell->getX(), ncell->getY());
-//        while (ncell != cell) // All cells except for the first and the last ones
-//        {
-//            MoveBackwards(ncell, dir);
-//            //level->getComponents()[current_component].Size()++;
-//        }
-//        //printf("Done recovering... (%d, %d)\n", ncell->getX(), ncell->getY());
-//
-//        // First cell: recover the bond with a neighbour 'from behind'
-//        // Disconnect with previously reconnected neighbour
-//        Disconnect(cell, dir);
-//    }
-//    depth--;
-//}
-//
-//void Analyzer::analyze(int startX, int startY, int dir)
-//{
-//    if (level->Analyzed)
-//    {
-//        return;
-//    }
-///*#ifdef DEBUG
-//    printf("Analyze(%d, %d, %d)\n", startX, startY, dir);
-//#endif*/
-//    Cell* cell = level->getCell(startY, startX);
-//
-//    if (cell->isFree()) // If is a free square
-//    {
-//        if (cell->isPit()) // Starting from a pit
-//        {
-//            level->Ends--;
-//        }
-//        // Seems to suck because a new pit may have appeared // TODO:
-//        // Going straight
-//        if (!(cell->next & P[dir])) // An obstacle right in front
-//        {
-//            Disconnect(cell, dir ^ 2);
-//            Occupy(cell, dir);
-//
-//            analyzeSolve(cell, dir);
-//
-//            Restore(cell, dir);
-//            Reconnect(cell, dir ^ 2);
-//        }
-//        else
-//        {
-//            // Remove bond from the neighbour 'from behind'
-//            Disconnect(cell, dir ^ 2);
-//
-//            Cell* exit = NULL;
-//
-//            Cell* ncell = cell;
-//
-//            unsigned int flags = 0;
-//
-//            while (ncell->Next[dir]->isFree() && ncell->Next[dir]->getComponentId() == level->componentCurrentIndex)
-//            {
-//                MoveForward(ncell, dir);
-//            }
-//
-//            Occupy(ncell, dir);
-//
-//            // GOING DEEPER ----------------------------------------------------------------------------------------------------------------
-////#ifdef DEBUG
-////            printf("$$$$$$$$$$ Component[%d].Size() = %d\n", current_component, level->getComponents()[current_component].Size());
-////            Component::Trace();
-//
-////            int cnt = 0;
-////            for (int i = 1; i <= H; i++) for (int j = 1; j <= W; j++) if (Grid[i][j].getComponentId() == current_component && Grid[i][j].free) cnt++;
-////            if (cnt != level->getComponents()[current_component].Size())
-////            {
-////                printf("WOOOOOOOOOOOOOOOOOOOOOOOOOW!\n");
-////                printf("cnt=%d vs size=%d\n", cnt, level->getComponents()[current_component].Size());
-////                system("pause");
-////            }
-//
-////            //system("pause");
-////#endif
-//            if (flags & SEPARATED)
-//            {
-//                printf("Got separated... stopped at (%d, %d)\n", ncell->getX(), ncell->getY());
-//            }
-//            /*else if (Ends > 2)
-//            {
-//                printf("Too many ends: %d\n", Ends);
-//            }*/
-//            else if (ncell->is_exit)
-//            {
-//                if (ncell->Next[dir]->isObstacle()) // Obstacle ahead
-//                {
-//                    // Try staying in the component
-//                    analyzeSolve(ncell, dir);
-//                }
-//                // Suppose we have gone out of the component
-//                analyzeComponent(level->getComponents()[level->componentCurrentIndex]);
-//            }
-//            else
-//            {
-//                if (!level->Analyzed)
-//                {
-//                    analyzeSolve(ncell, dir);
-//                }
-//            }
-//            // RECOVERING --------------------------------------------------------------------------------------------------------------------
-//
-//            while (ncell != cell) // All cells except for the first and the last ones
-//            {
-//                MoveBackwards(ncell, dir);
-//            }
-//
-//            Restore(cell, dir);
-//
-//            // First cell: recover the bond with a neighbour 'from behind'
-//            Reconnect(cell, dir ^ 2);
-//        }
-//
-//        if (cell->isPit())
-//        {
-//            level->Ends++; // Freeing up this pit
-//        }
-//    }
-//}
-
 // Create components, preprocess them
-
 void Analyzer::preprocess()
 {
     // Calculate mask of free neighbours for each cell
@@ -457,6 +170,9 @@ void Analyzer::preprocess()
     // Note: must be after createBonds
     // TODO: move out creation of Exit's
     findComponents();
+
+    // Assign opposing exit to every existing one
+    findOpposingExits();
 
     TRACE
     (
@@ -537,13 +253,13 @@ void Analyzer::postOccupyAction(Cell* cell, int dir) const
 {
     const Cell* left  = cell->getNextCell(Left[dir]);
     const Cell* right = cell->getNextCell(Right[dir]);
-    if (left->isEnd() && left->getComponentId() == cell->getComponentId())
+    if (left->isTemporaryEnd() && left->getComponentId() == cell->getComponentId())
     {
-        level->Ends++;
+        level->addTemporaryEnd(left);
     }
-    if (right->isEnd() && right->getComponentId() == cell->getComponentId())
+    if (right->isTemporaryEnd() && right->getComponentId() == cell->getComponentId())
     {
-        level->Ends++;
+        level->addTemporaryEnd(right);
     }
 }
 
@@ -551,13 +267,13 @@ void Analyzer::preRestoreAction(Cell* cell, int dir) const
 {
     const Cell* left  = cell->getNextCell(Left[dir]);
     const Cell* right = cell->getNextCell(Right[dir]);
-    if (left->isEnd() && left->getComponentId() == cell->getComponentId())
+    if (left->isTemporaryEnd() && left->getComponentId() == cell->getComponentId())
     {
-        level->Ends--;
+        level->removeTemporaryEnd(left);
     }
-    if (right->isEnd() && right->getComponentId() == cell->getComponentId())
+    if (right->isTemporaryEnd() && right->getComponentId() == cell->getComponentId())
     {
-        level->Ends--;
+        level->removeTemporaryEnd(right);
     }
 }
 
@@ -608,7 +324,7 @@ bool Analyzer::reachedFinalCell(Cell* cell, int dir) const
 
 bool Analyzer::potentialSolution(Cell* cell, int dir) const
 {
-    if (level->Ends > 2)
+    if (level->getTemporaryEnds().size() > 2)
     {
         return false;
     }
@@ -686,3 +402,4 @@ void Analyzer::solutionFound(Cell* cell, int dir)
         }
     }
 }
+

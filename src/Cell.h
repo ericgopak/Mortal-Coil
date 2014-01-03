@@ -23,7 +23,8 @@ protected:
     int exitMask;
     int mark; // ID of a corresponding path segment
 
-    std::set<Exit> exits;
+    //std::set<Exit> exits;
+    std::vector<Exit> exits;
     const Exit* exitsByDirection[4];
 
     Cell* nextCell[4]; // Pointers to neighbouring cells (nextCell[dir])
@@ -45,7 +46,7 @@ public:
     bool isFree() const;
     bool isOccupied() const;
     
-    bool isEnd() const; // True if exactly one neighbour is free
+    bool isTemporaryEnd() const; // if exactly one neighbour is free
 
     bool isPit() const;
     bool isThrough() const;
@@ -62,9 +63,10 @@ public:
     int getComponentId() const;
     int getMark() const;
     int getNextMask() const;
-    const std::set<Exit>& getExits() const;
+    const std::vector<Exit>& getExits() const;
 
     void addExit(const Exit& exit);
+    void setOpposingExit(const Exit* exit, const Exit* opposingExit);
 
     void setType(bool obstacle);
     void setXY(int x, int y);
@@ -82,14 +84,14 @@ public:
 class Exit : public Cell
 {
     int dir;
-    const Exit* opposite;
+    const Exit* opposingExit;
 
 public:
     //Exit(int x, int y, int dir);
     Exit(const Cell* cell, int dir);
 
-    //const Exit* getOpposite() const;
-    //void setOpposite(const Exit* exit);
+    const Exit* getOpposingExit() const;
+    void setOpposingExit(const Exit* opposingExit);
 
     bool operator < (const Exit &e) const;
     bool operator == (const Exit &e) const;

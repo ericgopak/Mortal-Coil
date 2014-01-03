@@ -71,12 +71,12 @@ int main(int argc, char* argv[])
 
         //level.traceComponent();
 
-        if (level.Ends > 0)
+        if (level.initialEnds.size() > 0)
         {
-            printf("Initial tails: %d\n", level.Ends);
-            for (int e = 0; e < level.Ends; e++)
+            printf("Initial tails: %d\n", level.initialEnds.size());
+            for (size_t e = 0; e < level.initialEnds.size(); e++)
             {
-                printf("Tail%d: %d %d\n", e + 1, level.EndX[e], level.EndY[e]);
+                printf("Tail%d: %d %d\n", e + 1, level.initialEnds[e]->getX(), level.initialEnds[e]->getY());
             }
         }
 

@@ -13,7 +13,6 @@ class Simulator
     {
         int depth;
         int currentX, currentY;
-        //int currentDir;
         int currentComponent;
 
         TraceInfo();
@@ -45,6 +44,8 @@ public:
     void findFreeCellsTouchingSameObstacles() const;
 
     void updateTouchingObstacles(Cell* cell, bool inc) const;
+
+    void findOpposingExits() const;
 
     void findNeighbours() const;
     void createBonds() const;

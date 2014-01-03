@@ -9,7 +9,7 @@ Level::Level(const char* filename)
     , componentBiggestIndex(-1)
     , Free(0)
     , Solved(false)
-    , Ends(0)
+    , initialEnds(0)
     , EdgesToBe(0)
     , componentsFullyTraversed(0)
 {
@@ -32,11 +32,7 @@ Level::~Level()
 void Level::readFromFile(const char* filename)
 {
     FILE* fin = fopen(filename, "r");
-
-    if (!fin)
-    {
-        throw std::exception("Failed to open input file!");
-    }
+    assert(fin);
 
     fscanf(fin, "%d %d", &H, &W);
 
@@ -145,6 +141,11 @@ int Level::getObstacleCount() const
     return obstacles.size();
 }
 
+const std::set<const Cell*>& Level::getTemporaryEnds() const
+{
+    return temporaryEnds;
+}
+
 int Level::getSolutionStartX() const
 {
     return solutionStartX;
@@ -158,6 +159,11 @@ int Level::getSolutionStartY() const
 const std::set<const Component*>& Level::getSpecialComponents() const
 {
     return specialComponents;
+}
+
+const std::set<int>& Level::getSpecialComponentIds() const
+{
+    return specialComponentsIds;
 }
 
 void Level::setSolutionStartXY(int startX, int startY)
@@ -176,9 +182,20 @@ void Level::setBiggest(int index)
     componentBiggestIndex = index;
 }
 
-void Level::addSpecialComponent(const Component* comp)
+void Level::addTemporaryEnd(const Cell* cell)
+{
+    temporaryEnds.insert(cell);
+}
+
+void Level::removeTemporaryEnd(const Cell* cell)
+{
+    temporaryEnds.erase(cell);
+}
+
+void Level::addSpecialComponent(const Component* comp, int index)
 {
     specialComponents.insert(comp);
+    specialComponentsIds.insert(index);
 }
 
 void Level::prependSolutionCell(Cell* cell, int dir)
@@ -219,7 +236,7 @@ void Level::prepareSolution()
         }
         else
         {
-            throw new std::exception("Something's wrong with the answer - found cells with equal coordinates!");
+            assert(false && "Something's wrong with the answer - found cells with equal coordinates!");
         }
         
         if (dir != currDir)

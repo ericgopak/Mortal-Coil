@@ -11,7 +11,7 @@ public:
 
     //void Solve(Cell* cell, int from);
     void solve(int row, int col, int firstComponentId);
-    void follow(const Exit* exit);
+    //void follow(const Exit* exit);
     void trySolving(int startX, int startY);
 
     virtual bool reachedFinalCell(Cell* cell, int dir) const;
