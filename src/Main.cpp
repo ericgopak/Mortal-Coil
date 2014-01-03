@@ -6,6 +6,9 @@
 #include "Analyzer.h"
 #include "Solver.h"
 
+static const char* INPUT_FILENAME = "mortal_coil.txt";
+static const char* OUTPUT_FILENAME = "output.txt";
+
 void printUsage()
 {
     Colorer::print<YELLOW>(
@@ -55,17 +58,16 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    Level level(INPUT_FILENAME);
 
-    Level level("mortal_coil.txt");
-
-    Colorer::print<RED>("Preprocessing...\n");
+    TRACE(Colorer::print<RED>("Preprocessing...\n"));
 
     Analyzer analyzer(&level);
     Solver solver(&level, "output.txt");
     analyzer.preprocess();
 
-    //TRACE
-    //(
+    TRACE
+    (
         printf("Free cells: %d\n", level.Free);
         printf("Components: %d\n", level.getObstacleCount());
 
@@ -79,14 +81,13 @@ int main(int argc, char* argv[])
                 printf("Tail%d: %d %d\n", e + 1, level.initialEnds[e]->getX(), level.initialEnds[e]->getY());
             }
         }
+    );
 
-    //);
-
-    Colorer::print<RED>("Analyzing...\n");
+    TRACE(Colorer::print<RED>("Analyzing...\n"));
 
     analyzer.analyzeComponents();
 
-    Colorer::print<RED>("Solving...\n");
+    TRACE(Colorer::print<RED>("Solving...\n"));
 
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
@@ -94,8 +95,13 @@ int main(int argc, char* argv[])
     
     TRACE(Colorer::print<WHITE>(level.Solved ? "SOLVED\n" : "FAILED TO SOLVE\n"));
 
+    if (level.Solved)
+    {
+        level.outputToFile(OUTPUT_FILENAME);
+    }
+
     clock_t finish_time = clock();
-    printf("Time elapsed: %lf\n", double(finish_time - start_time) / CLOCKS_PER_SEC);
+    printf("%lf\n", double(finish_time - start_time) / CLOCKS_PER_SEC);
 
     return 0;
 }

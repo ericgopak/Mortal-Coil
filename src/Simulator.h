@@ -50,13 +50,11 @@ public:
     void findNeighbours() const;
     void createBonds() const;
     void countEnds() const;
-    //void connectOppositeExits() const;
     
     void touchObstacles(Cell* cell) const;
     bool checkTouchingObstacles(Cell* cell) const;
     void untouchObstacles(Cell* cell) const;
 
-    //void backtrack(Cell* cell, int direction, Simulator* engine);
     void backtrack(Cell* cell, int direction);
 
     virtual void trySolving(int startX, int startY);

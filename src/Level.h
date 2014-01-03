@@ -84,7 +84,7 @@ public:
     void addSpecialComponent(const Component* comp, int index);
 
     void prependSolutionCell(Cell* cell, int dir);
-    void prepareSolution();
+    void prepareSolution(int startX, int startY);
 
     void PrintCell(const Cell* cell, int id = -1) const;
     void traceComponent(int id = -1, unsigned int flags = TRACE_DEFAULT) const;

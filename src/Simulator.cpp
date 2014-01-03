@@ -42,28 +42,6 @@ Simulator::TraceInfo::TraceInfo()
 {
 }
 
-//unsigned int Simulator::Occupy(Cell*& cell, int dir)
-//{
-//    unsigned int r = 0;
-//
-//    cell->setFree(false);
-//    level->Free--;
-//    level->getComponents()[level->getComponentCurrentIndex()].DecrementSize();
-//
-//    TRACE(cell->setMark(tracer.depth + 1));
-//
-//    // Break bonds with neighbours
-//    /*Disconnect(cell, Left[dir]);
-//    Disconnect(cell, Right[dir]);*/
-//    if (cell->Next[Left[dir]]->isFree()) Disconnect(cell, Left[dir]);
-//    if (cell->Next[Right[dir]]->isFree()) Disconnect(cell, Right[dir]);
-//
-//    // Consider touching components
-//    r |= CheckTouches(cell);
-//
-//    return r;
-//}
-
 void Simulator::occupy(Cell* cell, int dir) const
 {
     assert(cell->isFree() && "Occupying already non-free cell!");
@@ -73,56 +51,12 @@ void Simulator::occupy(Cell* cell, int dir) const
     level->getComponents()[cell->getComponentId()].decrementSize();
 }
 
-//void Simulator::Restore(Cell*& cell, int dir)
-//{
-//    cell->setFree(true);
-//    level->Free++;
-//    level->getComponents()[level->getComponentCurrentIndex()].IncrementSize();
-//
-//    TRACE(cell->setMark(0));
-//
-//    // Recover bounds with neighbours
-//    /*Reconnect(cell, Left[dir]);
-//    Reconnect(cell, Right[dir]);*/
-//    if (cell->Next[Left[dir]]->isFree()) Reconnect(cell, Left[dir]);
-//    if (cell->Next[Right[dir]]->isFree()) Reconnect(cell, Right[dir]);
-//
-//    // Recovering touches
-//    UncheckTouches(cell);
-//}
 void Simulator::restore(Cell* cell, int dir) const
 {
     cell->setFree(true);
     level->Free++;
     level->getComponents()[cell->getComponentId()].incrementSize(); // TODO: decrement 'occupied' instead
-
-    //cell->setMark(0);
-
-    // Recover bounds with neighbours
-    /*Reconnect(cell, Left[dir]);
-    Reconnect(cell, Right[dir]);*/
-    /*if (cell->Next[Left[dir]]->isFree()) Reconnect(cell, Left[dir]);
-    if (cell->Next[Right[dir]]->isFree()) Reconnect(cell, Right[dir]);*/
-
-    // Recovering touches
-    //UncheckTouches(cell);
 }
-
-//unsigned int Simulator::MoveForward(Cell*& cell, int dir)
-//{
-//    unsigned int r = Occupy(cell, dir);
-//
-//    cell = cell->Next[dir];
-//
-//    return r;
-//}
-//
-//void Simulator::MoveBackwards(Cell*& cell, int dir)
-//{
-//    Restore(cell, dir);
-//
-//    cell = cell->Next[dir ^ 2];
-//}
 
 Cell* Simulator::moveForward(Cell* cell, int dir) const
 {
@@ -348,34 +282,6 @@ void Simulator::countEnds() const
         }
     }
 }
-
-//void Simulator::connectOppositeExits() const
-//{
-//    for (int i = 1; i <= level->getHeight(); i++)
-//    {
-//        for (int j = 1; j <= level->getWidth(); j++)
-//        {
-//            Cell* cell = level->getCell(i, j);
-//
-//            // Connect opposing exits. Once.
-//            if (cell->isExit())
-//            {
-//                for (int dir = 0; dir < 4; dir++)
-//                {
-//                    int ny = cell->getY() + dy[dir];
-//                    int nx = cell->getX() + dx[dir];
-//
-//                    Cell* ncell = level->getCell(ny, nx);
-//
-//                    if (ncell->isExit())
-//                    {
-//                        cell->getExit();...
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
 
 void Simulator::floodComponent(int x, int y, int num) const
 {

@@ -17,33 +17,43 @@ void Solver::solve(int row, int col, int firstComponentId)
 
     if (level->initialEnds.size() == 2)
     {
-        Colorer::print<RED>("Level has 2 ends!\n");
+        TRACE(Colorer::print<RED>("Level has 2 ends!\n"));
         const Cell* e1 = level->initialEnds[0];
         const Cell* e2 = level->initialEnds[1];
         trySolving(e1->getX(), e1->getY());
         if (level->Solved)
         {
+            level->prepareSolution(e1->getX(), e1->getY());
             return;
         }
         trySolving(e2->getX(), e2->getY());
-
+        if (level->Solved)
+        {
+            level->prepareSolution(e2->getX(), e2->getY());
+            return;
+        }
         assert(level->Solved && "Failed to solve the level with 2 ends!");
     }
     else if (level->initialEnds.size() == 1)
     {
-        Colorer::print<RED>("Level has 1 end!\n");
+        TRACE(Colorer::print<RED>("Level has 1 end!\n"));
         const Cell* e = level->initialEnds[0];
         trySolving(e->getX(), e->getY());
-        if (!level->Solved)
+        if (level->Solved)
         {
-            Colorer::print<RED>("Failed to solve the level with 1 end!\n");
+            level->prepareSolution(e->getX(), e->getY());
+            return;
+        }
+        else
+        {
+            TRACE(Colorer::print<RED>("Failed to solve the level with 1 end!\n"));
         }
     }
 
     if (specialComponentIds.size() == 2)
     {
         // We know the first and the last components
-        Colorer::print<RED>("Level has 2 special components!\n");
+        TRACE(Colorer::print<RED>("Level has 2 special components!\n"));
 
         for (int y = 1; y <= level->getHeight(); y++)
         {
@@ -53,6 +63,11 @@ void Solver::solve(int row, int col, int firstComponentId)
                 if (specialComponentIds.find(level->getCell(y, x)->getComponentId()) != specialComponentIds.end())
                 {
                     trySolving(x, y);
+                    if (level->Solved)
+                    {
+                        level->prepareSolution(x, y);
+                        return;
+                    }
                 }
             }
         }
@@ -62,7 +77,7 @@ void Solver::solve(int row, int col, int firstComponentId)
     else if (specialComponentIds.size() == 1)
     {
         // Try starting from it
-        Colorer::print<RED>("Level has 1 special component!\n");
+        TRACE(Colorer::print<RED>("Level has 1 special component!\n"));
 
         for (int y = 1; y <= level->getHeight(); y++)
         {
@@ -72,17 +87,22 @@ void Solver::solve(int row, int col, int firstComponentId)
                 if (specialComponentIds.find(level->getCell(y, x)->getComponentId()) != specialComponentIds.end())
                 {
                     trySolving(x, y);
+                    if (level->Solved)
+                    {
+                        level->prepareSolution(x, y);
+                        return;
+                    }
                 }
             }
         }
 
         if (!level->Solved)
         {
-            Colorer::print<RED>("Failed to solve starting from the only special component!\n");
+            TRACE(Colorer::print<RED>("Failed to solve starting from the only special component!\n"));
         }
     }
 
-    Colorer::print<WHITE>("Trying all possible starting points...\n");
+    TRACE(Colorer::print<WHITE>("Trying all possible starting points...\n"));
 
     for (int startY = row; startY <= level->getHeight(); startY++)
     {
@@ -104,13 +124,10 @@ void Solver::solve(int row, int col, int firstComponentId)
                     TRACE(printf("(%d, %d) in component %d\n", startX, startY, cell->getComponentId()));
                     trySolving(startX, startY);
                 }
-
+                
                 if (level->Solved)
                 {
-                    level->setSolutionStartXY(startX, startY);
-                    level->prepareSolution();
-                    level->outputToFile(outputFilename);
-
+                    level->prepareSolution(startX, startY);
                     return;
                 }
             }
@@ -235,6 +252,6 @@ bool Solver::reachedFinalCell(Cell* cell, int dir) const
 
 void Solver::solutionFound(Cell* cell, int dir)
 {
-    Colorer::print<WHITE>("Solution found!!!\n");
+    TRACE(Colorer::print<WHITE>("Solution found!!!\n"));
     level->Solved = true;
 }

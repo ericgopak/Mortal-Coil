@@ -32,7 +32,7 @@ Level::~Level()
 void Level::readFromFile(const char* filename)
 {
     FILE* fin = fopen(filename, "r");
-    assert(fin);
+    assert(fin && "Failed to open file with level data!");
 
     fscanf(fin, "%d %d", &H, &W);
 
@@ -203,8 +203,10 @@ void Level::prependSolutionCell(Cell* cell, int dir)
     solution.push_front(cell);
 }
 
-void Level::prepareSolution()
+void Level::prepareSolution(int startX, int startY)
 {
+    setSolutionStartXY(startX, startY);
+
     Answer.clear();
 
     int currDir = -1;

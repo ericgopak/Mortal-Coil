@@ -60,22 +60,22 @@ void Analyzer::analyzeComponents()
         {
             setComponentCurrentIndex(i);
 
-            level->traceComponent(i);
-            printf("CONSIDERING %d (%d)\n", i, component.getSize());
+            TRACE(level->traceComponent(i));
+            TRACE(printf("CONSIDERING %d (%d)\n", i, component.getSize()));
 
             analyzeComponent(component);
             
-            Colorer::print<WHITE>("Found %d solution%c\n", component.getSolutionCount(), component.getSolutionCount() == 1 ? ' ' : 's');
+            TRACE(Colorer::print<WHITE>("Found %d solution%c\n", component.getSolutionCount(), component.getSolutionCount() == 1 ? ' ' : 's'));
 
             if (component.getSolutionCount() == 1)
             {
-                Colorer::print<YELLOW>("Component %d has ONLY ONE Solution!\n", i);
+                TRACE(Colorer::print<YELLOW>("Component %d has ONLY ONE Solution!\n", i));
             }
             else if (component.getSolutionCount() == 0)
             {
-                Colorer::print<YELLOW>("Component %d is SPECIAL!\n", getComponentCurrentIndex(), i);
+                TRACE(Colorer::print<YELLOW>("Component %d is SPECIAL!\n", getComponentCurrentIndex(), i));
 
-                level->traceComponent(i);
+                TRACE(level->traceComponent(i));
 
                 level->addSpecialComponent(&component, i);
             }
