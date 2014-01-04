@@ -3,7 +3,7 @@
 #include "Common.h"
 
 //#define MAX_CAN_TOUCH  4 // Max # of components one cell can touch
-//#define MAX_NEXT_TOUCH 8 // Max # of neighbouring cells touching the same component
+#define MAX_NEXT_TOUCH 8 // Max # of neighbouring cells touching the same component
 
 class Cell;
 class Exit;

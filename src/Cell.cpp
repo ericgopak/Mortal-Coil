@@ -149,7 +149,7 @@ void Cell::setOpposingExit(const Exit* exit, const Exit* opposingExit)
 void Cell::addNextTouch(int obstacleId, const Cell* cell)
 {
     neighboursTouchingSameObstacle[obstacleId].insert(cell);
-    assert(neighboursTouchingSameObstacle[obstacleId].size() <= 2);
+    assert(neighboursTouchingSameObstacle[obstacleId].size() <= MAX_NEXT_TOUCH);
 }
 
 void Cell::setType(bool obstacle)

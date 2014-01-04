@@ -163,7 +163,7 @@ void Solver::solve(int row, int col, int firstComponentId)
             const Cell* cell = level->getCell(startY, startX);
             if (!cell->isObstacle())
             {
-                TRACE(printf("%d,%d\n", startX, startY));
+                //TRACE(printf("%d,%d\n", startX, startY));
 
                 const Component& comp = level->getComponents()[cell->getComponentId()];
 

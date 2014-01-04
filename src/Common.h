@@ -61,4 +61,5 @@ namespace Debug
 {
     extern int depth;
     extern bool traceFlag;
+    extern int mostSolutions;
 }

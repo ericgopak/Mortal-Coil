@@ -2,10 +2,14 @@
 
 #include "Simulator.h"
 
+#define INITIAL_STATE_MASK 0
+
 class Analyzer : public Simulator
 {
     std::vector<const Exit*> previousExit;
-    std::vector<Path> solutionHolder;
+    std::vector<int> previousStateMask;
+    std::vector<Path> solutionPathHolder;
+    std::vector<int> solutionStateMaskHolder;
     int componentCurrentIndex;
 
     static int depth;
@@ -19,7 +23,7 @@ public:
     void setComponentCurrentIndex(int index);
 
     void analyzeComponents();
-    void analyzeComponent(Component& component);
+    void analyzeComponent(Component& component, int stateMask);
 
     void preprocess();
 
@@ -34,4 +38,7 @@ public:
     virtual bool reachedFinalCell(Cell* cell, int dir) const;
     virtual bool potentialSolution(Cell* cell, int dir) const;
     virtual void solutionFound(Cell* cell, int dir);
+
+    void collectResults(const Exit* exit1, const Exit* exit2);
+    void uncollectResults();
 };

@@ -24,7 +24,9 @@ public:
     int getLength() const;
 };
 
-typedef std::map<Path, ComponentSolution> SolutionMap;
+//typedef std::map<Path, ComponentSolution> SolutionMap;
+//typedef std::map<int, std::map<Path, ComponentSolution> > SolutionMap; // Index -> Path -> [Index -> Path] -> ...
+typedef std::map<int, std::map<Path, ComponentSolution> > SolutionMap; // Index -> Path -> [Index -> Path] -> ...
 
 class ComponentSolution
 {
@@ -40,7 +42,7 @@ class Component : public AbstractComponent
     int occupied;
     SolutionMap solutions;
     int solutionCount;
-    std::set<const Exit*> exits;
+    std::set<const Exit*> exits; // TODO: rewrite with std::vector
 
     std::stack<SolutionMap*> remainingSolutions;
 
@@ -55,7 +57,9 @@ public:
     const std::set<const Exit*>& getExits() const;
     const SolutionMap* getRemainingSolutions() const;
     const Exit* getExitByIndex(int index) const;
-    int getFreeExitsMask() const;
+    int getIndexByExit(const Exit* exit) const;
+    //int getFreeExitsMask() const;
+    int getCurrentStateMask() const;
 
     void addExit(const Exit* e);
     void addSolution(SolutionMap* newSolution);

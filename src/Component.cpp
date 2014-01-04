@@ -85,6 +85,7 @@ const SolutionMap* Component::getRemainingSolutions() const
 
 const Exit* Component::getExitByIndex(int index) const
 {
+    // TODO: implement exits using std::vector
     assert(index < (int)exits.size());
     // std::advance() is linear for std::set
     auto it = exits.begin();
@@ -92,9 +93,34 @@ const Exit* Component::getExitByIndex(int index) const
     return *it;
 }
 
-int Component::getFreeExitsMask() const
+int Component::getIndexByExit(const Exit* exit) const
 {
-    return (1 << exits.size()) - 1;
+    // TODO: implement exits using std::vector
+    // std::distance() is linear for std::set
+
+    size_t x = std::distance(exits.begin(), exits.find(exit));
+    assert(x < exits.size() && "Exit not found!");
+
+    return x;
+}
+
+//int Component::getFreeExitsMask() const
+//{
+//    return (1 << exits.size()) - 1;
+//}
+
+int Component::getCurrentStateMask() const
+{
+    int mask = 0;
+    for (size_t i = 0; i < exits.size(); i++)
+    {
+        const Exit* exit = getExitByIndex(i);
+        if (exit->isFree() == false)
+        {
+            mask = 1 << i;
+        }
+    }
+    return mask;
 }
 
 const SolutionMap* Component::getSolutions() const
@@ -111,30 +137,70 @@ void Component::addExit(const Exit* e)
 // Assuming 'solution' contains only one solution
 void Component::addSolution(SolutionMap* newSolution)
 {
+    // Caution: don't read the code. It just works =)
+    // TODO: refactor
+
+    SolutionMap* currentSolutions = &solutions;
+
     while (newSolution->size() > 0)
     {
-        SolutionMap::iterator p = newSolution->begin();
-        SolutionMap::const_iterator it = solutions.find(p->first);
-        if (it == solutions.cend())
+        assert(newSolution->size() <= 1 && "Trying to add invalid solution!");
+
+        SolutionMap::iterator newIndexToPath = newSolution->begin();
+        SolutionMap::iterator currentIndexToPath = currentSolutions->find(newIndexToPath->first);
+        if (currentIndexToPath == currentSolutions->end())
         {
-            // New solution (differs from existing)
+            // New solution (different indexes)
             solutionCount++;
-            solutions[p->first] = p->second;
+            (*currentSolutions)[newIndexToPath->first] = newIndexToPath->second;
             break;
         }
         else
         {
-            newSolution = p->second.getSolutions();
+            assert(newIndexToPath->second.size() <= 1 && "Trying to add invalid solution!");
+
+            const Path& newPath = newIndexToPath->second.begin()->first;
+            std::map<Path, ComponentSolution>::iterator currentPathToSolution = currentIndexToPath->second.find(newPath);
+            if (currentPathToSolution == currentIndexToPath->second.end())
+            {
+                // New solution (different paths)
+                solutionCount++;
+
+                (*currentSolutions)[newIndexToPath->first][newPath] = newIndexToPath->second.begin()->second;
+                break;
+            }
+            else
+            {
+                newSolution = newIndexToPath->second.begin()->second.getSolutions();
+                currentSolutions = currentIndexToPath->second.begin()->second.getSolutions();
+            }
         }
+
+        //SolutionMap::iterator p = newSolution->begin();
+        //SolutionMap::const_iterator it = solutions.find(p->first);
+        //if (it == solutions.cend())
+        //{
+        //    // New solution (differs from existing)
+        //    solutionCount++;
+        //    solutions[p->first] = p->second;
+        //    break;
+        //}
+        //else
+        //{
+        //    newSolution = p->second.getSolutions();
+        //}
     }
 }
 
 void Component::chooseSolution(const Path* chosenPath)
 {
     SolutionMap* currentOptions = remainingSolutions.top();
-    SolutionMap::iterator it = currentOptions->find(*chosenPath);
+    //SolutionMap::iterator it = currentOptions->find(*chosenPath);
 
-    assert(it != currentOptions->end() && "Tried to choose non-existent path!");
+    int currentStateMask = getCurrentStateMask();
+    std::map<Path, ComponentSolution>::iterator it = (*currentOptions)[currentStateMask].find(*chosenPath);
+
+    assert(it != (*currentOptions)[currentStateMask].end() && "Tried to choose non-existent path!");
 
     remainingSolutions.push(it->second.getSolutions());
 }

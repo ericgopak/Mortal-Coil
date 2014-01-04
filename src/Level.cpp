@@ -287,7 +287,7 @@ void Level::traceComponent(int id, unsigned int flags) const
     if (id != -1)
     {
         printf("Tracing %s %d\n", (flags & TRACE_COMPONENTS) ? "component": "obstacle", id);
-        printf("Size: %d\n", (flags & TRACE_COMPONENTS) ? components[id].getSize() : obstacles[id].getSize());
+        //printf("Size: %d\n", (flags & TRACE_COMPONENTS) ? components[id].getSize() : obstacles[id].getSize());
     }
 
     int x1 = 1, x2 = W;

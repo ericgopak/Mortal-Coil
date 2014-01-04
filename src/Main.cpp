@@ -86,6 +86,8 @@ int main(int argc, char* argv[])
 
     analyzer.analyzeComponents();
 
+    TRACE(Colorer::print<WHITE>("Max number of solutions: %d\n", Debug::mostSolutions));
+
     TRACE(Colorer::print<RED>("Solving...\n"));
 
     int firstRow = (row != -1) ? row : 1;
