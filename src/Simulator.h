@@ -41,9 +41,6 @@ public:
     void floodObstacle(int x, int y, int num) const;
 
     void findTouchingObstacles() const;
-    void findFreeCellsTouchingSameObstacles() const;
-
-    void updateTouchingObstacles(Cell* cell, bool inc) const;
 
     void findOpposingExits() const;
 
@@ -59,18 +56,18 @@ public:
 
     virtual void trySolving(int startX, int startY);
 
-    virtual void preOccupyAction(Cell* cell, int dir) const;
-    virtual void postOccupyAction(Cell* cell, int dir) const;
-    virtual void preRestoreAction(Cell* cell, int dir) const;
-    virtual void postRestoreAction(Cell* cell, int dir) const;
-    virtual void preAction(Cell* cell, int dir) const;
-    virtual void postAction(Cell* cell, int dir) const;
-
     virtual bool mayStartFrom(Cell* cell, int dir) const;
     virtual bool shouldConsider(Cell* cell, int dir) const;
     virtual bool stopBacktracking() const;
-    virtual bool potentialSolution(Cell* cell, int dir) const;
+
+    virtual void preOccupyAction(Cell* cell, int dir) const = 0;
+    virtual void postOccupyAction(Cell* cell, int dir) const = 0;
+    virtual void preRestoreAction(Cell* cell, int dir) const = 0;
+    virtual void postRestoreAction(Cell* cell, int dir) const = 0;
+    virtual void preAction(Cell* cell, int dir) const = 0;
+    virtual void postAction(Cell* cell, int dir) const = 0;
     
+    virtual bool potentialSolution(Cell* cell, int dir) const = 0;
     virtual void solutionFound(Cell* cell, int dir) = 0;
     virtual bool reachedFinalCell(Cell* cell, int dir) const = 0;
 };

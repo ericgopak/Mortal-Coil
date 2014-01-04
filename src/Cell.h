@@ -1,10 +1,13 @@
 #pragma once
 
-#define MAX_CAN_TOUCH  4 // Max # of components one cell can touch
-#define MAX_NEXT_TOUCH 8 // Max # of neighbouring cells touching the same component
+#include "Common.h"
+
+//#define MAX_CAN_TOUCH  4 // Max # of components one cell can touch
+//#define MAX_NEXT_TOUCH 8 // Max # of neighbouring cells touching the same component
 
 class Cell;
 class Exit;
+typedef std::map<int, std::set<const Cell*> > NextTouchMap;
 
 class Cell
 {
@@ -23,39 +26,33 @@ protected:
     int exitMask;
     int mark; // ID of a corresponding path segment
 
-    //std::set<Exit> exits;
     std::vector<Exit> exits;
     const Exit* exitsByDirection[4];
 
     Cell* nextCell[4]; // Pointers to neighbouring cells (nextCell[dir])
-
     int nextMask; // Mask of free neighbours
-    //bool is_exit; // True if this cell is an 'exit' for some component
+
+    NextTouchMap neighboursTouchingSameObstacle;
 
 public:
 
-    int Touch[MAX_CAN_TOUCH]; // List of indeces of components this cell touches // unique indeces!!!
-    int touch; // Amount of touched components
-    Cell* NextTouch[MAX_CAN_TOUCH][MAX_NEXT_TOUCH]; // Neighbouring cells that touch (NextTouch[touch][nexttouch[touch]])
-    int nexttouch[MAX_CAN_TOUCH]; // Number of nearby cells also touching Touch[i] component
-
     Cell(int x = -1, int y = -1);
-    ~Cell();
 
     bool isObstacle() const;
     bool isFree() const;
     bool isOccupied() const;
     
     bool isTemporaryEnd() const; // if exactly one neighbour is free
-
     bool isPit() const;
     bool isThrough() const;
-    bool isExit() const; // TODO: refactor as 'hasExits'
+    bool hasExits() const;
 
-    bool mayBeFirst() const;
+    bool mayBeFirst() const; // TODO: seems obolete... remove!
     bool hasExit(int dir) const;
     const Exit* getExit(int dir) const;
     Cell* getNextCell(int dir) const;
+
+    const NextTouchMap& getNeighboursTouchingSameObstacle() const;
 
     int getX() const;
     int getY() const;
@@ -67,6 +64,7 @@ public:
 
     void addExit(const Exit& exit);
     void setOpposingExit(const Exit* exit, const Exit* opposingExit);
+    void addNextTouch(int obstacleId, const Cell* cell);
 
     void setType(bool obstacle);
     void setXY(int x, int y);
@@ -75,10 +73,7 @@ public:
     void setFree(bool free);
     void setNextMask(int mask);
     void setNextCell(int dir, Cell* ncell);
-    //void setMayBeFirst(bool flag);
     void setMark(int mark);
-
-    //void UpdateTouchingObstacles(bool inc);
 };
 
 class Exit : public Cell
@@ -87,7 +82,6 @@ class Exit : public Cell
     const Exit* opposingExit;
 
 public:
-    //Exit(int x, int y, int dir);
     Exit(const Cell* cell, int dir);
 
     const Exit* getOpposingExit() const;

@@ -10,35 +10,13 @@ Simulator::Simulator(Level* currentLevel)
 
 Simulator::~Simulator()
 {
-    //delete tracer;
 }
-
-//int Simulator::getComponentCurrentIndex() const
-//{
-//    return componentCurrentIndex;
-//}
-//
-//int Simulator::getComponentCount() const
-//{
-//    return componentCount;
-//}
-
-//void Simulator::SetMostCells(int index)
-//{
-//    componentMostCellsIndex = index;
-//}
-
-//void Simulator::SetBiggest(int index)
-//{
-//    componentBiggestIndex = index;
-//}
 
 Simulator::TraceInfo::TraceInfo()
     : depth(0)
     , currentComponent(-1)
     , currentX(-1)
     , currentY(-1)
-//    , currentDir(-1)
 {
 }
 
@@ -55,7 +33,7 @@ void Simulator::restore(Cell* cell, int dir) const
 {
     cell->setFree(true);
     level->Free++;
-    level->getComponents()[cell->getComponentId()].incrementSize(); // TODO: decrement 'occupied' instead
+    level->getComponents()[cell->getComponentId()].incrementSize();
 }
 
 Cell* Simulator::moveForward(Cell* cell, int dir) const
@@ -102,59 +80,24 @@ void Simulator::findTouchingObstacles() const
     {
         for (int j = 1; j <= level->getWidth(); j++)
         {
-            Cell& c1 = *(level->getCell(i, j));
-            if (c1.isObstacle() == false)
+            Cell* c1 = level->getCell(i, j);
+            if (c1->isObstacle() == false)
             {
                 for (int dir = 0; dir < 8; dir++)
                 {
-                    Cell &c2 = *(level->getCell(i + dy[dir], j + dx[dir]));
-                    if (c2.isObstacle())
+                    Cell* c2 = level->getCell(i + dy[dir], j + dx[dir]);
+                    if (c2->isObstacle())
                     {
-                        bool is_new = true;
-                        int oind = c2.getObstacleId();
-                        for (int k = 0; k < c1.touch; k++)
-                        {
-                            if (oind == c1.Touch[k])
-                            {
-                                is_new = false;
-                                break;
-                            }
-                        }
-                        if (is_new)
-                        {
-                            c1.Touch[c1.touch++] = oind;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+                        const Cell* leftCell  = c1->getNextCell(Left[dir]);
+                        const Cell* rightCell = c1->getNextCell(Right[dir]);
 
-void Simulator::findFreeCellsTouchingSameObstacles() const
-{
-    for (int i = 1; i <= level->getHeight(); i++)
-    {
-        for (int j = 1; j <= level->getWidth(); j++)
-        {
-            Cell &c1 = *(level->getCell(i, j));
-            if (c1.isObstacle() == false)
-            {
-                for (int dir = 0; dir < 4; dir++)
-                {
-                    Cell &c2 = *(level->getCell(i + dy[dir], j + dx[dir]));
-                    if (c2.isObstacle() == false)
-                    {
-                        for (int t1 = 0; t1 < c1.touch; t1++)
+                        if (leftCell->isObstacle() == false)
                         {
-                            for (int t2 = 0; t2 < c2.touch; t2++)
-                            {
-                                if (c1.Touch[t1] == c2.Touch[t2])
-                                {
-                                    c1.NextTouch[t1][c1.nexttouch[t1]++] = &c2;
-                                    break;
-                                }
-                            }
+                            c1->addNextTouch(c2->getObstacleId(), leftCell);
+                        }
+                        if (rightCell->isObstacle() == false)
+                        {
+                            c1->addNextTouch(c2->getObstacleId(), rightCell);
                         }
                     }
                 }
@@ -166,7 +109,7 @@ void Simulator::findFreeCellsTouchingSameObstacles() const
 void Simulator::findObstacles() const
 {
     floodObstacle(0, 0, 0); // Special component - the one that includes borders
-    level->getObstacles().push_back(Obstacle()); // TODO: call proper cons
+    level->getObstacles().push_back(Obstacle());
     
     for (int i = 1; i <= level->getHeight(); i++)
     {
@@ -175,7 +118,7 @@ void Simulator::findObstacles() const
             if (level->getCell(i, j)->isObstacle() && level->getCell(i, j)->getObstacleId() == -1)
             {
                 int index = level->getObstacleCount();
-                level->getObstacles().push_back(Obstacle()); // TODO: call proper cons
+                level->getObstacles().push_back(Obstacle());
                 // New obstacle found -> mark all the cells in it
                 floodObstacle(j, i, index);
             }
@@ -198,21 +141,6 @@ void Simulator::floodObstacle(int x, int y, int num) const
         if (level->getCell(ny, nx)->getObstacleId() == -1) // Not assigned
         {
             floodObstacle(nx, ny, num);
-        }
-    }
-}
-
-void Simulator::updateTouchingObstacles(Cell* cell, bool inc) const
-{
-    for (int t = 0; t < cell->touch; t++)
-    {
-        if (inc)
-        {
-            level->getObstacles()[cell->Touch[t]].IncrementTouched();
-        }
-        else
-        {
-            level->getObstacles()[cell->Touch[t]].DecrementTouched();
         }
     }
 }
@@ -285,8 +213,6 @@ void Simulator::countEnds() const
 
 void Simulator::floodComponent(int x, int y, int num) const
 {
-    int mask = 0;
-
     Cell* cell = level->getCell(y, x);
 
     cell->setComponentId(num);
@@ -327,10 +253,8 @@ void Simulator::floodComponent(int x, int y, int num) const
         }
     }
 
-    if (cell->isExit())
+    if (cell->hasExits())
     {
-        //level->getCell(y, x)->is_exit = true;
-
         FOREACH(cell->getExits(), e)
         {
             level->getComponents()[num].addExit(&*e);
@@ -340,32 +264,31 @@ void Simulator::floodComponent(int x, int y, int num) const
 
 void Simulator::touchObstacles(Cell* cell) const
 {
-    for (int t = 0; t < cell->touch; t++)
+    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
     {
-        Obstacle& c = level->getObstacles()[cell->Touch[t]];
-        c.IncrementTouched();
+        level->getObstacles()[it->first].touch();
     }
 }
 
 bool Simulator::checkTouchingObstacles(Cell* cell) const
 {
-    for (int t = 0; t < cell->touch; t++)
+    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
     {
-        Obstacle& o = level->getObstacles()[cell->Touch[t]];
+        const Obstacle& o = level->getObstacles()[it->first];
 
-        if (o.Touched() > 1) // Is there any same-component-touching cell that has been visited before?
+        if (o.getTouchCount() > 1)
         {
             bool ok = false;
-            for (int k = 0; k < cell->nexttouch[t]; k++)
+
+            FOREACH_CONST(it->second, it2)
             {
-                // Check if any 'neighbour' cells touched the same component
-                if (!(cell->NextTouch[t][k]->isFree())) // Try to avoid using FREE / UNFREE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                if ((*it2)->isFree() == false)
                 {
                     ok = true;
                     break;
                 }
             }
-            if (!ok)
+            if (ok == false)
             {
                 return false;
             }
@@ -377,52 +300,10 @@ bool Simulator::checkTouchingObstacles(Cell* cell) const
 
 void Simulator::untouchObstacles(Cell* cell) const
 {
-    for (int t = 0; t < cell->touch; t++)
+    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
     {
-        Obstacle& c = level->getObstacles()[cell->Touch[t]];
-        c.DecrementTouched();
+        level->getObstacles()[it->first].untouch();
     }
-}
-
-void Simulator::preAction(Cell* cell, int dir) const
-{
-}
-
-void Simulator::postAction(Cell* cell, int dir) const
-{
-    if (level->Solved)
-    {
-        // Accumulate answer
-        level->prependSolutionCell(cell, dir);
-    }
-}
-
-void Simulator::preOccupyAction(Cell* cell, int dir) const
-{
-    touchObstacles(cell);
-}
-
-void Simulator::postOccupyAction(Cell* cell, int dir) const
-{
-}
-
-void Simulator::preRestoreAction(Cell* cell, int dir) const
-{
-}
-
-void Simulator::postRestoreAction(Cell* cell, int dir) const
-{
-    untouchObstacles(cell);
-}
-
-bool Simulator::potentialSolution(Cell* cell, int dir) const
-{
-    if (checkTouchingObstacles(cell) == false)
-    {
-        return false;
-    }
-
-    return true;
 }
 
 bool Simulator::mayStartFrom(Cell* cell, int dir) const

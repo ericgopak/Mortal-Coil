@@ -2,30 +2,23 @@
 #include "Colorer.h"
 #include "Obstacle.h"
 
-//int Obstacle::Count = 0;
-
 Obstacle::Obstacle()
     : AbstractComponent()
-    , touched(0)
+    , touchCount(0)
 {
 }
 
-//void Obstacle::Trace()
-//{
-//    AbstractComponent::Trace(-1, AbstractComponent::TRACE_OBSTACLES);
-//}
-
-int Obstacle::Touched() const
+int Obstacle::getTouchCount() const
 {
-    return touched;
+    return touchCount;
 }
 
-void Obstacle::IncrementTouched()
+void Obstacle::touch()
 {
-    touched++;
+    touchCount++;
 }
 
-void Obstacle::DecrementTouched()
+void Obstacle::untouch()
 {
-    touched--;
+    touchCount--;
 }

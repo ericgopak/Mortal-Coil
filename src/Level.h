@@ -14,14 +14,11 @@ static const unsigned int TRACE_DEFAULT = TRACE_COMPONENTS | TRACE_OBSTACLES;
 
 class Level
 {
-    Cell **Grid;
+    Cell **Grid; // TODO: force allocate as a contiguous memory block
 
     int H, W;
     int solutionStartX;
     int solutionStartY;
-
-    void readFromFile(const char* filename);
-    void init();
 
     std::vector<Component> components;
     std::vector<Obstacle> obstacles;
@@ -32,6 +29,9 @@ class Level
     std::set<int> specialComponentsIds;
 
     std::set<const Cell*> temporaryEnds;
+
+    void readFromFile(const char* filename);
+    void init();
 
 public:
 

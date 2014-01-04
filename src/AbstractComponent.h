@@ -2,6 +2,11 @@
 
 #include "Common.h"
 
+/* Ideas:
+o store set of Cells's for convenience
+o replace (in,de)crementSize() with (de,in)crementOccupied
+*/
+
 class AbstractComponent
 {
 protected:

@@ -1,6 +1,7 @@
 #pragma once
 
-// Colors
+#include <Windows.h>
+
 #define RED    FOREGROUND_RED   | FOREGROUND_INTENSITY
 #define BLUE   FOREGROUND_BLUE  | FOREGROUND_INTENSITY
 #define GREEN  FOREGROUND_GREEN | FOREGROUND_INTENSITY

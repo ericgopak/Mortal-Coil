@@ -1,6 +1,5 @@
 #include "Common.h"
 #include "Colorer.h"
-#include "General.h"
 #include "Obstacle.h"
 #include "Component.h"
 #include "Analyzer.h"

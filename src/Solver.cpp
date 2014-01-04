@@ -1,6 +1,5 @@
 #include "Common.h"
 #include "Colorer.h"
-#include "General.h"
 #include "Obstacle.h"
 #include "Component.h"
 #include "Solver.h"
@@ -9,6 +8,59 @@ Solver::Solver(Level* currentLevel, const char* _outputFilename)
     : Simulator(currentLevel)
     , outputFilename(_outputFilename)
 {
+}
+
+void Solver::preOccupyAction(Cell* cell, int dir) const
+{
+    touchObstacles(cell);
+}
+
+void Solver::postOccupyAction(Cell* cell, int dir) const
+{
+}
+
+void Solver::preRestoreAction(Cell* cell, int dir) const
+{
+}
+
+void Solver::postRestoreAction(Cell* cell, int dir) const
+{
+    untouchObstacles(cell);
+}
+
+void Solver::preAction(Cell* cell, int dir) const
+{
+}
+
+void Solver::postAction(Cell* cell, int dir) const
+{
+    if (level->Solved)
+    {
+        // Accumulate answer
+        level->prependSolutionCell(cell, dir);
+    }
+}
+
+bool Solver::reachedFinalCell(Cell* cell, int dir) const
+{
+    // If we are at the very last remaining cell
+    return level->Free == 1;
+}
+
+bool Solver::potentialSolution(Cell* cell, int dir) const
+{
+    if (checkTouchingObstacles(cell) == false)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void Solver::solutionFound(Cell* cell, int dir)
+{
+    TRACE(Colorer::print<WHITE>("Solution found!!!\n"));
+    level->Solved = true;
 }
 
 void Solver::solve(int row, int col, int firstComponentId)
@@ -242,16 +294,4 @@ void Solver::trySolving(int startX, int startY)
             }
         }
     }
-}
-
-bool Solver::reachedFinalCell(Cell* cell, int dir) const
-{
-    // If we are at the very last remaining cell
-    return level->Free == 1;
-}
-
-void Solver::solutionFound(Cell* cell, int dir)
-{
-    TRACE(Colorer::print<WHITE>("Solution found!!!\n"));
-    level->Solved = true;
 }

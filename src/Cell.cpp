@@ -9,24 +9,11 @@ Cell::Cell(int x, int y)
     , obstacleId(-1)
     , componentId(-1)
     , nextMask(0)
-    , touch(0)
     , mark(0)
     , exitMask(0)
 {
     nextCell[0] = nextCell[1] = nextCell[2] = nextCell[3] = NULL;
     exitsByDirection[0] = exitsByDirection[1] = exitsByDirection[2] = exitsByDirection[3] = NULL;
-    for (int i = 0; i < MAX_CAN_TOUCH; i++)
-    {
-        nexttouch[i] = 0;
-        for (int j = 0; j < MAX_NEXT_TOUCH; j++)
-        {
-            NextTouch[i][j] = NULL;
-        }
-    }
-}
-
-Cell::~Cell()
-{
 }
 
 bool Cell::isFree() const
@@ -61,7 +48,7 @@ bool Cell::isTemporaryEnd() const
 
 bool Cell::isPit() const
 {
-    return Bits[nextMask] <= 1;
+    return BitCount[nextMask] <= 1;
 }
 
 bool Cell::isThrough() const
@@ -70,7 +57,7 @@ bool Cell::isThrough() const
     
     for (int dir = 0; dir < 4; dir++)
     {
-        if ((nextMask & P[dir]) && Bits[nextCell[dir]->getNextMask()] == 2)
+        if ((nextMask & P[dir]) && BitCount[nextCell[dir]->getNextMask()] == 2)
         {
             k++;
         }
@@ -79,7 +66,7 @@ bool Cell::isThrough() const
     return k == 2;
 }
 
-bool Cell::isExit() const
+bool Cell::hasExits() const
 {
     return getExits().size() > 0;
 }
@@ -102,6 +89,11 @@ const Exit* Cell::getExit(int dir) const
 Cell* Cell::getNextCell(int dir) const
 {
     return nextCell[dir];
+}
+
+const NextTouchMap& Cell::getNeighboursTouchingSameObstacle() const
+{
+    return neighboursTouchingSameObstacle;
 }
 
 int Cell::getX() const
@@ -154,6 +146,12 @@ void Cell::setOpposingExit(const Exit* exit, const Exit* opposingExit)
     e->setOpposingExit(opposingExit);
 }
 
+void Cell::addNextTouch(int obstacleId, const Cell* cell)
+{
+    neighboursTouchingSameObstacle[obstacleId].insert(cell);
+    assert(neighboursTouchingSameObstacle[obstacleId].size() <= 2);
+}
+
 void Cell::setType(bool obstacle)
 {
     type = obstacle ? Cell::Obstacle : Cell::FreeCell;
@@ -195,12 +193,6 @@ void Cell::setMark(int mark)
     this->mark = mark;
 }
 
-//Exit::Exit(int x, int y, int dir)
-//    : Cell(x, y)
-//    , dir(dir)
-//{
-//}
-
 Exit::Exit(const Cell* cell, int dir)
     : Cell(*cell)
     , dir(dir)
@@ -217,16 +209,6 @@ void Exit::setOpposingExit(const Exit* opposingExit)
 {
     this->opposingExit = opposingExit;
 }
-
-//const Exit* Exit::getOpposite() const
-//{
-//    return opposite;
-//}
-//
-//void Exit::setOpposite(const Exit* exit)
-//{
-//    opposite = exit;
-//}
 
 bool Exit::operator < (const Exit &e) const
 {

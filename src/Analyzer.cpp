@@ -1,6 +1,5 @@
 #include "Common.h"
 #include "Colorer.h"
-#include "General.h"
 #include "Component.h"
 #include "Analyzer.h"
 
@@ -85,12 +84,9 @@ void Analyzer::analyzeComponents()
 
 void Analyzer::analyzeComponent(Component& component)
 {
-    tracer.currentX = -1;
+    /*tracer.currentX = -1;
     tracer.currentY = -1;
-    //tracer.currentDir = -1;
-
-    /*SolutionMap solution;
-    solutionIterator = &solution;*/
+    tracer.currentDir = -1;*/
 
     if (component.getSize() == 0)
     {
@@ -168,7 +164,8 @@ void Analyzer::preprocess()
     findObstacles();
 
     // Note: must be after createBonds
-    // TODO: move out creation of Exit's
+    // Split free cells into components with Flood-fill
+    // Additionally initialize all Exit's
     findComponents();
 
     // Assign opposing exit to every existing one
@@ -180,11 +177,8 @@ void Analyzer::preprocess()
     );
 
     // Analyzing obstacles ------------------------------------------------------------
-    // For every free cell: list obstacles that it touches
+    // Find all 'next-touches' for every cell
     findTouchingObstacles();
-
-    // For every free cell: list neighbouring free cell touching the same obstacle
-    findFreeCellsTouchingSameObstacles();
 
     // Find biggest component
     int bestid = 0;
@@ -205,29 +199,6 @@ void Analyzer::preprocess()
 
     level->setMostCells(best);
     level->setBiggest(bestid);
-    //Component::Trace(Component::Biggest);
-    //Component::Trace();
-
-#ifdef TRACE_STATISTICS
-    std::map<int, int> stats;
-    for (int i = 0; i < Component::Count; i++)
-    {
-        int sols = level->getComponents()[i].Solutions();
-        if (!stats[sols])
-        {
-            stats[sols] = 1;
-        }
-        else
-        {
-            stats[sols]++;
-        }
-    }
-
-    FOREACH(stats, it)
-    {
-        printf("Stats: %d components --> %d solutions\n", it->second, it->first);
-    }
-#endif
 }
 
 void Analyzer::preAction(Cell* cell, int dir) const
@@ -285,7 +256,7 @@ void Analyzer::postRestoreAction(Cell* cell, int dir) const
 bool Analyzer::reachedFinalCell(Cell* cell, int dir) const
 {
     int t = cell->getComponentId();
-    if (cell->isExit())
+    if (cell->hasExits())
     {
         if (cell->getNextCell(dir)->isObstacle())
         {
@@ -334,10 +305,8 @@ bool Analyzer::potentialSolution(Cell* cell, int dir) const
 
 void Analyzer::solutionFound(Cell* cell, int dir)
 {
-    // Assuming cell->isExit()
+    // Assuming cell->hasExits()
     
-    //level->traceComponent(cell->getComponentId());
-
     if (cell->getNextCell(dir)->isObstacle())
     {
         // Try left / right
@@ -375,7 +344,6 @@ void Analyzer::solutionFound(Cell* cell, int dir)
             else
             {
                 // continue: turn right
-//                level->traceComponent(getComponentCurrentIndex());
                 backtrack(cell, rightDirection);
             }
         }
@@ -402,4 +370,3 @@ void Analyzer::solutionFound(Cell* cell, int dir)
         }
     }
 }
-

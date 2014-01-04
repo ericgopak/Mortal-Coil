@@ -38,7 +38,6 @@ public:
 class Component : public AbstractComponent
 {
     int occupied;
-    //SolutionMap solutions;
     SolutionMap solutions;
     int solutionCount;
     std::set<const Exit*> exits;
