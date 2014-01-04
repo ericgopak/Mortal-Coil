@@ -82,11 +82,11 @@ int main(int argc, char* argv[])
         }
     );
 
-    TRACE(Colorer::print<RED>("Analyzing...\n"));
+    /*TRACE(Colorer::print<RED>("Analyzing...\n"));
 
     analyzer.analyzeComponents();
 
-    TRACE(Colorer::print<WHITE>("Max number of solutions: %d\n", Debug::mostSolutions));
+    TRACE(Colorer::print<WHITE>("Max number of solutions: %d\n", Debug::mostSolutions));*/
 
     TRACE(Colorer::print<RED>("Solving...\n"));
 

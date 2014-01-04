@@ -31,6 +31,8 @@ void Simulator::occupy(Cell* cell, int dir) const
 
 void Simulator::restore(Cell* cell, int dir) const
 {
+    assert(cell->isFree() == false && "Restoring already free cell!");
+
     cell->setFree(true);
     level->Free++;
     level->getComponents()[cell->getComponentId()].incrementSize();
@@ -371,6 +373,7 @@ void Simulator::backtrack(Cell* cell, int direction)
             }
             else
             {
+                // TODO: does not cover the case if we turn out from current component
                 // Turn left
                 int leftDirection = Left[direction];
                 if (cell->getNextCell(leftDirection)->isFree())
@@ -380,7 +383,7 @@ void Simulator::backtrack(Cell* cell, int direction)
                     cell = moveBackwards(cell, leftDirection);
                 }
 
-                if (stopBacktracking() == false)
+                if (stopBacktracking() == false) // Do not terminate in order to guarantee proper postAction()
                 {
                     // Turn right
                     int rightDirection = Right[direction];

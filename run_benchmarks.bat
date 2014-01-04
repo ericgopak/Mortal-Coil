@@ -3,9 +3,6 @@
 if [%1] == [] (
 	goto printUsage
 )
-if [%2] == [] (
-	goto printUsage
-)
 
 set CONFIGURATION=Release
 rem set CONFIGURATION=Debug
@@ -22,6 +19,6 @@ popd
 goto end
 
 :printUsage
-echo Usage: run_benchmarks.bat fromLevel toLevel
+echo Usage: run_benchmarks.bat fromLevel [toLevel]
 
 :end

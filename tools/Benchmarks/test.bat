@@ -2,15 +2,22 @@
 
 if [%1] == [] goto printUsage
 if [%2] == [] goto printUsage
-if [%3] == [] goto printUsage
 
+set solver=%1
+set fromLevel=%2
 
-for /l %%i in (%2, 1, %3) do (
+if [%3] == [] (
+	set toLevel=%2
+) else (
+	set toLevel=%3
+)
+
+for /l %%i in (%fromLevel%, 1, %toLevel%) do (
 	< nul set /p a="Level %%i:	"
 	copy "..\..\data\levels\Level%%i" "mortal_coil.txt" > nul
 	if exist "output.txt" del /q "output.txt"
 
-	for %%e in (%1) do (
+	for %%e in (%solver%) do (
 		start "" /d "%cd%" /b /w "%%e" > "times\time%%i"
 	)
 	
