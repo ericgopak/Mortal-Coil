@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "Cell.h"
+#include "Obstacle.h"
 
 Cell::Cell(int x, int y)
     : x(x)
@@ -130,6 +131,11 @@ const std::vector<Exit>& Cell::getExits() const
 {
     return exits;
 }
+
+//std::set<Obstacle*>* Cell::getTouchingObstacles()
+//{
+//    return &touchingObstacles;
+//}
 
 void Cell::addExit(const Exit& exit)
 {

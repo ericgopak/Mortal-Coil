@@ -8,6 +8,7 @@
 class Cell;
 class Exit;
 typedef std::map<int, std::set<const Cell*> > NextTouchMap;
+class Obstacle;
 
 class Cell
 {
@@ -29,10 +30,11 @@ protected:
     std::vector<Exit> exits;
     const Exit* exitsByDirection[4];
 
-    Cell* nextCell[4]; // Pointers to neighbouring cells (nextCell[dir])
+    Cell* nextCell[8]; // Pointers to neighbouring cells (nextCell[dir])
     int nextMask; // Mask of free neighbours
 
     NextTouchMap neighboursTouchingSameObstacle;
+    std::set<::Obstacle*> touchingObstacles;
 
 public:
 
@@ -61,10 +63,12 @@ public:
     int getMark() const;
     int getNextMask() const;
     const std::vector<Exit>& getExits() const;
+    //std::set<::Obstacle*>* getTouchingObstacles();
 
     void addExit(const Exit& exit);
     void setOpposingExit(const Exit* exit, const Exit* opposingExit);
     void addNextTouch(int obstacleId, const Cell* cell);
+    //void addTouchingObstacle(::Obstacle* obst);
 
     void setType(bool obstacle);
     void setXY(int x, int y);

@@ -27,9 +27,14 @@ for /l %%i in (%fromLevel%, 1, %toLevel%) do (
 
 	for %%e in (%solver%) do (
 		start "" /d "%cd%" /b /w "%%e" > "times\time%%i"
+		rem start "" /d "%cd%" /b /w "%%e"
 	)
 	
-	if exist "output.txt" "..\Solution Tester\Solution Tester.exe" < "output.txt"
+	if exist "output.txt" (
+		"..\Solution Tester\Solution Tester.exe" < "output.txt"
+	) else (
+		echo Solver did not write to output file!
+	)
 )
 
 :cleanup

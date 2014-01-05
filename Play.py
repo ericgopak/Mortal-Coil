@@ -12,7 +12,7 @@ Single = 0
 with open('credentials.txt') as creds:
     USERNAME, PASSWORD = tuple(creds.read().split())
 
-PATH_TO_EXECUTABLE = 'build/msvc/Release/Mortal_Coil.exe'
+PATH_TO_EXECUTABLE = 'build/msvc/MortalCoil/Release/MortalCoil.exe'
 INPUT_FILENAME = 'mortal_coil.txt'
 
 def main(argv):

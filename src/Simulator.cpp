@@ -26,7 +26,7 @@ void Simulator::occupy(Cell* cell, int dir) const
 
     cell->setFree(false);
     level->Free--;
-    level->getComponents()[cell->getComponentId()].decrementSize();
+    level->getComponents()[cell->getComponentId()].incrementOccupied();
 }
 
 void Simulator::restore(Cell* cell, int dir) const
@@ -35,7 +35,7 @@ void Simulator::restore(Cell* cell, int dir) const
 
     cell->setFree(true);
     level->Free++;
-    level->getComponents()[cell->getComponentId()].incrementSize();
+    level->getComponents()[cell->getComponentId()].decrementOccupied();
 }
 
 Cell* Simulator::moveForward(Cell* cell, int dir) const
@@ -110,9 +110,11 @@ void Simulator::findTouchingObstacles() const
 
 void Simulator::findObstacles() const
 {
-    floodObstacle(0, 0, 0); // Special component - the one that includes borders
+    // Special obstacle - the one that includes borders
     level->getObstacles().push_back(Obstacle());
-    
+    floodObstacle(0, 0, 0);
+
+    // Remaining obstacles
     for (int i = 1; i <= level->getHeight(); i++)
     {
         for (int j = 1; j <= level->getWidth(); j++)
@@ -130,7 +132,9 @@ void Simulator::findObstacles() const
 
 void Simulator::floodObstacle(int x, int y, int num) const
 {
-    level->getCell(y, x)->setObstacleId(num);
+    Cell* cell = level->getCell(y, x);
+    cell->setObstacleId(num);
+    level->getObstacles()[num].addCell(cell);
 
     for (int dir = 0; dir < 8; dir++) // Diagonal directions as well
     {
@@ -187,7 +191,7 @@ void Simulator::createBonds() const
     {
         for (int j = 0; j <= level->getWidth() + 1; j++)
         {
-            for (int dir = 0; dir < 4; dir++)
+            for (int dir = 0; dir < 8; dir++)
             {
                 if (0 <= i + dy[dir] && i + dy[dir] <= level->getHeight() + 1)
                 if (0 <= j + dx[dir] && j + dx[dir] <= level->getWidth() + 1)
@@ -218,7 +222,7 @@ void Simulator::floodComponent(int x, int y, int num) const
     Cell* cell = level->getCell(y, x);
 
     cell->setComponentId(num);
-    level->getComponents()[num].incrementSize();
+    level->getComponents()[num].addCell(cell);
 
     for (int dir = 0; dir < 4; dir++)
     {
@@ -261,6 +265,7 @@ void Simulator::floodComponent(int x, int y, int num) const
         {
             level->getComponents()[num].addExit(&*e);
         }
+        level->getComponents()[num].addExitCell(cell);
     }
 }
 
@@ -274,11 +279,16 @@ void Simulator::touchObstacles(Cell* cell) const
 
 bool Simulator::checkTouchingObstacles(Cell* cell) const
 {
+    //level->traceComponent();
+
+    int x = cell->getX();
+    int y = cell->getY();
+
     FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
     {
         const Obstacle& o = level->getObstacles()[it->first];
 
-        if (o.getTouchCount() > 1)
+        if (o.getTouchCount() > 0)
         {
             bool ok = false;
 
@@ -306,29 +316,6 @@ void Simulator::untouchObstacles(Cell* cell) const
     {
         level->getObstacles()[it->first].untouch();
     }
-}
-
-void Simulator::joinTouchingObstacles(Cell* cell) const
-{
-    // Merge touching obstacles into one
-    const int& x = cell->getX();
-    const int& y = cell->getY();
-    for (int dir = 0; dir < 8; dir++)
-    {
-        int nx = x + dx[dir];
-        int ny = y + dy[dir];
-        assert(0 <= nx && nx <= level->getWidth() + 1); // TODO: this is not necessary
-        assert(0 <= ny && ny <= level->getHeight() + 1); // TODO: this is not necessary
-
-        Component* comp = &level->getComponents()[level->getCell(ny, nx)->getComponentId()];
-
-        //comp-> // TODO:
-    }
-}
-
-void Simulator::disjoinTouchingObstacles(Cell* cell) const
-{
-
 }
 
 bool Simulator::mayStartFrom(Cell* cell, int dir) const

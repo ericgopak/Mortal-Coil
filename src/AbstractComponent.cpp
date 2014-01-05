@@ -2,22 +2,32 @@
 #include "Colorer.h"
 #include "AbstractComponent.h"
 
-AbstractComponent::AbstractComponent()
-    : size(0)
-{
-}
+//AbstractComponent::AbstractComponent()
+//    : size(0)
+//{
+//}
 
 int AbstractComponent::getSize() const
 {
-    return size;
+    return cells.size();
 }
 
-void AbstractComponent::incrementSize()
+const std::set<const Cell*>& AbstractComponent::getCells() const
 {
-    size++;
+    return cells;
 }
 
-void AbstractComponent::decrementSize()
+void AbstractComponent::addCell(const Cell* cell)
 {
-    size--;
+    cells.insert(cell);
 }
+
+//void AbstractComponent::incrementSize()
+//{
+//    size++;
+//}
+//
+//void AbstractComponent::decrementSize()
+//{
+//    size--;
+//}

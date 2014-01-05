@@ -22,7 +22,7 @@
 // -- Reorder exits in Component::exits in CW or CCW order (e.g. use atan2()?)
 //      then filter solutions if pits appear (exits are split into separated sets)
 
-#define TRACE_STATISTICS
+//#define TRACE_STATISTICS
 
 #ifdef _DEBUG
 #   define TRACE(x) x;
@@ -30,8 +30,6 @@
 #   define TRACE(x)
 #endif
 
-#define MAX_BOARD_SIDE 200 // Max dimension of the board
-#define MAX_SOLUTION_LENGTH 1000000 // Max length of the solution
 #define MAX_EXPECTED_COMPONENTS 50000 // Max number of components
 #define MAX_EXPECTED_COMPONENT_EXITS 20 // Max number of exits in a single component
 
@@ -68,4 +66,5 @@ namespace Debug
     extern int gotTooManyTemporaryEndsCounter;
     extern int gotInvalidNextTouchesCounter;
     extern int gotIsolatedCellsCounter;
+    extern int gotTooManyTemporaryEndBlocksCounter;
 }

@@ -19,6 +19,7 @@ void Solver::preOccupyAction(Cell* cell, int dir) const
 
 void Solver::postOccupyAction(Cell* cell, int dir) const
 {
+    // Update temporary ends
     const Cell* left  = cell->getNextCell(Left[dir]);
     const Cell* right = cell->getNextCell(Right[dir]);
     const Cell* behind = cell->getNextCell(dir ^ 2);
@@ -34,10 +35,54 @@ void Solver::postOccupyAction(Cell* cell, int dir) const
     {
         level->addTemporaryEnd(behind);
     }
+
+    // Update temporary end blocks
+    if (cell->hasExits())
+    {
+        const Component* comp = &level->getComponents()[cell->getComponentId()];
+        if (comp->getSize() > 1)
+        {
+            int stateMask = comp->getCurrentStateMask();
+            int mask = ~stateMask & (comp->getFreeExitCellsMask());
+            if (__popcnt(mask) == 1) // TODO: try SSE4 instruction (_mm_popcnt_u64)
+            {
+                // TODO: this may try to add the same component several times
+                level->addTemporaryEndBlock(comp);
+            }
+            else if (__popcnt(mask) == 0) // We had this component added previously. Remove it
+            {
+                //assert(comp->getOccupiedCount() == comp->getSize() && "Some cells left unvisited! How is that possible? Should be caught by checkTouchingComponents()");
+                level->removeTemporaryEndBlock(comp);
+            }
+        }
+
+        // TODO: What about neighbouring cells with multiple exits???
+        // Consider all neighouring components
+        //FOREACH_CONST(comp->getExits(), e)
+        //{
+        //    const Exit* exit = *e;
+        //    const Component* nextComp = &level->getComponents()[exit->getComponentId()];
+        //    if (nextComp->getSize() > 1)
+        //    {
+        //        int stateMask = nextComp->getCurrentStateMask();
+        //        int mask = ~stateMask & (comp->getFreeExitCellsMask());
+        //        if (__popcnt(mask) == 1) // TODO: try SSE4 instruction (_mm_popcnt_u64)
+        //        {
+        //            // TODO: this may add the same component several times
+        //            level->addTemporaryEndBlock(nextComp);
+        //        }
+        //        else if (nextComp->getSize() > 1 && __popcnt(mask) == 0) // We had this component added previously. Remove it
+        //        {
+        //            level->removeTemporaryEndBlock(nextComp);
+        //        }
+        //    }
+        //}
+    }
 }
 
 void Solver::preRestoreAction(Cell* cell, int dir) const
 {
+    // Update temporary ends
     const Cell* left  = cell->getNextCell(Left[dir]);
     const Cell* right = cell->getNextCell(Right[dir]);
     const Cell* behind = cell->getNextCell(dir ^ 2);
@@ -52,6 +97,27 @@ void Solver::preRestoreAction(Cell* cell, int dir) const
     if (behind->isTemporaryEnd())
     {
         level->removeTemporaryEnd(behind);
+    }
+
+    // Update temporary end blocks
+    if (cell->hasExits())
+    {
+        const Component* comp = &level->getComponents()[cell->getComponentId()];
+        if (comp->getSize() > 1)
+        {
+            int stateMask = comp->getCurrentStateMask();
+            int mask = ~stateMask & (comp->getFreeExitCellsMask());
+            if (__popcnt(mask) == 1) // TODO: try SSE4 instruction (_mm_popcnt_u64)
+            {
+                // TODO: this may try to add the same component several times
+                level->removeTemporaryEndBlock(comp);
+            }
+            else if (__popcnt(mask) == 0) // We had this component added previously. Remove it
+            {
+                //assert(comp->getOccupiedCount() == comp->getSize() && "Some cells left unvisited! How is that possible? Should be caught by checkTouchingComponents()");
+                level->addTemporaryEndBlock(comp);
+            }
+        }
     }
 }
 
@@ -106,6 +172,25 @@ bool Solver::potentialSolution(Cell* cell, int dir) const
 #endif
         //level->traceComponent();
         return false;
+    }
+
+    if (level->getTemporaryEndBlocks().size() > 2)
+    {
+#ifdef TRACE_STATISTICS
+        Debug::gotTooManyTemporaryEndBlocksCounter++;
+#endif
+        return false;
+    }
+
+    if (level->getTemporaryEndBlocks().size() == 2)
+    {
+        if (level->getTemporaryEndBlocks().find(&level->getComponents()[cell->getComponentId()]) == level->getTemporaryEndBlocks().end())
+        {
+#ifdef TRACE_STATISTICS
+            Debug::gotTooManyTemporaryEndBlocksCounter++;
+#endif
+            return false;
+        }
     }
 
     return true;

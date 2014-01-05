@@ -77,6 +77,11 @@ const std::set<const Exit*>& Component::getExits() const
     return exits;
 }
 
+const std::set<const Cell*>& Component::getExitCells() const
+{
+    return exitCells;
+}
+
 const SolutionMap* Component::getRemainingSolutions() const
 {
     assert(remainingSolutions.size() > 0);
@@ -93,6 +98,16 @@ const Exit* Component::getExitByIndex(int index) const
     return *it;
 }
 
+const Cell* Component::getExitCellByIndex(int index) const
+{
+    // TODO: implement exits using std::vector
+    assert(index < (int)exitCells.size());
+    // std::advance() is linear for std::set
+    auto it = exitCells.begin();
+    std::advance(it, index);
+    return *it;
+}
+
 int Component::getIndexByExit(const Exit* exit) const
 {
     // TODO: implement exits using std::vector
@@ -104,20 +119,20 @@ int Component::getIndexByExit(const Exit* exit) const
     return x;
 }
 
-//int Component::getFreeExitsMask() const
-//{
-//    return (1 << exits.size()) - 1;
-//}
+int Component::getFreeExitCellsMask() const
+{
+    return (1 << exitCells.size()) - 1;
+}
 
 int Component::getCurrentStateMask() const
 {
     int mask = 0;
-    for (size_t i = 0; i < exits.size(); i++)
+    for (size_t i = 0; i < exitCells.size(); i++)
     {
-        const Exit* exit = getExitByIndex(i);
-        if (exit->isFree() == false)
+        const Cell* exitCell = getExitCellByIndex(i);
+        if (exitCell->isFree() == false)
         {
-            mask = 1 << i;
+            mask |= 1 << i;
         }
     }
     return mask;
@@ -132,6 +147,11 @@ void Component::addExit(const Exit* e)
 {
     exits.insert(e);
     assert(exits.size() < MAX_EXPECTED_COMPONENT_EXITS);
+}
+
+void Component::addExitCell(const Cell* cell)
+{
+    exitCells.insert(cell);
 }
 
 // Assuming 'solution' contains only one solution

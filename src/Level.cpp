@@ -146,6 +146,11 @@ const std::set<const Cell*>& Level::getTemporaryEnds() const
     return temporaryEnds;
 }
 
+const std::set<const Component*>& Level::getTemporaryEndBlocks() const
+{
+    return temporaryEndBlocks;
+}
+
 int Level::getSolutionStartX() const
 {
     return solutionStartX;
@@ -190,6 +195,16 @@ void Level::addTemporaryEnd(const Cell* cell)
 void Level::removeTemporaryEnd(const Cell* cell)
 {
     temporaryEnds.erase(cell);
+}
+
+void Level::addTemporaryEndBlock(const Component* comp)
+{
+    temporaryEndBlocks.insert(comp);
+}
+
+void Level::removeTemporaryEndBlock(const Component* comp)
+{
+    temporaryEndBlocks.erase(comp);
 }
 
 void Level::addSpecialComponent(const Component* comp, int index)

@@ -91,7 +91,7 @@ void Analyzer::analyzeComponents()
 
 void Analyzer::analyzeComponent(Component& component, int stateMask)
 {
-    if (component.getSize() == 0)
+    if (component.getOccupiedCount() == component.getSize())
     {
         if (solutionPathHolder.size() > 0)
         {

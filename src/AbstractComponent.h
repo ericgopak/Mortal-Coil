@@ -10,13 +10,13 @@ o replace (in,de)crementSize() with (de,in)crementOccupied
 class AbstractComponent
 {
 protected:
-    int size;
+    std::set<const Cell*> cells;
 
 public:
-    AbstractComponent();
+    //AbstractComponent();
 
     int getSize() const;
+    const std::set<const Cell*>& getCells() const;
 
-    void incrementSize();
-    void decrementSize();
+    void addCell(const Cell* cell);
 };

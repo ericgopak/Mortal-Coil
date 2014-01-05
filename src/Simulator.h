@@ -52,9 +52,6 @@ public:
     bool checkTouchingObstacles(Cell* cell) const;
     void untouchObstacles(Cell* cell) const;
 
-    void joinTouchingObstacles(Cell* cell) const;
-    void disjoinTouchingObstacles(Cell* cell) const;
-
     void backtrack(Cell* cell, int direction);
 
     virtual void trySolving(int startX, int startY);

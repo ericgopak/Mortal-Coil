@@ -41,6 +41,7 @@ class Component : public AbstractComponent
     SolutionMap solutions;
     int solutionCount;
     std::set<const Exit*> exits; // TODO: rewrite with std::vector
+    std::set<const Cell*> exitCells;
 
     std::stack<SolutionMap*> remainingSolutions;
 
@@ -53,13 +54,16 @@ public:
     int getSolutionCount() const;
     const SolutionMap* getSolutions() const;
     const std::set<const Exit*>& getExits() const;
+    const std::set<const Cell*>& getExitCells() const;
     const SolutionMap* getRemainingSolutions() const;
     const Exit* getExitByIndex(int index) const;
+    const Cell* getExitCellByIndex(int index) const;
     int getIndexByExit(const Exit* exit) const;
-    //int getFreeExitsMask() const;
+    int getFreeExitCellsMask() const;
     int getCurrentStateMask() const;
 
     void addExit(const Exit* e);
+    void addExitCell(const Cell* cell);
     void addSolution(SolutionMap* newSolution);
     void chooseSolution(const Path* chosenPath);
     void unchooseSolution();

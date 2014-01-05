@@ -100,6 +100,7 @@ int main(int argc, char* argv[])
     printf("Got too many temporary ends %d times!\n", Debug::gotTooManyTemporaryEndsCounter);
     printf("Got invalid next touches %d times!\n", Debug::gotInvalidNextTouchesCounter);
     printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
+    printf("Got too many temporary end blocks %d times!\n", Debug::gotTooManyTemporaryEndBlocksCounter);
 #endif
 
     if (level.Solved)
