@@ -244,7 +244,7 @@ void Analyzer::preOccupyAction(Cell* cell, int dir) const
     // because we do not simulate the whole solution
     // (only partial)
 
-    cell->setMark(tracer.depth);
+    TRACE(cell->setMark(tracer.depth));
 }
 
 void Analyzer::postOccupyAction(Cell* cell, int dir) const
@@ -277,7 +277,7 @@ void Analyzer::preRestoreAction(Cell* cell, int dir) const
 
 void Analyzer::postRestoreAction(Cell* cell, int dir) const
 {
-    cell->setMark(0);
+    TRACE(cell->setMark(0));
 }
 
 bool Analyzer::reachedFinalCell(Cell* cell, int dir) const

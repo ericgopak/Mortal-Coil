@@ -175,20 +175,6 @@ void Component::addSolution(SolutionMap* newSolution)
                 currentSolutions = currentIndexToPath->second.begin()->second.getSolutions();
             }
         }
-
-        //SolutionMap::iterator p = newSolution->begin();
-        //SolutionMap::const_iterator it = solutions.find(p->first);
-        //if (it == solutions.cend())
-        //{
-        //    // New solution (differs from existing)
-        //    solutionCount++;
-        //    solutions[p->first] = p->second;
-        //    break;
-        //}
-        //else
-        //{
-        //    newSolution = p->second.getSolutions();
-        //}
     }
 }
 

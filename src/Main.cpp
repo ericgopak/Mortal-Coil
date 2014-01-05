@@ -96,6 +96,10 @@ int main(int argc, char* argv[])
     
     TRACE(Colorer::print<WHITE>(level.Solved ? "SOLVED\n" : "FAILED TO SOLVE\n"));
 
+#ifdef TRACE_STATISTICS
+    printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
+#endif
+
     if (level.Solved)
     {
         level.outputToFile(OUTPUT_FILENAME);

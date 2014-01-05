@@ -13,19 +13,53 @@ Solver::Solver(Level* currentLevel, const char* _outputFilename)
 void Solver::preOccupyAction(Cell* cell, int dir) const
 {
     touchObstacles(cell);
+
+    TRACE(cell->setMark(tracer.depth));
 }
 
 void Solver::postOccupyAction(Cell* cell, int dir) const
 {
+    const Cell* left  = cell->getNextCell(Left[dir]);
+    const Cell* right = cell->getNextCell(Right[dir]);
+    const Cell* behind = cell->getNextCell(dir ^ 2);
+    if (left->isTemporaryEnd())
+    {
+        level->addTemporaryEnd(left);
+    }
+    if (right->isTemporaryEnd())
+    {
+        level->addTemporaryEnd(right);
+    }
+    if (behind->isTemporaryEnd())
+    {
+        level->addTemporaryEnd(behind);
+    }
 }
 
 void Solver::preRestoreAction(Cell* cell, int dir) const
 {
+    const Cell* left  = cell->getNextCell(Left[dir]);
+    const Cell* right = cell->getNextCell(Right[dir]);
+    const Cell* behind = cell->getNextCell(dir ^ 2);
+    if (left->isTemporaryEnd())
+    {
+        level->removeTemporaryEnd(left);
+    }
+    if (right->isTemporaryEnd())
+    {
+        level->removeTemporaryEnd(right);
+    }
+    if (behind->isTemporaryEnd())
+    {
+        level->removeTemporaryEnd(behind);
+    }
 }
 
 void Solver::postRestoreAction(Cell* cell, int dir) const
 {
     untouchObstacles(cell);
+
+    TRACE(cell->setMark(0));
 }
 
 void Solver::preAction(Cell* cell, int dir) const
@@ -49,8 +83,22 @@ bool Solver::reachedFinalCell(Cell* cell, int dir) const
 
 bool Solver::potentialSolution(Cell* cell, int dir) const
 {
+    if (level->getTemporaryEnds().size() > 1)
+    {
+        return false;
+    }
+
     if (checkTouchingObstacles(cell) == false)
     {
+        return false;
+    }
+
+    if (gotIsolatedCells(cell, dir)) // TODO: Seems to be quite rare. Are conditions correct?
+    {
+#ifdef TRACE_STATISTICS
+        Debug::gotIsolatedCellsCounter++;
+#endif
+        //level->traceComponent();
         return false;
     }
 
@@ -61,6 +109,26 @@ void Solver::solutionFound(Cell* cell, int dir)
 {
     TRACE(Colorer::print<WHITE>("Solution found!!!\n"));
     level->Solved = true;
+}
+
+bool Solver::gotIsolatedCells(Cell* cell, int dir) const
+{
+    const Cell* front = cell->getNextCell(dir);
+    const Cell* frontLeft = cell->getNextCell(dir)->getNextCell(Left[dir]);
+    const Cell* frontRight = cell->getNextCell(dir)->getNextCell(Right[dir]);
+
+    if (front->isObstacle() == false && front->isFree() == false ||
+        frontLeft->isObstacle() == false && frontLeft->isFree() == false ||
+        frontRight->isObstacle() == false && frontRight->isFree() == false)
+    {
+        const Cell* left  = cell->getNextCell(Left[dir]);
+        const Cell* right = cell->getNextCell(Right[dir]);
+        if (left->isFree() && right->isFree())
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Solver::solve(int row, int col, int firstComponentId)

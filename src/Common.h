@@ -22,6 +22,8 @@
 // -- Reorder exits in Component::exits in CW or CCW order (e.g. use atan2()?)
 //      then filter solutions if pits appear (exits are split into separated sets)
 
+//#define TRACE_STATISTICS
+
 #ifdef _DEBUG
 #   define TRACE(x) x;
 #else
@@ -62,4 +64,5 @@ namespace Debug
     extern int depth;
     extern bool traceFlag;
     extern int mostSolutions;
+    extern int gotIsolatedCellsCounter;
 }

@@ -20,6 +20,8 @@ public:
     virtual bool potentialSolution(Cell* cell, int dir) const;
     virtual void solutionFound(Cell* cell, int dir);
 
+    bool gotIsolatedCells(Cell* cell, int dir) const;
+
     void solve(int row, int col, int firstComponentId);
     //void follow(const Exit* exit);
     void trySolving(int startX, int startY);

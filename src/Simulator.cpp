@@ -308,9 +308,39 @@ void Simulator::untouchObstacles(Cell* cell) const
     }
 }
 
+void Simulator::joinTouchingObstacles(Cell* cell) const
+{
+    // Merge touching obstacles into one
+    const int& x = cell->getX();
+    const int& y = cell->getY();
+    for (int dir = 0; dir < 8; dir++)
+    {
+        int nx = x + dx[dir];
+        int ny = y + dy[dir];
+        assert(0 <= nx && nx <= level->getWidth() + 1); // TODO: this is not necessary
+        assert(0 <= ny && ny <= level->getHeight() + 1); // TODO: this is not necessary
+
+        Component* comp = &level->getComponents()[level->getCell(ny, nx)->getComponentId()];
+
+        //comp-> // TODO:
+    }
+}
+
+void Simulator::disjoinTouchingObstacles(Cell* cell) const
+{
+
+}
+
 bool Simulator::mayStartFrom(Cell* cell, int dir) const
 {
-    if (cell->isThrough()) return false;
+    if (cell->getNextCell(dir)->isFree() == false)
+    {
+        return false;
+    }
+    if (cell->isThrough())
+    {
+        return false;
+    }
     return true;
 }
 
@@ -353,6 +383,8 @@ void Simulator::backtrack(Cell* cell, int direction)
         return;
     }
 
+    //level->traceComponent();
+
     TRACE(tracer.depth++);
 
     preAction(cell, direction);
@@ -373,7 +405,6 @@ void Simulator::backtrack(Cell* cell, int direction)
             }
             else
             {
-                // TODO: does not cover the case if we turn out from current component
                 // Turn left
                 int leftDirection = Left[direction];
                 if (cell->getNextCell(leftDirection)->isFree())

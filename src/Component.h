@@ -24,8 +24,6 @@ public:
     int getLength() const;
 };
 
-//typedef std::map<Path, ComponentSolution> SolutionMap;
-//typedef std::map<int, std::map<Path, ComponentSolution> > SolutionMap; // Index -> Path -> [Index -> Path] -> ...
 typedef std::map<int, std::map<Path, ComponentSolution> > SolutionMap; // Index -> Path -> [Index -> Path] -> ...
 
 class ComponentSolution
