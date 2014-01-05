@@ -97,6 +97,8 @@ int main(int argc, char* argv[])
     TRACE(Colorer::print<WHITE>(level.Solved ? "SOLVED\n" : "FAILED TO SOLVE\n"));
 
 #ifdef TRACE_STATISTICS
+    printf("Got too many temporary ends %d times!\n", Debug::gotTooManyTemporaryEndsCounter);
+    printf("Got invalid next touches %d times!\n", Debug::gotInvalidNextTouchesCounter);
     printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
 #endif
 

@@ -85,11 +85,17 @@ bool Solver::potentialSolution(Cell* cell, int dir) const
 {
     if (level->getTemporaryEnds().size() > 1)
     {
+#ifdef TRACE_STATISTICS
+        Debug::gotTooManyTemporaryEndsCounter++;
+#endif
         return false;
     }
 
     if (checkTouchingObstacles(cell) == false)
     {
+#ifdef TRACE_STATISTICS
+        Debug::gotInvalidNextTouchesCounter++;
+#endif
         return false;
     }
 
