@@ -1,27 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #pragma once
 
-// Solution to the problem "Mortal Coil" at http://www.hacker.org/coil
-// Author: Eric Gopak
-
-// Main idea: Trying all possibilities with as much pruning as possible
-// ------------------------ Improvements: ------------------------
-// -- Counts 'ends': doesn't consider cases with > 2 'ends'
-// -- Checks for pits beforehand (if one exists, then it's either head or tail)
-// -- Splits obstacles into components (use all 8 directions for it)
-// -- Optimized Solve() function
-// -- Observation: if a cell has two neighbours with 2 neighbours each - ignore that cell
-// -- Observation: every obstacle sides must be touched continuosly (otherwise free cells are separated)
-// -- Marking cells as free/not free
-// -- Every two neighbouring cells have a bond
-// -- Every cell has a mask of neighbours (1 - neighbour is free, 0 - otherwise)
-// -- Counting number of 'edges' - stop if there are not ehough edges left for the solutions (Edges < EdgesToBe)
-// -- Global optimization
-
-// Optimization ideas:
-// -- Reorder exits in Component::exits in CW or CCW order (e.g. use atan2()?)
-//      then filter solutions if pits appear (exits are split into separated sets)
-
 //#define TRACE_STATISTICS
 
 #ifdef _DEBUG

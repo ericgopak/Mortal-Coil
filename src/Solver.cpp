@@ -12,6 +12,8 @@ Solver::Solver(Level* currentLevel, const char* _outputFilename)
 
 void Solver::preOccupyAction(Cell* cell, int dir) const
 {
+    assert(cell->isFree());
+
     touchObstacles(cell);
 
     TRACE(cell->setMark(tracer.depth));
@@ -19,110 +21,24 @@ void Solver::preOccupyAction(Cell* cell, int dir) const
 
 void Solver::postOccupyAction(Cell* cell, int dir) const
 {
-    // Update temporary ends
-    const Cell* left  = cell->getNextCell(Left[dir]);
-    const Cell* right = cell->getNextCell(Right[dir]);
-    const Cell* behind = cell->getNextCell(dir ^ 2);
-    if (left->isTemporaryEnd())
-    {
-        level->addTemporaryEnd(left);
-    }
-    if (right->isTemporaryEnd())
-    {
-        level->addTemporaryEnd(right);
-    }
-    if (behind->isTemporaryEnd())
-    {
-        level->addTemporaryEnd(behind);
-    }
+    assert(cell->isFree() == false);
 
-    // Update temporary end blocks
-    if (cell->hasExits())
-    {
-        const Component* comp = &level->getComponents()[cell->getComponentId()];
-        if (comp->getSize() > 1)
-        {
-            int stateMask = comp->getCurrentStateMask();
-            int mask = ~stateMask & (comp->getFreeExitCellsMask());
-            if (__popcnt(mask) == 1) // TODO: try SSE4 instruction (_mm_popcnt_u64)
-            {
-                // TODO: this may try to add the same component several times
-                level->addTemporaryEndBlock(comp);
-            }
-            else if (__popcnt(mask) == 0) // We had this component added previously. Remove it
-            {
-                //assert(comp->getOccupiedCount() == comp->getSize() && "Some cells left unvisited! How is that possible? Should be caught by checkTouchingComponents()");
-                level->removeTemporaryEndBlock(comp);
-            }
-        }
-
-        // TODO: What about neighbouring cells with multiple exits???
-        // Consider all neighouring components
-        //FOREACH_CONST(comp->getExits(), e)
-        //{
-        //    const Exit* exit = *e;
-        //    const Component* nextComp = &level->getComponents()[exit->getComponentId()];
-        //    if (nextComp->getSize() > 1)
-        //    {
-        //        int stateMask = nextComp->getCurrentStateMask();
-        //        int mask = ~stateMask & (comp->getFreeExitCellsMask());
-        //        if (__popcnt(mask) == 1) // TODO: try SSE4 instruction (_mm_popcnt_u64)
-        //        {
-        //            // TODO: this may add the same component several times
-        //            level->addTemporaryEndBlock(nextComp);
-        //        }
-        //        else if (nextComp->getSize() > 1 && __popcnt(mask) == 0) // We had this component added previously. Remove it
-        //        {
-        //            level->removeTemporaryEndBlock(nextComp);
-        //        }
-        //    }
-        //}
-    }
+    addTemporaryEnds(cell, dir);
+    addTemporaryEndBlocks(cell, dir);
 }
 
 void Solver::preRestoreAction(Cell* cell, int dir) const
 {
-    // Update temporary ends
-    const Cell* left  = cell->getNextCell(Left[dir]);
-    const Cell* right = cell->getNextCell(Right[dir]);
-    const Cell* behind = cell->getNextCell(dir ^ 2);
-    if (left->isTemporaryEnd())
-    {
-        level->removeTemporaryEnd(left);
-    }
-    if (right->isTemporaryEnd())
-    {
-        level->removeTemporaryEnd(right);
-    }
-    if (behind->isTemporaryEnd())
-    {
-        level->removeTemporaryEnd(behind);
-    }
+    assert(cell->isFree() == false);
 
-    // Update temporary end blocks
-    if (cell->hasExits())
-    {
-        const Component* comp = &level->getComponents()[cell->getComponentId()];
-        if (comp->getSize() > 1)
-        {
-            int stateMask = comp->getCurrentStateMask();
-            int mask = ~stateMask & (comp->getFreeExitCellsMask());
-            if (__popcnt(mask) == 1) // TODO: try SSE4 instruction (_mm_popcnt_u64)
-            {
-                // TODO: this may try to add the same component several times
-                level->removeTemporaryEndBlock(comp);
-            }
-            else if (__popcnt(mask) == 0) // We had this component added previously. Remove it
-            {
-                //assert(comp->getOccupiedCount() == comp->getSize() && "Some cells left unvisited! How is that possible? Should be caught by checkTouchingComponents()");
-                level->addTemporaryEndBlock(comp);
-            }
-        }
-    }
+    removeTemporaryEnds(cell, dir);
+    removeTemporaryEndBlocks(cell, dir);
 }
 
 void Solver::postRestoreAction(Cell* cell, int dir) const
 {
+    assert(cell->isFree());
+
     untouchObstacles(cell);
 
     TRACE(cell->setMark(0));
@@ -165,12 +81,11 @@ bool Solver::potentialSolution(Cell* cell, int dir) const
         return false;
     }
 
-    if (gotIsolatedCells(cell, dir)) // TODO: Seems to be quite rare. Are conditions correct?
+    if (gotIsolatedCells(cell, dir))
     {
 #ifdef TRACE_STATISTICS
         Debug::gotIsolatedCellsCounter++;
 #endif
-        //level->traceComponent();
         return false;
     }
 
@@ -180,17 +95,6 @@ bool Solver::potentialSolution(Cell* cell, int dir) const
         Debug::gotTooManyTemporaryEndBlocksCounter++;
 #endif
         return false;
-    }
-
-    if (level->getTemporaryEndBlocks().size() == 2)
-    {
-        if (level->getTemporaryEndBlocks().find(&level->getComponents()[cell->getComponentId()]) == level->getTemporaryEndBlocks().end())
-        {
-#ifdef TRACE_STATISTICS
-            Debug::gotTooManyTemporaryEndBlocksCounter++;
-#endif
-            return false;
-        }
     }
 
     return true;
@@ -221,6 +125,200 @@ bool Solver::gotIsolatedCells(Cell* cell, int dir) const
     }
     return false;
 }
+
+void Solver::addTemporaryEnds(Cell* cell, int dir) const
+{
+    const Cell* left  = cell->getNextCell(Left[dir]);
+    const Cell* right = cell->getNextCell(Right[dir]);
+    const Cell* behind = cell->getNextCell(dir ^ 2);
+    if (left->isTemporaryEnd())
+    {
+        level->addTemporaryEnd(left);
+    }
+    if (right->isTemporaryEnd())
+    {
+        level->addTemporaryEnd(right);
+    }
+    if (behind->isTemporaryEnd())
+    {
+        level->addTemporaryEnd(behind);
+    }
+}
+
+void Solver::removeTemporaryEnds(Cell* cell, int dir) const
+{
+    const Cell* left  = cell->getNextCell(Left[dir]);
+    const Cell* right = cell->getNextCell(Right[dir]);
+    const Cell* behind = cell->getNextCell(dir ^ 2);
+    if (left->isTemporaryEnd())
+    {
+        level->removeTemporaryEnd(left);
+    }
+    if (right->isTemporaryEnd())
+    {
+        level->removeTemporaryEnd(right);
+    }
+    if (behind->isTemporaryEnd())
+    {
+        level->removeTemporaryEnd(behind);
+    }
+}
+
+void Solver::addTemporaryEndBlocks(Cell* cell, int dir) const
+{
+    // Assuming cell has just been occupied
+    if (cell->hasExits())
+    {
+        const Component* comp = &level->getComponents()[cell->getComponentId()];
+
+        if (comp->getSize() == 1) // Special case - these components do not affect temporary end blocks
+        {
+            return;
+        }
+        assert(comp->getExitCells().size() > 0 && "Assuming no components have 0 exits");
+
+        int fullMask = comp->getFreeExitCellsMask();
+        
+        // Compare previous and current exit masks
+        int currentMask = comp->getCurrentStateMask();
+
+        if (currentMask == fullMask) // No exits remain.
+        {
+            level->removeTemporaryEndBlock(comp);
+        }
+        else if (__popcnt(currentMask ^ fullMask) == 1) // Only one exit remains
+        {
+            level->addTemporaryEndBlock(comp);
+        }
+    }
+}
+
+void Solver::removeTemporaryEndBlocks(Cell* cell, int dir) const
+{
+    // Assuming cell is just about to get unoccupied
+    if (cell->hasExits())
+    {
+        const Component* comp = &level->getComponents()[cell->getComponentId()];
+
+        if (comp->getSize() == 1) // Special case - these components do not affect temporary end blocks
+        {
+            return;
+        }
+        assert(comp->getExitCells().size() > 0 && "Assuming no components have 0 exits");
+
+        int fullMask = comp->getFreeExitCellsMask();
+        
+        // Compare previous and current exit masks
+        int currentMask = comp->getCurrentStateMask();
+
+        if (currentMask == fullMask) // No exits remain.
+        {
+            level->addTemporaryEndBlock(comp);
+        }
+        else if (__popcnt(currentMask ^ fullMask) == 1) // Only one exit remains
+        {
+            level->removeTemporaryEndBlock(comp);
+        }
+    }
+}
+
+// *** This does not work, because isolated bits do not correspond to pits. It's hard to tell if the exit really is isolated ***
+// TODO: consider exits to itself! See level23 (x=3,y=1)->RDL
+//void Solver::addTemporaryEndBlocks(Cell* cell, int dir) const
+//{
+//    // Assuming cell has just been occupied
+//    if (cell->hasExits())
+//    {
+//        const Component* comp = &level->getComponents()[cell->getComponentId()];
+//
+//        if (comp->getSize() == 1) // Special case - these components do not affect temporary end blocks
+//        {
+//            return;
+//        }
+//
+//        int exitCellCount = comp->getExitCells().size();
+//        int fullMask = comp->getFreeExitCellsMask();
+//        
+//        // Compare previous and current exit masks
+//        int currentMask = comp->getCurrentStateMask();
+//        int index = comp->getIndexByExitCell(cell);
+//        int previousMask = currentMask ^ (1 << index);
+//
+//        int bit = previousMask ^ currentMask;
+//        int leftBit = (bit << 1) < fullMask ? (bit << 1) : 1;
+//        int leftLeftBit = (leftBit << 1) < fullMask ? (leftBit << 1) : 1;
+//        int rightBit = (bit >> 1) > 0 ? (bit >> 1) : (1 << (exitCellCount - 1));
+//        int rightRightBit = (rightBit >> 1) > 0 ? (rightBit >> 1) : (1 << (exitCellCount - 1));
+//
+//        if ((~previousMask & (leftBit | bit | rightBit)) == bit) // Exit got joined back. Neighbouring exits are occupied
+//        {
+//            level->removeTemporaryEndBlock(comp);
+//        }
+//        else
+//        {
+//            if ((~currentMask & (leftLeftBit | leftBit | bit)) == leftBit) // Exit to the left got separated
+//            {
+//                level->addTemporaryEndBlock(comp);
+//            }
+//
+//            if (leftBit != rightBit) // May happen with 2 exitCells
+//            {
+//                if ((~currentMask & (bit | rightBit | rightRightBit)) == rightBit) // Exit to the right got separated
+//                {
+//                    level->addTemporaryEndBlock(comp);
+//                }
+//            }
+//        }
+//    }
+//}
+
+//void Solver::removeTemporaryEndBlocks(Cell* cell, int dir) const
+//{
+//    // Assuming cell is just about to get unoccupied
+//    if (cell->hasExits())
+//    {
+//        const Component* comp = &level->getComponents()[cell->getComponentId()];
+//
+//        if (comp->getSize() == 1) // Special case - these components do not affect temporary end blocks
+//        {
+//            return;
+//        }
+//
+//        int exitCellCount = comp->getExitCells().size();
+//        int fullMask = comp->getFreeExitCellsMask();
+//        
+//        // Compare previous and current exit masks
+//        int currentMask = comp->getCurrentStateMask();
+//        int index = comp->getIndexByExitCell(cell);
+//        int previousMask = currentMask ^ (1 << index);
+//
+//        int bit = previousMask ^ currentMask;
+//        int leftBit = (bit << 1) < fullMask ? (bit << 1) : 1;
+//        int leftLeftBit = (leftBit << 1) < fullMask ? (leftBit << 1) : 1;
+//        int rightBit = (bit >> 1) > 0 ? (bit >> 1) : (1 << (exitCellCount - 1));
+//        int rightRightBit = (rightBit >> 1) > 0 ? (rightBit >> 1) : (1 << (exitCellCount - 1));
+//
+//        if ((~previousMask & (leftBit | bit | rightBit)) == bit) // Exit got joined back. Neighbouring exits are occupied
+//        {
+//            level->addTemporaryEndBlock(comp);
+//        }
+//        else
+//        {
+//            if ((~currentMask & (leftLeftBit | leftBit | bit)) == leftBit) // Exit to the left got separated
+//            {
+//                level->removeTemporaryEndBlock(comp);
+//            }
+//
+//            if (leftBit != rightBit) // May happen with 2 exitCells
+//            {
+//                if ((~currentMask & (bit | rightBit | rightRightBit)) == rightBit) // Exit to the right got separated
+//                {
+//                    level->removeTemporaryEndBlock(comp);
+//                }
+//            }
+//        }
+//    }
+//}
 
 void Solver::solve(int row, int col, int firstComponentId)
 {

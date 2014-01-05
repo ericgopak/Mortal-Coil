@@ -1,3 +1,32 @@
+/****************************************************************************************************
+    Solution to the problem "Mortal Coil" at http://www.hacker.org/coil
+    Author: Eric Gopak
+
+# Ideas:
+    o Stop if there is isolated exit (check if mask contains isolated bit, like xxx010xxx)
+    o Use Pits (level->Ends) as one-sized temporaryEndBlock
+    o Force Simulator::backtrack() visit every cell only ONCE!
+    o Pruning: if new exit got blocked - check if there are at least 2 exits left (if it's not the very last component)
+    o Redefine 'exits' to be the ones that cannot be blocked during solve()
+    o Disallow ANY 'tails' in analysis solutions
+
+# Optimization ideas:
+    o Rewrite std::set with std::unordered_set. Better with std::vector. Best with C-style array.
+    o Rewrite STL containers with custom ones (maybe just replace std::map with std::unordered_map)
+    o Make use of SSE/SSE2 instructions
+    o Play around with compiler flags
+    o Try compiling with GCC, Intel C++, Clang compilers
+    o see http://msdn.microsoft.com/en-us/library/y0dh78ez%28VS.80%29.aspx
+
+# Figure out how to:
+    o filter solutions if pits appear (exits are split into separated sets)
+
+# Notes
+    o No SPECIAL components in following levels: 24, 28
+    o Interesting largest component in Level 28 (2 portals to itself)
+
+****************************************************************************************************/
+
 #include "Common.h"
 #include "Colorer.h"
 #include "Obstacle.h"
@@ -80,6 +109,10 @@ int main(int argc, char* argv[])
                 printf("Tail%d: %d %d\n", e + 1, level.initialEnds[e]->getX(), level.initialEnds[e]->getY());
             }
         }
+        if (level.getTemporaryEndBlocks().size() > 0)
+        {
+            printf("Initial end blocks: %d\n", level.getTemporaryEndBlocks().size());
+        }
     );
 
     /*TRACE(Colorer::print<RED>("Analyzing...\n"));
@@ -93,7 +126,7 @@ int main(int argc, char* argv[])
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
     solver.solve(firstRow, firstCol, firstComponentId);
-    
+
     TRACE(Colorer::print<WHITE>(level.Solved ? "SOLVED\n" : "FAILED TO SOLVE\n"));
 
 #ifdef TRACE_STATISTICS

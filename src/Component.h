@@ -40,8 +40,9 @@ class Component : public AbstractComponent
     int occupied;
     SolutionMap solutions;
     int solutionCount;
-    std::set<const Exit*> exits; // TODO: rewrite with std::vector
-    std::set<const Cell*> exitCells;
+    // Arranged counter-clockwise along the perimeter
+    std::vector<const Exit*> exits;
+    std::vector<const Cell*> exitCells;
 
     std::stack<SolutionMap*> remainingSolutions;
 
@@ -53,12 +54,13 @@ public:
     int getOccupiedCount() const;
     int getSolutionCount() const;
     const SolutionMap* getSolutions() const;
-    const std::set<const Exit*>& getExits() const;
-    const std::set<const Cell*>& getExitCells() const;
+    const std::vector<const Exit*>& getExits() const;
+    const std::vector<const Cell*>& getExitCells() const;
     const SolutionMap* getRemainingSolutions() const;
     const Exit* getExitByIndex(int index) const;
     const Cell* getExitCellByIndex(int index) const;
     int getIndexByExit(const Exit* exit) const;
+    int getIndexByExitCell(const Cell* exitCell) const;
     int getFreeExitCellsMask() const;
     int getCurrentStateMask() const;
 

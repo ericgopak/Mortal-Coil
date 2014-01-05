@@ -34,7 +34,7 @@ protected:
     int nextMask; // Mask of free neighbours
 
     NextTouchMap neighboursTouchingSameObstacle;
-    std::set<::Obstacle*> touchingObstacles;
+    //std::set< ::Obstacle*> touchingObstacles;
 
 public:
 
@@ -63,7 +63,7 @@ public:
     int getMark() const;
     int getNextMask() const;
     const std::vector<Exit>& getExits() const;
-    //std::set<::Obstacle*>* getTouchingObstacles();
+    //std::set< ::Obstacle*>* getTouchingObstacles();
 
     void addExit(const Exit& exit);
     void setOpposingExit(const Exit* exit, const Exit* opposingExit);

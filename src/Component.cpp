@@ -49,6 +49,9 @@ Component::Component()
     , occupied(0)
     , solutionCount(0)
 {
+    // TODO: test
+    exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
+    exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     remainingSolutions.push(&solutions);
 }
 
@@ -59,6 +62,9 @@ Component::Component(const Component& c)
     , solutions(c.solutions)
     , exits(c.exits)
 {
+    // TODO: test
+    exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
+    exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     remainingSolutions.push(&solutions);
 }
 
@@ -72,12 +78,12 @@ int Component::getSolutionCount() const
     return solutionCount;
 }
 
-const std::set<const Exit*>& Component::getExits() const
+const std::vector<const Exit*>& Component::getExits() const
 {
     return exits;
 }
 
-const std::set<const Cell*>& Component::getExitCells() const
+const std::vector<const Cell*>& Component::getExitCells() const
 {
     return exitCells;
 }
@@ -110,11 +116,18 @@ const Cell* Component::getExitCellByIndex(int index) const
 
 int Component::getIndexByExit(const Exit* exit) const
 {
-    // TODO: implement exits using std::vector
-    // std::distance() is linear for std::set
-
-    size_t x = std::distance(exits.begin(), exits.find(exit));
+    // TODO: this must be slow! Rewrite!
+    size_t x = std::distance(exits.begin(), std::find(exits.begin(), exits.end(), exit));
     assert(x < exits.size() && "Exit not found!");
+
+    return x;
+}
+
+int Component::getIndexByExitCell(const Cell* exitCell) const
+{
+    // TODO: this must be slow! Rewrite!
+    size_t x = std::distance(exitCells.begin(), std::find(exitCells.begin(), exitCells.end(), exitCell));
+    assert(x < exitCells.size() && "ExitCell not found!");
 
     return x;
 }
@@ -145,13 +158,13 @@ const SolutionMap* Component::getSolutions() const
 
 void Component::addExit(const Exit* e)
 {
-    exits.insert(e);
+    exits.push_back(e);
     assert(exits.size() < MAX_EXPECTED_COMPONENT_EXITS);
 }
 
 void Component::addExitCell(const Cell* cell)
 {
-    exitCells.insert(cell);
+    exitCells.push_back(cell);
 }
 
 // Assuming 'solution' contains only one solution

@@ -3,6 +3,18 @@
 #include "Common.h"
 #include "Component.h"
 
+#include <unordered_set>
+
+static bool isExit(const Cell* cell, int dir)
+{
+    const Cell* left = cell->getNextCell(Left[dir]);
+    const Cell* frontLeft = left->getNextCell(dir);
+    const Cell* right = cell->getNextCell(Right[dir]);
+    const Cell* frontRight = right->getNextCell(dir);
+
+    return (left->isObstacle() || frontLeft->isObstacle()) && (right->isObstacle() || frontRight->isObstacle());
+}
+
 Simulator::Simulator(Level* currentLevel)
     : level(currentLevel)
 {
@@ -151,6 +163,110 @@ void Simulator::floodObstacle(int x, int y, int num) const
     }
 }
 
+static void collectExitsAlongPerimeter(Cell* cell, int dir, const Cell* const entryPoint, Component* const component)
+{
+    Cell* left = cell->getNextCell(Left[dir]);
+    if (!left->isObstacle())
+    {
+        if (left->getComponentId() == cell->getComponentId())
+        {
+            if (left != entryPoint)
+            {
+                collectExitsAlongPerimeter(left, Left[dir], entryPoint, component);
+            }
+            return;
+        }
+        else // is exit
+        {
+            Exit exit(cell, Left[dir]);
+            cell->addExit(exit);
+            component->addExit(cell->getExit(Left[dir]));
+        }
+    }
+
+    Cell* front = cell->getNextCell(dir);
+    if (!front->isObstacle())
+    {
+        if (front->getComponentId() == cell->getComponentId())
+        {
+            if (front != entryPoint)
+            {
+                collectExitsAlongPerimeter(front, dir, entryPoint, component);
+            }
+
+            if (cell->hasExits())
+            {
+                component->addExitCell(cell);
+            }
+            return;
+        }
+        else // is exit
+        {
+            Exit exit(cell, dir);
+            cell->addExit(exit);
+            component->addExit(cell->getExit(dir));
+        }
+    }
+
+    Cell* right = cell->getNextCell(Right[dir]);
+    if (!right->isObstacle())
+    {
+        if (right->getComponentId() == cell->getComponentId())
+        {
+            if (right != entryPoint)
+            {
+                collectExitsAlongPerimeter(right, Right[dir], entryPoint, component);
+            }
+
+            if (cell->hasExits())
+            {
+                component->addExitCell(cell);
+            }
+            return;
+        }
+        else // is exit
+        {
+            Exit exit(cell, Right[dir]);
+            cell->addExit(exit);
+            component->addExit(cell->getExit(Right[dir]));
+        }
+    }
+
+    if (cell->hasExits())
+    {
+        component->addExitCell(cell);
+    }
+}
+
+// TODO: this does not consider exits to inner components (between inner obstacles)
+void Simulator::findComponentExits() const
+{
+    std::unordered_set<int> processedComponents;
+
+    for (int i = 1; i <= level->getHeight(); i++)
+    {
+        for (int j = 1; j <= level->getWidth(); j++)
+        {
+            Cell* cell = level->getCell(i, j);
+            int componentId = cell->getComponentId();
+            if (!cell->isObstacle() && processedComponents.find(componentId) == processedComponents.end())
+            {
+                Component* comp = &level->getComponents()[componentId];
+
+                // Assumption: first cell encountered is along the perimeter
+                collectExitsAlongPerimeter(cell, 3, cell, comp); // Start by going up. We know there is an obstacle to the left
+
+                if (comp->getSize() > 1 && comp->getExitCells().size() == 1)
+                {
+                    level->addTemporaryEndBlock(comp);
+                }
+
+                processedComponents.insert(componentId);
+            }
+        }
+    }
+}
+
 void Simulator::findOpposingExits() const
 {
     FOREACH(level->getComponents(), comp)
@@ -237,35 +353,16 @@ void Simulator::floodComponent(int x, int y, int num) const
 
                 if (ncell->isObstacle() == false)
                 {
-                    bool l = level->getCell(y + dy[Left[dir]], x + dx[Left[dir]])->isObstacle()
-                        || level->getCell(ny + dy[Left[dir]], nx + dx[Left[dir]])->isObstacle();
-                    bool r = level->getCell(y + dy[Right[dir]], x + dx[Right[dir]])->isObstacle()
-                        || level->getCell(ny + dy[Right[dir]], nx + dx[Right[dir]])->isObstacle();
-
-                    if (!(l && r))
+                    if (isExit(cell, dir) == false)
                     {
                         if (ncell->getComponentId() == -1)
                         {
                             floodComponent(nx, ny, num);
                         }
                     }
-                    else // is exit
-                    {
-                        Exit exit(cell, dir);
-                        cell->addExit(exit);
-                    }
                 }
             }
         }
-    }
-
-    if (cell->hasExits())
-    {
-        FOREACH(cell->getExits(), e)
-        {
-            level->getComponents()[num].addExit(&*e);
-        }
-        level->getComponents()[num].addExitCell(cell);
     }
 }
 
@@ -279,8 +376,6 @@ void Simulator::touchObstacles(Cell* cell) const
 
 bool Simulator::checkTouchingObstacles(Cell* cell) const
 {
-    //level->traceComponent();
-
     int x = cell->getX();
     int y = cell->getY();
 
@@ -371,7 +466,6 @@ void Simulator::backtrack(Cell* cell, int direction)
     }
 
     //level->traceComponent();
-
     TRACE(tracer.depth++);
 
     preAction(cell, direction);

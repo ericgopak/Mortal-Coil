@@ -146,7 +146,7 @@ const std::set<const Cell*>& Level::getTemporaryEnds() const
     return temporaryEnds;
 }
 
-const std::set<const Component*>& Level::getTemporaryEndBlocks() const
+const std::deque<const Component*>& Level::getTemporaryEndBlocks() const
 {
     return temporaryEndBlocks;
 }
@@ -189,22 +189,36 @@ void Level::setBiggest(int index)
 
 void Level::addTemporaryEnd(const Cell* cell)
 {
+    assert(temporaryEnds.find(cell) == temporaryEnds.end());
     temporaryEnds.insert(cell);
 }
 
 void Level::removeTemporaryEnd(const Cell* cell)
 {
+    assert(temporaryEnds.find(cell) != temporaryEnds.end());
     temporaryEnds.erase(cell);
 }
 
 void Level::addTemporaryEndBlock(const Component* comp)
 {
-    temporaryEndBlocks.insert(comp);
+    temporaryEndBlocks.push_back(comp);
 }
 
 void Level::removeTemporaryEndBlock(const Component* comp)
 {
-    temporaryEndBlocks.erase(comp);
+    assert(temporaryEndBlocks.empty() == false);
+    if (comp == temporaryEndBlocks.back())
+    {
+        temporaryEndBlocks.pop_back();
+    }
+    else if (comp == temporaryEndBlocks.front())
+    {
+        temporaryEndBlocks.pop_front();
+    }
+    else
+    {
+        assert(false && "Meh, temporary end blocks appeared to be mixed up!");
+    }
 }
 
 void Level::addSpecialComponent(const Component* comp, int index)

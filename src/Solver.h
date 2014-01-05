@@ -21,6 +21,10 @@ public:
     virtual void solutionFound(Cell* cell, int dir);
 
     bool gotIsolatedCells(Cell* cell, int dir) const;
+    void addTemporaryEnds(Cell* cell, int dir) const;
+    void removeTemporaryEnds(Cell* cell, int dir) const;
+    void addTemporaryEndBlocks(Cell* cell, int dir) const;
+    void removeTemporaryEndBlocks(Cell* cell, int dir) const;
 
     void solve(int row, int col, int firstComponentId);
     //void follow(const Exit* exit);

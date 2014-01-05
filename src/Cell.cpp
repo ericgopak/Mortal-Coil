@@ -13,6 +13,7 @@ Cell::Cell(int x, int y)
     , mark(0)
     , exitMask(0)
 {
+    exits.reserve(4); // Mandatory! Otherwise pointers are gonna be invalidated
     nextCell[0] = nextCell[1] = nextCell[2] = nextCell[3] = NULL;
     exitsByDirection[0] = exitsByDirection[1] = exitsByDirection[2] = exitsByDirection[3] = NULL;
 }

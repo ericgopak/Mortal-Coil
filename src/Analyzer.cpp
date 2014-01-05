@@ -30,7 +30,7 @@ void Analyzer::analyzeComponents()
 
         if (component.getSize() == 1)
         {
-            const std::set<const Exit*>& exits = component.getExits();
+            const std::vector<const Exit*>& exits = component.getExits();
 
             if (component.getExits().size() == 2)
             {
@@ -195,13 +195,12 @@ void Analyzer::preprocess()
     // Additionally initialize all Exit's
     findComponents();
 
+    findComponentExits();
+
     // Assign opposing exit to every existing one
     findOpposingExits();
 
-    TRACE
-    (
-        level->traceComponent();
-    );
+    TRACE(level->traceComponent());
 
     // Analyzing obstacles ------------------------------------------------------------
     // Find all 'next-touches' for every cell
