@@ -2,49 +2,74 @@
 
 #include "Common.h"
 #include "AbstractComponent.h"
+#include <tuple>
 
-class ComponentSolution;
-
-class Path
+// Component -> StateMask -> SolutionHead -> SolutionBody -> [ StateMask -> ... ]
+struct SolutionHead
 {
-    const Exit* start;
-    const Exit* finish;
+    int startX, startY, startDir;
 
-    int length;
-
-public:
-
-    Path();
-    Path(const Exit* a, const Exit* b, int length);
-
-    bool operator < (const Path& p) const;
-
-    const Exit* getStart() const;
-    const Exit* getFinish() const;
-    int getLength() const;
+    bool operator < (const SolutionHead& head) const;
 };
 
-typedef std::map<int, std::map<Path, ComponentSolution> > SolutionMap; // Index -> Path -> [Index -> Path] -> ...
-
-class ComponentSolution
+struct SolutionBody
 {
-    SolutionMap solutions;
+    int endX, endY, endDir;
+    //std::string solution; // TODO: consider compressing (1 bit per decision)
+
+    bool operator < (const SolutionBody& body) const;
+};
+
+class SolutionTree;
+
+typedef std::tuple<int, SolutionHead, SolutionBody> SolutionRecord;
+
+// Solution tree implementation
+class BodyToTree
+{
+    friend class SolutionTree;
+
+    std::map<SolutionBody, SolutionTree> bodyToTree;
 
 public:
 
-    SolutionMap* getSolutions();
+    SolutionTree* followBody(const SolutionBody& solutionBody);
+};
+
+class HeadToBody
+{
+    friend class SolutionTree;
+
+    std::map<SolutionHead, BodyToTree> headToBody;
+
+public:
+
+    BodyToTree* followHead(const SolutionHead& solutionHead);
+};
+
+class SolutionTree
+{
+    std::map<int, HeadToBody> tree;
+    int solutionCount;
+
+public:
+
+    SolutionTree();
+
+    HeadToBody* followStateMask(const int stateMask);
+    int getSolutionCount() const;
+    void addSolution(const std::vector<SolutionRecord>& solution);
 };
 
 class Component : public AbstractComponent
 {
     int occupied;
-    SolutionMap solutions;
-    int solutionCount;
+    SolutionTree solutions;
     // Arranged counter-clockwise along the perimeter
     std::vector<const Exit*> exits;
     std::vector<const Cell*> exitCells;
 
-    std::stack<SolutionMap*> remainingSolutions;
+    std::stack<SolutionTree*> remainingSolutions;
 
 public:
     Component();
@@ -53,21 +78,22 @@ public:
 
     int getOccupiedCount() const;
     int getSolutionCount() const;
-    const SolutionMap* getSolutions() const;
+    SolutionTree* getSolutions(); // TODO: reconsider
     const std::vector<const Exit*>& getExits() const;
     const std::vector<const Cell*>& getExitCells() const;
-    const SolutionMap* getRemainingSolutions() const;
+    const SolutionTree* getRemainingSolutions() const;
     const Exit* getExitByIndex(int index) const;
     const Cell* getExitCellByIndex(int index) const;
     int getIndexByExit(const Exit* exit) const;
     int getIndexByExitCell(const Cell* exitCell) const;
     int getFreeExitCellsMask() const;
-    int getCurrentStateMask() const;
+    int getCurrentExitStateMask() const;
+    int getCurrentExitCellStateMask() const;
 
     void addExit(const Exit* e);
     void addExitCell(const Cell* cell);
-    void addSolution(SolutionMap* newSolution);
-    void chooseSolution(const Path* chosenPath);
+    //void addSolution(SolutionTree* newSolution);
+    void chooseSolution(const int stateMask, const SolutionHead& head, const SolutionBody& body);
     void unchooseSolution();
 
     void incrementOccupied(int num = 1);

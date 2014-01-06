@@ -239,6 +239,7 @@ static void collectExitsAlongPerimeter(Cell* cell, int dir, const Cell* const en
 }
 
 // TODO: this does not consider exits to inner components (between inner obstacles)
+// On the other hand, this forces all inner cells to be treated as a single component
 void Simulator::findComponentExits() const
 {
     std::unordered_set<int> processedComponents;

@@ -37,17 +37,20 @@ void Analyzer::analyzeComponents()
                 const Exit* e1 = *exits.begin();
                 const Exit* e2 = *(++exits.begin());
 
-                SolutionMap solution1;
-                SolutionMap solution2;
+                SolutionHead h1 = {e1->getX(), e1->getY(), e1->getDir()};
+                SolutionHead h2 = {e2->getX(), e2->getY(), e2->getDir()};
+                
+                SolutionBody b1 = {e2->getX(), e2->getY(), e2->getDir()};
+                SolutionBody b2 = {e1->getX(), e1->getY(), e1->getDir()};
 
-                Path p1(e1, e2, 1);
-                Path p2(e2, e1, 1);
+                SolutionRecord solution1(0, h1, b1);
+                SolutionRecord solution2(0, h2, b2);
 
-                solution1[INITIAL_STATE_MASK][p1] = ComponentSolution();
-                solution2[INITIAL_STATE_MASK][p2] = ComponentSolution();
+                std::vector<SolutionRecord> v1(1, solution1);
+                std::vector<SolutionRecord> v2(1, solution2);
 
-                component.addSolution(&solution1);
-                component.addSolution(&solution2);
+                component.getSolutions()->addSolution(v1);
+                component.getSolutions()->addSolution(v2);
             }
             else if (component.getExits().size() == 1)
             {
@@ -66,16 +69,16 @@ void Analyzer::analyzeComponents()
             
             TRACE(Colorer::print<WHITE>("Found %d solution%c\n", component.getSolutionCount(), component.getSolutionCount() == 1 ? ' ' : 's'));
 
-            TRACE(
-                if (component.getSolutionCount() > Debug::mostSolutions)
-                {
-                    Debug::mostSolutions = component.getSolutionCount();
-                }
-            )
+#ifdef TRACE_STATISTICS
+            if (component.getSolutionCount() > Debug::mostSolutions)
+            {
+                Debug::mostSolutions = component.getSolutionCount();
+            }
+#endif
 
             if (component.getSolutionCount() == 1)
             {
-                TRACE(Colorer::print<YELLOW>("Component %d has ONLY ONE Solution! Solution state mask: %d\n", i, component.getSolutions()->begin()->first));
+                TRACE(Colorer::print<YELLOW>("Component %d has ONLY ONE Solution!\n", i));
             }
             else if (component.getSolutionCount() == 0)
             {
@@ -93,33 +96,24 @@ void Analyzer::analyzeComponent(Component& component, int stateMask)
 {
     if (component.getOccupiedCount() == component.getSize())
     {
-        if (solutionPathHolder.size() > 0)
+        if (solutionRecordHolder.size() > 0)
         {
             TRACE(
-                Colorer::print<WHITE>("Oh yeah! Found full solution!  ");
                 level->traceComponent(componentCurrentIndex);
-                for (size_t i = 0; i < solutionPathHolder.size(); i++)
+                Colorer::print<WHITE>("Oh yeah! Found full solution:    ");
+                for (size_t i = 0; i < solutionRecordHolder.size(); i++)
                 {
-                    const Exit* a = solutionPathHolder[i].getStart();
-                    const Exit* b = solutionPathHolder[i].getFinish();
-                    Colorer::print<WHITE>("(%d,%d,%d) --> (%d,%d,%d)  "
-                        , a->getX(), a->getY(), a->getDir()
-                        , b->getX(), b->getY(), b->getDir());
+                    const SolutionRecord& record = solutionRecordHolder[i];
+                    Colorer::print<WHITE>("[%d] --> (%d,%d,%d) --> (%d,%d,%d)   "
+                        , std::get<0>(record)
+                        , std::get<1>(record).startX, std::get<1>(record).startY, std::get<1>(record).startDir
+                        , std::get<2>(record).endX, std::get<2>(record).endY, std::get<2>(record).endDir
+                    );
                 }
-
                 printf("\n");
-            )
+            );
 
-            SolutionMap solution;
-            SolutionMap* solutionFollower = &solution;
-
-            for (size_t i = 0; i < solutionPathHolder.size(); i++)
-            {
-                (*solutionFollower)[solutionStateMaskHolder[i]][solutionPathHolder[i]] = ComponentSolution();
-                solutionFollower = (*solutionFollower)[solutionStateMaskHolder[i]].begin()->second.getSolutions();
-            }
-
-            component.addSolution(&solution);
+            component.getSolutions()->addSolution(solutionRecordHolder);
         }
         else
         {
@@ -149,28 +143,6 @@ void Analyzer::analyzeComponent(Component& component, int stateMask)
                 prevDepth = lastDepthCopy;
             }
         }
-
-        /*FOREACH(component.getExits(), it)
-        {
-            const Exit* e = *it;
-            if (level->getCell(e->getY(), e->getX())->isOccupied())
-            {
-                continue;
-            }
-
-            int dir = e->getDir();
-            
-            Cell* cell = level->getCell(e->getY(), e->getX());
-            
-            int lastDepthCopy = prevDepth;
-            prevDepth = depth;
-
-            previousExit.push_back(e);
-            backtrack(cell, dir ^ 2);
-            previousExit.pop_back();
-
-            prevDepth = lastDepthCopy;
-        }*/
     }
 }
 
@@ -202,7 +174,6 @@ void Analyzer::preprocess()
 
     TRACE(level->traceComponent());
 
-    // Analyzing obstacles ------------------------------------------------------------
     // Find all 'next-touches' for every cell
     findTouchingObstacles();
 
@@ -217,11 +188,9 @@ void Analyzer::preprocess()
             bestid = i;
         }
     }
-
-    TRACE
-    (
-        Colorer::print<WHITE>("Biggest component: %d cells  ID: %d\n", best, bestid);
-    );
+#ifdef TRACE_STATISTICS
+    Colorer::print<WHITE>("Biggest component: %d cells  ID: %d\n", best, bestid);
+#endif
 
     level->setMostCells(best);
     level->setBiggest(bestid);
@@ -329,31 +298,21 @@ bool Analyzer::potentialSolution(Cell* cell, int dir) const
 
 void Analyzer::collectResults(const Exit* exit1, const Exit* exit2)
 {
-    //level->traceComponent(getComponentCurrentIndex());
-
-    Path path(exit1, exit2, depth - prevDepth);
-    solutionPathHolder.push_back(path);
-
-    //int exitIndex1 = level->getComponents()[getComponentCurrentIndex()].getIndexByExit(exit1);
-    //int exitIndex2 = level->getComponents()[getComponentCurrentIndex()].getIndexByExit(exit2);
-    //assert((previousStateMask.back() & (1 << exitIndex1)) == 0 && (previousStateMask.back() & (1 << exitIndex2)) == 0 && "Erroneous state mask!");
-    //int newStateMask = previousStateMask.back() | (1 << exitIndex1) | (1 << exitIndex2);
-    //solutionStateMaskHolder.push_back(newStateMask);
-    solutionStateMaskHolder.push_back(previousStateMask.back());
+    SolutionHead head = {exit1->getX(), exit1->getY(), exit1->getDir()};
+    SolutionBody body = {exit2->getX(), exit2->getY(), exit2->getDir()};
+    SolutionRecord record(previousStateMask.back(), head, body);
+    solutionRecordHolder.push_back(record);
 }
 
 void Analyzer::uncollectResults()
 {
-    solutionPathHolder.pop_back();
-    solutionStateMaskHolder.pop_back();
+    solutionRecordHolder.pop_back();
 }
 
 void Analyzer::solutionFound(Cell* cell, int dir)
 {
-    //level->traceComponent();
-
     // Assuming cell->hasExits()
-    
+
     if (cell->getNextCell(dir)->isObstacle())
     {
         // Try left / right
@@ -369,7 +328,7 @@ void Analyzer::solutionFound(Cell* cell, int dir)
                 assert((previousStateMask.back() & (1 << exitIndex1)) == 0 && (previousStateMask.back() & (1 << exitIndex2)) == 0 && "Erroneous state mask!");
                 int newStateMask = previousStateMask.back() | (1 << exitIndex1) | (1 << exitIndex2);
 
-                preOccupyAction(cell, dir);
+                preOccupyAction(cell, dir); // TODO: use moveForward / moveBackwards!
                 occupy(cell, dir);
                 postOccupyAction(cell, dir);
                 analyzeComponent(level->getComponents()[getComponentCurrentIndex()], newStateMask);
@@ -428,8 +387,9 @@ void Analyzer::solutionFound(Cell* cell, int dir)
             {
                 collectResults(previousExit.back(), cell->getExit(dir));
 
-                int exitIndex1 = level->getComponents()[getComponentCurrentIndex()].getIndexByExit(previousExit.back());
-                int exitIndex2 = level->getComponents()[getComponentCurrentIndex()].getIndexByExit(cell->getExit(dir));
+                const Component& comp = level->getComponents()[getComponentCurrentIndex()];
+                int exitIndex1 = comp.getIndexByExit(previousExit.back());
+                int exitIndex2 = comp.getIndexByExit(cell->getExit(dir));
                 assert((previousStateMask.back() & (1 << exitIndex1)) == 0 && (previousStateMask.back() & (1 << exitIndex2)) == 0 && "Erroneous state mask!");
                 int newStateMask = previousStateMask.back() | (1 << exitIndex1) | (1 << exitIndex2);
 
@@ -445,10 +405,13 @@ void Analyzer::solutionFound(Cell* cell, int dir)
             }
 
             // Consider case: cell ahead has been occupied somewhen during Analysis
+            if (cell->getNextCell(dir)->isFree())
             {
+                cell->getNextCell(dir)->setFree(false); // Otherwise loops infinitely (turning left,right,left,...)
+
                 // Update latest stateMask: mark exit ahead as necessary occupied
                 int exitIndex = level->getComponents()[getComponentCurrentIndex()].getIndexByExit(cell->getExit(dir));
-                int prevMask = previousStateMask.back();
+                const int prevMask = previousStateMask.back();
                 previousStateMask.pop_back();
                 assert(((1 << exitIndex) & prevMask) == 0 && "Erroneous state mask!");
                 int newMask = prevMask | (1 << exitIndex);
@@ -472,6 +435,8 @@ void Analyzer::solutionFound(Cell* cell, int dir)
 
                 previousStateMask.pop_back();
                 previousStateMask.push_back(prevMask);
+
+                cell->getNextCell(dir)->setFree(true);
             }
         }
     }

@@ -8,8 +8,7 @@ class Analyzer : public Simulator
 {
     std::vector<const Exit*> previousExit;
     std::vector<int> previousStateMask;
-    std::vector<Path> solutionPathHolder;
-    std::vector<int> solutionStateMaskHolder;
+    std::vector<SolutionRecord> solutionRecordHolder;
     int componentCurrentIndex;
 
     static int depth;

@@ -179,8 +179,8 @@ void Solver::addTemporaryEndBlocks(Cell* cell, int dir) const
 
         int fullMask = comp->getFreeExitCellsMask();
         
-        // Compare previous and current exit masks
-        int currentMask = comp->getCurrentStateMask();
+        // Compare previous and current exit cell masks
+        int currentMask = comp->getCurrentExitCellStateMask();
 
         if (currentMask == fullMask) // No exits remain.
         {
@@ -208,8 +208,8 @@ void Solver::removeTemporaryEndBlocks(Cell* cell, int dir) const
 
         int fullMask = comp->getFreeExitCellsMask();
         
-        // Compare previous and current exit masks
-        int currentMask = comp->getCurrentStateMask();
+        // Compare previous and current exit cell masks
+        int currentMask = comp->getCurrentExitCellStateMask();
 
         if (currentMask == fullMask) // No exits remain.
         {

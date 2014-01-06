@@ -2,54 +2,72 @@
 #include "Component.h"
 #include "Colorer.h"
 
-Path::Path()
-    : start(NULL)
-    , finish(NULL)
+bool SolutionHead::operator < (const SolutionHead& head) const
+{
+    if (startY != head.startY) return startY < head.startY;
+    if (startX != head.startX) return startX < head.startX;
+    return startDir < head.startDir;
+}
+
+bool SolutionBody::operator < (const SolutionBody& body) const
+{
+    if (endY != body.endY) return endY < body.endY;
+    if (endX != body.endX) return endX < body.endX;
+    return endDir < body.endDir;
+}
+
+SolutionTree* BodyToTree::followBody(const SolutionBody& solutionBody)
+{
+    return bodyToTree.find(solutionBody) == bodyToTree.end()
+        ? NULL
+        : &bodyToTree[solutionBody];
+}
+
+BodyToTree* HeadToBody::followHead(const SolutionHead& solutionHead)
+{
+    return headToBody.find(solutionHead) == headToBody.end()
+        ? NULL
+        : &headToBody[solutionHead];
+}
+
+HeadToBody* SolutionTree::followStateMask(const int stateMask)
+{
+    return tree.find(stateMask) == tree.end()
+        ? NULL
+        : &tree[stateMask];
+}
+
+SolutionTree::SolutionTree()
+    : solutionCount(0)
 {
 }
 
-Path::Path(const Exit* a, const Exit* b, int length)
-    : start(a)
-    , finish(b)
-    , length(length)
+int SolutionTree::getSolutionCount() const
 {
+    return solutionCount;
 }
 
-bool Path::operator < (const Path& p) const
+void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution)
 {
-    if (start != p.start)
+    // TODO: check for solution uniqueness
+
+    SolutionTree* subtree = this;
+    for (size_t i = 0; i < solution.size(); i++)
     {
-        return start < p.start;
+        subtree->solutionCount++;
+
+        const SolutionRecord& record = solution[i];
+        HeadToBody* headToBody = &subtree->tree[std::get<0>(record)];
+        BodyToTree* bodyToTree = &headToBody->headToBody[std::get<1>(record)];
+        subtree = &bodyToTree->bodyToTree[std::get<2>(record)];
     }
-    return finish < p.finish;
-}
-
-const Exit* Path::getStart() const
-{
-    return start;
-}
-
-const Exit* Path::getFinish() const
-{
-    return finish;
-}
-
-int Path::getLength() const
-{
-    return length;
-}
-
-SolutionMap* ComponentSolution::getSolutions()
-{
-    return &solutions;
 }
 
 Component::Component()
     : AbstractComponent()
     , occupied(0)
-    , solutionCount(0)
 {
-    // TODO: test
+    // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     remainingSolutions.push(&solutions);
@@ -58,11 +76,10 @@ Component::Component()
 Component::Component(const Component& c)
     : AbstractComponent(c)
     , occupied(c.occupied)
-    , solutionCount(c.solutionCount)
     , solutions(c.solutions)
     , exits(c.exits)
 {
-    // TODO: test
+    // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     remainingSolutions.push(&solutions);
@@ -75,7 +92,7 @@ int Component::getOccupiedCount() const
 
 int Component::getSolutionCount() const
 {
-    return solutionCount;
+    return solutions.getSolutionCount();
 }
 
 const std::vector<const Exit*>& Component::getExits() const
@@ -88,7 +105,7 @@ const std::vector<const Cell*>& Component::getExitCells() const
     return exitCells;
 }
 
-const SolutionMap* Component::getRemainingSolutions() const
+const SolutionTree* Component::getRemainingSolutions() const
 {
     assert(remainingSolutions.size() > 0);
     return remainingSolutions.top();
@@ -96,22 +113,12 @@ const SolutionMap* Component::getRemainingSolutions() const
 
 const Exit* Component::getExitByIndex(int index) const
 {
-    // TODO: implement exits using std::vector
-    assert(index < (int)exits.size());
-    // std::advance() is linear for std::set
-    auto it = exits.begin();
-    std::advance(it, index);
-    return *it;
+    return exits[index];
 }
 
 const Cell* Component::getExitCellByIndex(int index) const
 {
-    // TODO: implement exits using std::vector
-    assert(index < (int)exitCells.size());
-    // std::advance() is linear for std::set
-    auto it = exitCells.begin();
-    std::advance(it, index);
-    return *it;
+    return exitCells[index];
 }
 
 int Component::getIndexByExit(const Exit* exit) const
@@ -137,7 +144,21 @@ int Component::getFreeExitCellsMask() const
     return (1 << exitCells.size()) - 1;
 }
 
-int Component::getCurrentStateMask() const
+int Component::getCurrentExitStateMask() const
+{
+    int mask = 0;
+    for (size_t i = 0; i < exits.size(); i++)
+    {
+        const Cell* exit = getExitByIndex(i);
+        if (exit->isFree() == false)
+        {
+            mask |= 1 << i;
+        }
+    }
+    return mask;
+}
+
+int Component::getCurrentExitCellStateMask() const
 {
     int mask = 0;
     for (size_t i = 0; i < exitCells.size(); i++)
@@ -151,7 +172,8 @@ int Component::getCurrentStateMask() const
     return mask;
 }
 
-const SolutionMap* Component::getSolutions() const
+
+SolutionTree* Component::getSolutions()
 {
     return &solutions;
 }
@@ -167,61 +189,17 @@ void Component::addExitCell(const Cell* cell)
     exitCells.push_back(cell);
 }
 
-// Assuming 'solution' contains only one solution
-void Component::addSolution(SolutionMap* newSolution)
+void Component::chooseSolution(const int stateMask, const SolutionHead& head, const SolutionBody& body)
 {
-    // Caution: don't read the code. It just works =)
-    // TODO: refactor
+    SolutionTree* currentOptions = remainingSolutions.top();
+    HeadToBody* headToBody = currentOptions->followStateMask(stateMask);
+    assert(headToBody != NULL && "Failed to choose given solution: state mask not found!");
+    BodyToTree* bodyToTree = headToBody->followHead(head);
+    assert(bodyToTree != NULL && "Failed to choose given solution: solution head not found!");
+    SolutionTree* subtree = bodyToTree->followBody(body);
+    //assert(subtree != NULL && "Failed to choose given solution: solution body not found!");
 
-    SolutionMap* currentSolutions = &solutions;
-
-    while (newSolution->size() > 0)
-    {
-        assert(newSolution->size() <= 1 && "Trying to add invalid solution!");
-
-        SolutionMap::iterator newIndexToPath = newSolution->begin();
-        SolutionMap::iterator currentIndexToPath = currentSolutions->find(newIndexToPath->first);
-        if (currentIndexToPath == currentSolutions->end())
-        {
-            // New solution (different indexes)
-            solutionCount++;
-            (*currentSolutions)[newIndexToPath->first] = newIndexToPath->second;
-            break;
-        }
-        else
-        {
-            assert(newIndexToPath->second.size() <= 1 && "Trying to add invalid solution!");
-
-            const Path& newPath = newIndexToPath->second.begin()->first;
-            std::map<Path, ComponentSolution>::iterator currentPathToSolution = currentIndexToPath->second.find(newPath);
-            if (currentPathToSolution == currentIndexToPath->second.end())
-            {
-                // New solution (different paths)
-                solutionCount++;
-
-                (*currentSolutions)[newIndexToPath->first][newPath] = newIndexToPath->second.begin()->second;
-                break;
-            }
-            else
-            {
-                newSolution = newIndexToPath->second.begin()->second.getSolutions();
-                currentSolutions = currentIndexToPath->second.begin()->second.getSolutions();
-            }
-        }
-    }
-}
-
-void Component::chooseSolution(const Path* chosenPath)
-{
-    SolutionMap* currentOptions = remainingSolutions.top();
-    //SolutionMap::iterator it = currentOptions->find(*chosenPath);
-
-    int currentStateMask = getCurrentStateMask();
-    std::map<Path, ComponentSolution>::iterator it = (*currentOptions)[currentStateMask].find(*chosenPath);
-
-    assert(it != (*currentOptions)[currentStateMask].end() && "Tried to choose non-existent path!");
-
-    remainingSolutions.push(it->second.getSolutions());
+    remainingSolutions.push(subtree);
 }
 
 void Component::unchooseSolution()
