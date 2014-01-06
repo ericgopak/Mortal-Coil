@@ -25,7 +25,10 @@ protected:
     int obstacleId; // Index of an obstacle cell belongs to. 0 for the 'border'
     int componentId; // Index of the component the cell belongs to
     int exitMask;
-    int mark; // ID of a corresponding path segment
+    TRACE(
+        int depth;
+        int layer;
+    );
 
     std::vector<Exit> exits;
     const Exit* exitsByDirection[4];
@@ -60,7 +63,6 @@ public:
     int getY() const;
     int getObstacleId() const;
     int getComponentId() const;
-    int getMark() const;
     int getNextMask() const;
     const std::vector<Exit>& getExits() const;
     //std::set< ::Obstacle*>* getTouchingObstacles();
@@ -77,7 +79,13 @@ public:
     void setFree(bool free);
     void setNextMask(int mask);
     void setNextCell(int dir, Cell* ncell);
-    void setMark(int mark);
+    
+#ifdef TRACE_SOLUTIONS
+    int getDepth() const;
+    int getLayer() const;
+    void setDepth(int depth);
+    void setLayer(int layer);
+#endif
 };
 
 class Exit : public Cell

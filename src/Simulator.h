@@ -9,14 +9,17 @@ class Cell;
 
 class Simulator
 {
-    struct TraceInfo
-    {
-        int depth;
-        int currentX, currentY;
-        int currentComponent;
+    TRACE(
+        struct TraceInfo
+        {
+            int depth;
+            int layer;
+            /*int currentX, currentY;
+            int currentComponent;*/
 
-        TraceInfo();
-    };
+            TraceInfo();
+        };
+    );
 
     Simulator& operator = (const Simulator&);
     Simulator(const Simulator&);
@@ -25,7 +28,9 @@ protected:
     Level* level;
 
 public:
-    TraceInfo tracer;
+    TRACE(
+        TraceInfo tracer;
+    );
 
     Simulator(Level* currentLevel);
     ~Simulator();

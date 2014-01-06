@@ -24,13 +24,16 @@ Simulator::~Simulator()
 {
 }
 
+#ifdef TRACE_SOLUTIONS
 Simulator::TraceInfo::TraceInfo()
-    : depth(0)
-    , currentComponent(-1)
+    : depth(-1)
+    , layer(-1)
+    /*, currentComponent(-1)
     , currentX(-1)
-    , currentY(-1)
+    , currentY(-1)*/
 {
 }
+#endif
 
 void Simulator::occupy(Cell* cell, int dir) const
 {
@@ -165,6 +168,7 @@ void Simulator::floodObstacle(int x, int y, int num) const
 
 static void collectExitsAlongPerimeter(Cell* cell, int dir, const Cell* const entryPoint, Component* const component)
 {
+    // TODO: consider exit at your back (for 1-sized components)
     Cell* left = cell->getNextCell(Left[dir]);
     if (!left->isObstacle())
     {

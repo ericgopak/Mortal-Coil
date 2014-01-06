@@ -10,8 +10,11 @@ Cell::Cell(int x, int y)
     , obstacleId(-1)
     , componentId(-1)
     , nextMask(0)
-    , mark(0)
     , exitMask(0)
+#ifdef TRACE_SOLUTIONS
+    , depth(-1)
+    , layer(-1)
+#endif
 {
     exits.reserve(4); // Mandatory! Otherwise pointers are gonna be invalidated
     nextCell[0] = nextCell[1] = nextCell[2] = nextCell[3] = NULL;
@@ -118,11 +121,6 @@ int Cell::getComponentId() const
     return componentId;
 }
 
-int Cell::getMark() const
-{
-    return mark;
-}
-
 int Cell::getNextMask() const
 {
     return nextMask;
@@ -195,11 +193,6 @@ void Cell::setNextCell(int dir, Cell* ncell)
     nextCell[dir] = ncell;
 }
 
-void Cell::setMark(int mark)
-{
-    this->mark = mark;
-}
-
 Exit::Exit(const Cell* cell, int dir)
     : Cell(*cell)
     , dir(dir)
@@ -239,3 +232,25 @@ int Exit::getDir() const
 {
     return dir;
 }
+
+#ifdef TRACE_SOLUTIONS
+int Cell::getDepth() const
+{
+    return depth;
+}
+
+int Cell::getLayer() const
+{
+    return layer;
+}
+
+void Cell::setDepth(int depth)
+{
+    this->depth = depth;
+}
+
+void Cell::setLayer(int layer)
+{
+    this->layer = layer;
+}
+#endif

@@ -16,7 +16,7 @@ void Solver::preOccupyAction(Cell* cell, int dir) const
 
     touchObstacles(cell);
 
-    TRACE(cell->setMark(tracer.depth));
+    TRACE(cell->setDepth(tracer.depth));
 }
 
 void Solver::postOccupyAction(Cell* cell, int dir) const
@@ -41,7 +41,7 @@ void Solver::postRestoreAction(Cell* cell, int dir) const
 
     untouchObstacles(cell);
 
-    TRACE(cell->setMark(0));
+    TRACE(cell->setDepth(-1));
 }
 
 void Solver::preAction(Cell* cell, int dir) const

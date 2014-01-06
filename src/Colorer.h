@@ -2,22 +2,28 @@
 
 #include <Windows.h>
 
-#define RED    FOREGROUND_RED   | FOREGROUND_INTENSITY
-#define BLUE   FOREGROUND_BLUE  | FOREGROUND_INTENSITY
-#define GREEN  FOREGROUND_GREEN | FOREGROUND_INTENSITY
-#define DARK_GREEN FOREGROUND_GREEN
-#define YELLOW 0x0E
-#define WHITE  0x0F
-#define BACKGROUND_WHITE 0x70
-#define PURPLE 0x0D
-#define DEFAULT_COLOR DARK_GREEN
+// Custom colors
+#define BLUE             FOREGROUND_INTENSITY | FOREGROUND_BLUE
+#define GREEN            FOREGROUND_INTENSITY | FOREGROUND_GREEN
+#define RED              FOREGROUND_INTENSITY | FOREGROUND_RED
+#define YELLOW           FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_RED
+#define WHITE            FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED
+#define GRAY             FOREGROUND_INTENSITY
+#define DARK_GREEN       FOREGROUND_GREEN
+
+#define BACKGROUND_WHITE BACKGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE
+
+#define FOREGROUND_ONE FOREGROUND_BLUE
+#define BACKGROUND_ONE BACKGROUND_BLUE
+
+typedef int ColorType;
 
 namespace Colorer
 {
-    void setColor(int color);
+    void setColor(ColorType color);
     void restoreColor();
 
-    template <int color>
+    template <ColorType color>
     void print(const char* format, ...)
     {
         va_list arg;

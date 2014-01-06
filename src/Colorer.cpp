@@ -4,21 +4,21 @@
 
 namespace Colorer
 {
-    HANDLE hstdin = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE hstdin  = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
 
-    int ok = GetConsoleScreenBufferInfo(hstdout, &csbi);
+    BOOL ok = GetConsoleScreenBufferInfo(hstdout, &csbi);
 
-    void setColor(int color)
+    void setColor(ColorType color)
     {
         SetConsoleTextAttribute(hstdout, color);
     }
 
-    void colorize(const char* text, unsigned char color)
+    void colorize(const char* text, ColorType color)
     {
-        SetConsoleTextAttribute(hstdout, color);
+        SetConsoleTextAttribute(hstdout, (WORD)color);
         printf("%s", text);
         restoreColor();
     }

@@ -278,37 +278,67 @@ void Level::prepareSolution(int startX, int startY)
     }
 }
 
-void Level::PrintCell(const Cell* cell, int id) const
+void Level::printCell(const Cell* cell, int id) const
 {
+    ColorType background = 0x00;
+    ColorType foreground = 0x00;
+    char symbol = 0;
+
+    // Background
     if (cell->isObstacle())
     {
-        Colorer::print<BACKGROUND_GREEN>("%d", cell->getObstacleId() % 10);
+        background = BACKGROUND_GREEN;
     }
-    else if (cell->getMark())
+    else
+#ifdef TRACE_SOLUTIONS
+    if (cell->getLayer() != -1)
     {
-        Colorer::setColor((3 + cell->getMark() % 4) | BACKGROUND_WHITE);
-        printf("%d", cell->getMark() % 10);
-        Colorer::restoreColor();
+        background = BACKGROUND_INTENSITY | BACKGROUND_ONE * (2 + cell->getLayer());
     }
-    else if (cell->mayBeFirst())
+    else
+#endif
     {
-        Colorer::print<BACKGROUND_WHITE | BACKGROUND_INTENSITY>("%d", cell->getComponentId() % 10);
+        background = BACKGROUND_WHITE;
     }
-    else if (id != -1 && cell->getComponentId() == id)
+
+    // Foreground
+#ifdef TRACE_SOLUTIONS
+    if (cell->getDepth() != -1)
     {
-        Colorer::print<RED | BACKGROUND_WHITE>("*");
-        Colorer::restoreColor();
+        foreground = GRAY;
+    }
+    else
+#endif
+    if (id != -1 && cell->getComponentId() == id)
+    {
+        foreground = RED;
+    }
+
+    // Symbol to print
+    if (cell->isObstacle())
+    {
+        symbol = '0' + cell->getObstacleId() % 10;
+    }
+    else
+#ifdef TRACE_SOLUTIONS
+        if (cell->getDepth() != -1)
+    {
+        symbol = '0' + (cell->getDepth() + 1) % 10;
+    }
+    else
+#endif
+        if (id != -1 && cell->getComponentId() == id)
+    {
+        symbol = '*';
     }
     else if (cell->getComponentId() != -1)
     {
-        Colorer::setColor(BACKGROUND_WHITE);
-        printf("%d", cell->getComponentId() % 10);
-        Colorer::restoreColor();
+        symbol = '0' + cell->getComponentId() % 10;
     }
-    else
-    {
-        printf("?");
-    }
+
+    Colorer::setColor(foreground | background);
+    printf("%c", symbol);
+    Colorer::restoreColor();
 }
 
 void Level::traceComponent(int id, unsigned int flags) const
@@ -352,11 +382,11 @@ void Level::traceComponent(int id, unsigned int flags) const
         {
             if ((flags & TRACE_COMPONENTS) && Grid[i][j].isObstacle() == false)
             {
-                PrintCell(&Grid[i][j], id);
+                printCell(&Grid[i][j], id);
             }
             else if ((flags & TRACE_OBSTACLES) && Grid[i][j].isObstacle())
             {
-                PrintCell(&Grid[i][j], id);
+                printCell(&Grid[i][j], id);
             }
             else
             {

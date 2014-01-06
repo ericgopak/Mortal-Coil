@@ -61,13 +61,14 @@ void Analyzer::analyzeComponents()
         else if (component.getSize() > 1)
         {
             setComponentCurrentIndex(i);
-
+            if (i == 10) {
             TRACE(level->traceComponent(i));
             TRACE(printf("CONSIDERING %d (%d)\n", i, component.getSize()));
 
             analyzeComponent(component, INITIAL_STATE_MASK);
             
-            TRACE(Colorer::print<WHITE>("Found %d solution%c\n", component.getSolutionCount(), component.getSolutionCount() == 1 ? ' ' : 's'));
+            TRACE(Colorer::print<WHITE>("Component %d got %d solution%c\n", i, component.getSolutionCount(), component.getSolutionCount() == 1 ? ' ' : 's'));
+            }
 
 #ifdef TRACE_STATISTICS
             if (component.getSolutionCount() > Debug::mostSolutions)
@@ -136,7 +137,11 @@ void Analyzer::analyzeComponent(Component& component, int stateMask)
                 previousExit.push_back(e);
                 previousStateMask.push_back(stateMask);
 
+                TRACE(tracer.layer++);
+
                 backtrack(cell, dir ^ 2);
+
+                TRACE(tracer.layer--);
 
                 previousExit.pop_back();
                 previousStateMask.pop_back();
@@ -212,7 +217,8 @@ void Analyzer::preOccupyAction(Cell* cell, int dir) const
     // because we do not simulate the whole solution
     // (only partial)
 
-    TRACE(cell->setMark(tracer.depth));
+    TRACE(cell->setDepth(tracer.depth));
+    TRACE(cell->setLayer(tracer.layer));
 }
 
 void Analyzer::postOccupyAction(Cell* cell, int dir) const
@@ -245,7 +251,8 @@ void Analyzer::preRestoreAction(Cell* cell, int dir) const
 
 void Analyzer::postRestoreAction(Cell* cell, int dir) const
 {
-    TRACE(cell->setMark(0));
+    TRACE(cell->setDepth(-1));
+    TRACE(cell->setLayer(-1));
 }
 
 bool Analyzer::reachedFinalCell(Cell* cell, int dir) const

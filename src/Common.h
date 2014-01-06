@@ -4,6 +4,10 @@
 //#define TRACE_STATISTICS
 
 #ifdef _DEBUG
+#   define TRACE_SOLUTIONS
+#endif
+
+#ifdef TRACE_SOLUTIONS
 #   define TRACE(x) x;
 #else
 #   define TRACE(x)
