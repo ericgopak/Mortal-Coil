@@ -12,34 +12,40 @@ if [%3] == [] (
 	set toLevel=%3
 )
 
+set inputFile="mortal_coil.txt"
+set outputFile="output.txt"
 set levelDataFile="..\..\data\levels\Level%%i"
+set timesFile="times\time%%i"
+set checker="..\Solution Tester\Solution Tester.exe"
 
 for /l %%i in (%fromLevel%, 1, %toLevel%) do (
 	< nul set /p a="Level %%i:	"
 
 	if exist %levelDataFile% (
-		copy %levelDataFile% "mortal_coil.txt" > nul
+		copy %levelDataFile% %inputFile% > nul
 	) else (
 		echo No data file for level %%i!
 		exit /b
 	)
-	if exist "output.txt" del /q "output.txt"
+	if exist %outputFile% del /q %outputFile%
+	if exist %timesFile% del /q %timesFile%
 
 	for %%e in (%solver%) do (
-		start "" /d "%cd%" /b /w "%%e" > "times\time%%i"
-		rem start "" /d "%cd%" /b /w "%%e"
+		start "" /d "%cd%" /b /w "%%e" > %timesFile%
 	)
-	
-	if exist "output.txt" (
-		"..\Solution Tester\Solution Tester.exe" < "output.txt"
+
+	if exist %outputFile% (
+		start "" /b /w %checker% < %outputFile%
+		< nul set /p a=.	Time elapsed: 
+		type %timesFile%
 	) else (
 		echo Solver did not write to output file!
 	)
 )
 
 :cleanup
-if exist "output.txt" del /q "output.txt"
-if exist "mortal_coil.txt" del /q "mortal_coil.txt"
+if exist %outputFile% del /q %outputFile%
+if exist %inputFile% del /q %inputFile%
 exit /b
 
 :printUsage

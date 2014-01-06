@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -92,6 +93,7 @@ void Level::readFromFile(const char* filename)
     if (!fin)
     {
         perror("Failed to open level file!");
+        exit(EXIT_FAILURE);
     }
 
     fscanf(fin, "%d %d", &H, &W);
@@ -331,17 +333,17 @@ int main()
     
     if (level.Answer.size() == 0)
     {
-        perror("Answer is empty!\n");
+        perror("Answer is empty");
         return -1;
     }
     
     if (testSolution(&level))
     {
-        printf("OK!\n");
+        printf("OK");
     }
     else
     {
-        printf("FAIL!\n");
+        printf("FAIL");
     }
     
     return 0;
