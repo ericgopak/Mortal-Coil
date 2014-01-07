@@ -4,6 +4,8 @@
 #include "AbstractComponent.h"
 #include <tuple>
 
+#include "Cell.h"
+
 // Component -> StateMask -> SolutionHead -> SolutionBody -> [ StateMask -> ... ]
 struct SolutionHead
 {

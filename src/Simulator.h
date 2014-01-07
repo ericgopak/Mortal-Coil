@@ -14,12 +14,10 @@ class Simulator
         {
             int depth;
             int layer;
-            /*int currentX, currentY;
-            int currentComponent;*/
 
             TraceInfo();
         };
-    );
+    )
 
     Simulator& operator = (const Simulator&);
     Simulator(const Simulator&);

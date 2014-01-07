@@ -29,6 +29,7 @@ class Level
     std::set<int> specialComponentsIds;
 
     std::set<const Cell*> temporaryEnds;
+    std::set<const Cell*> temporaryEndsInCurrentComponent;
     std::deque<const Component*> temporaryEndBlocks;
 
     void readFromFile(const char* filename);
@@ -68,6 +69,7 @@ public:
     int getObstacleCount() const;
 
     const std::set<const Cell*>& getTemporaryEnds() const;
+    const std::set<const Cell*>& getTemporaryEndsInCurrentComponent() const;
     const std::deque<const Component*>& getTemporaryEndBlocks() const;
 
     int getSolutionStartX() const;
@@ -82,6 +84,9 @@ public:
 
     void addTemporaryEnd(const Cell* cell);
     void removeTemporaryEnd(const Cell* cell);
+
+    void addTemporaryEndsInCurrentComponent(const Cell* cell);
+    void removeTemporaryEndsInCurrentComponent(const Cell* cell);
 
     void addTemporaryEndBlock(const Component* comp);
     void removeTemporaryEndBlock(const Component* comp);

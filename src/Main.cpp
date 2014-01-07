@@ -5,7 +5,7 @@
 # Ideas:
     o Stop if there is isolated exit (check if mask contains isolated bit, like xxx010xxx)
     o Use Pits (level->Ends) as one-sized temporaryEndBlock
-    o Force Simulator::backtrack() visit every cell only ONCE!
+    o Force backtrack() visit every cell only ONCE!
     o Pruning: if new exit got blocked - check if there are at least 2 exits left (if it's not the very last component)
     o Redefine 'exits' to be the ones that cannot be blocked during solve()
     o Disallow ANY 'tails' in analysis solutions
@@ -88,6 +88,8 @@ int main(int argc, char* argv[])
 
     Level level(INPUT_FILENAME);
 
+    Debug::level = &level;
+
     TRACE(Colorer::print<RED>("Preprocessing...\n"));
 
     Analyzer analyzer(&level);
@@ -121,6 +123,7 @@ int main(int argc, char* argv[])
 
 #ifdef TRACE_STATISTICS
     Colorer::print<WHITE>("Max number of solutions: %d\n", Debug::mostSolutions);
+    Colorer::print<WHITE>("Number of SPECIAL components: %d\n", level.getSpecialComponents().size());
 #endif
 
     TRACE(Colorer::print<RED>("Solving...\n"));

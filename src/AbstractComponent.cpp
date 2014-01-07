@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "Colorer.h"
 #include "AbstractComponent.h"
+#include "Cell.h"
 
 int AbstractComponent::getSize() const
 {

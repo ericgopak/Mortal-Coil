@@ -2,6 +2,8 @@
 
 #include "Common.h"
 
+class Cell;
+
 class AbstractComponent
 {
 protected:

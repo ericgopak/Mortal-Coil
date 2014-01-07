@@ -1,5 +1,6 @@
-#define _CRT_SECURE_NO_WARNINGS
 #pragma once
+
+#define _CRT_SECURE_NO_WARNINGS
 
 //#define TRACE_STATISTICS
 
@@ -14,7 +15,8 @@
 #endif
 
 #define MAX_EXPECTED_COMPONENTS 50000 // Max number of components
-#define MAX_EXPECTED_COMPONENT_EXITS 20 // Max number of exits in a single component
+#define MAX_EXPECTED_COMPONENT_EXITS 30 // Max number of exits in a single component
+//#define MAX_EXPECTED_SOLUTION_COUNT 21280 // Max number of unique solutions of a component
 
 #define FOREACH(x, it) for (decltype((x).begin()) it = (x).begin(); it != (x).end(); it++)
 #define FOREACH_CONST(x, it) for (decltype((x).cbegin()) it = (x).cbegin(); it != (x).cend(); it++)
@@ -29,8 +31,6 @@
 #include <stack>
 #include <algorithm>
 
-#include "Cell.h"
-
 const int dx[8] = {1, 0,-1, 0,  1,-1,-1, 1};
 const int dy[8] = {0, 1, 0,-1,  1, 1,-1,-1};
 const int Left[8]  = {3, 0, 1, 2, 0, 1, 2, 3};
@@ -40,14 +40,26 @@ const char Direction[4] = {'R', 'D', 'L', 'U'};
 const int BitCount[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4}; // Bits[i] = Number of set bits in i
 const int P[4] = {1, 2, 4, 8}; // TODO: really?
 
+class Level;
+
 namespace Debug
 {
+    extern const Level* level;
+
     extern int depth;
     extern bool traceFlag;
-    extern int mostSolutions;
 
+#ifdef TRACE_STATISTICS
+    extern int mostSolutions;
     extern int gotTooManyTemporaryEndsCounter;
     extern int gotInvalidNextTouchesCounter;
     extern int gotIsolatedCellsCounter;
     extern int gotTooManyTemporaryEndBlocksCounter;
+#endif
+#ifdef TRACE_SOLUTIONS
+    extern int currentX;
+    extern int currentY;
+    extern int currentDir;
+    /*extern int currentComponent;*/
+#endif
 }

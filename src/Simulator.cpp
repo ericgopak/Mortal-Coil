@@ -28,9 +28,6 @@ Simulator::~Simulator()
 Simulator::TraceInfo::TraceInfo()
     : depth(-1)
     , layer(-1)
-    /*, currentComponent(-1)
-    , currentX(-1)
-    , currentY(-1)*/
 {
 }
 #endif
@@ -55,6 +52,12 @@ void Simulator::restore(Cell* cell, int dir) const
 
 Cell* Simulator::moveForward(Cell* cell, int dir) const
 {
+    TRACE(
+        Debug::currentX = cell->getX();
+        Debug::currentY = cell->getY();
+        Debug::currentDir = dir;
+    );
+
     preOccupyAction(cell, dir);
     occupy(cell, dir);
     postOccupyAction(cell, dir);
@@ -69,6 +72,12 @@ Cell* Simulator::moveBackwards(Cell* cell, int dir) const
     preRestoreAction(cell, dir);
     restore(cell, dir);
     postRestoreAction(cell, dir);
+
+    TRACE(
+        Debug::currentX = cell->getX();
+        Debug::currentY = cell->getY();
+        Debug::currentDir = dir;
+    );
 
     return cell;
 }
@@ -470,8 +479,9 @@ void Simulator::backtrack(Cell* cell, int direction)
         return;
     }
 
-    //level->traceComponent();
     TRACE(tracer.depth++);
+
+    //level->traceComponent();
 
     preAction(cell, direction);
 

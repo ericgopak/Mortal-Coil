@@ -53,15 +53,6 @@ void Level::readFromFile(const char* filename)
         }
     }
 
-    /*for (int i = 0; i <= H + 1; i++)
-    {
-        for (int j = 0; j <= W + 1; j++)
-        {
-            printf("%d", !Grid[i][j].isObstacle());
-        }
-        printf("\n");
-    }*/
-
     fclose(fin);
 }
 
@@ -146,6 +137,11 @@ const std::set<const Cell*>& Level::getTemporaryEnds() const
     return temporaryEnds;
 }
 
+const std::set<const Cell*>& Level::getTemporaryEndsInCurrentComponent() const
+{
+    return temporaryEndsInCurrentComponent;
+}
+
 const std::deque<const Component*>& Level::getTemporaryEndBlocks() const
 {
     return temporaryEndBlocks;
@@ -197,6 +193,20 @@ void Level::removeTemporaryEnd(const Cell* cell)
 {
     assert(temporaryEnds.find(cell) != temporaryEnds.end());
     temporaryEnds.erase(cell);
+}
+
+void Level::addTemporaryEndsInCurrentComponent(const Cell* cell)
+{
+//    traceComponent();
+
+    assert(temporaryEndsInCurrentComponent.find(cell) == temporaryEndsInCurrentComponent.end());
+    temporaryEndsInCurrentComponent.insert(cell);
+}
+
+void Level::removeTemporaryEndsInCurrentComponent(const Cell* cell)
+{
+    assert(temporaryEndsInCurrentComponent.find(cell) != temporaryEndsInCurrentComponent.end());
+    temporaryEndsInCurrentComponent.erase(cell);
 }
 
 void Level::addTemporaryEndBlock(const Component* comp)
@@ -282,21 +292,34 @@ void Level::printCell(const Cell* cell, int id) const
 {
     ColorType background = 0x00;
     ColorType foreground = 0x00;
-    char symbol = 0;
+    char symbol = '?';
 
     // Background
     if (cell->isObstacle())
     {
         background = BACKGROUND_GREEN;
+        if (cell->isFree()) // Special case: temporary obstacle
+        {
+            background = BACKGROUND_GRAY;
+        }
     }
     else
 #ifdef TRACE_SOLUTIONS
-    if (cell->getLayer() != -1)
+        if (cell->getLayer() != -1)
     {
         background = BACKGROUND_INTENSITY | BACKGROUND_ONE * (2 + cell->getLayer());
     }
     else
 #endif
+        if (temporaryEnds.find(cell) != temporaryEnds.end())
+    {
+        background = BACKGROUND_YELLOW;
+    }
+    else if (cell->isFree() == false)
+    {
+        background = BACKGROUND_GRAY;
+    }
+    else
     {
         background = BACKGROUND_WHITE;
     }
@@ -306,10 +329,15 @@ void Level::printCell(const Cell* cell, int id) const
     if (cell->getDepth() != -1)
     {
         foreground = GRAY;
+
+        if (cell->getX() == Debug::currentX && cell->getY() == Debug::currentY)
+        {
+            foreground = YELLOW;
+        }
     }
     else
 #endif
-    if (id != -1 && cell->getComponentId() == id)
+        if (id != -1 && cell->getComponentId() == id)
     {
         foreground = RED;
     }
@@ -324,6 +352,12 @@ void Level::printCell(const Cell* cell, int id) const
         if (cell->getDepth() != -1)
     {
         symbol = '0' + (cell->getDepth() + 1) % 10;
+        TRACE(
+            if (cell->getX() == Debug::currentX && cell->getY() == Debug::currentY)
+            {
+                symbol = '@';
+            }
+        );
     }
     else
 #endif
