@@ -55,6 +55,7 @@ void Analyzer::analyzeComponents()
             else if (component.getExits().size() == 1)
             {
                 const Exit* e = *exits.begin();
+
                 TRACE(Colorer::print<YELLOW>("Double check: end at (%d, %d)  (one exit only)\n", e->getX(), e->getY()));
             }
         }
@@ -82,7 +83,6 @@ void Analyzer::analyzeComponents()
             else if (component.getSolutionCount() == 0)
             {
                 TRACE(Colorer::print<YELLOW>("Component %d is SPECIAL!\n", getComponentCurrentIndex(), i));
-
                 TRACE(level->traceComponent(i));
 
                 level->addSpecialComponent(&component, i);

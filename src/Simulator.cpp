@@ -177,9 +177,8 @@ void Simulator::floodObstacle(int x, int y, int num) const
 
 static void collectExitsAlongPerimeter(Cell* cell, int dir, const Cell* const entryPoint, Component* const component)
 {
-    // TODO: consider exit at your back (for 1-sized components)
     Cell* left = cell->getNextCell(Left[dir]);
-    if (!left->isObstacle())
+    if (left->isObstacle() == false)
     {
         if (left->getComponentId() == cell->getComponentId())
         {
@@ -198,7 +197,7 @@ static void collectExitsAlongPerimeter(Cell* cell, int dir, const Cell* const en
     }
 
     Cell* front = cell->getNextCell(dir);
-    if (!front->isObstacle())
+    if (front->isObstacle() == false)
     {
         if (front->getComponentId() == cell->getComponentId())
         {
@@ -222,7 +221,7 @@ static void collectExitsAlongPerimeter(Cell* cell, int dir, const Cell* const en
     }
 
     Cell* right = cell->getNextCell(Right[dir]);
-    if (!right->isObstacle())
+    if (right->isObstacle() == false)
     {
         if (right->getComponentId() == cell->getComponentId())
         {
@@ -242,6 +241,21 @@ static void collectExitsAlongPerimeter(Cell* cell, int dir, const Cell* const en
             Exit exit(cell, Right[dir]);
             cell->addExit(exit);
             component->addExit(cell->getExit(Right[dir]));
+        }
+    }
+
+    Cell* behind = cell->getNextCell(dir ^ 2);
+    if (behind->isObstacle() == false)
+    {
+        if (behind->getComponentId() == cell->getComponentId())
+        {
+            throw std::exception("Impossible!");
+        }
+        else // is exit
+        {
+            Exit exit(cell, dir ^ 2);
+            cell->addExit(exit);
+            component->addExit(cell->getExit(dir ^ 2));
         }
     }
 
