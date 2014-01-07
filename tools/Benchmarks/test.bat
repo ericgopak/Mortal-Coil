@@ -16,7 +16,7 @@ set inputFile="mortal_coil.txt"
 set outputFile="output.txt"
 set levelDataFile="..\..\data\levels\Level%%i"
 set timesFile="times\time%%i"
-set checker="..\Solution Tester\Solution Tester.exe"
+set checker="..\Solution Checker\Solution Checker.exe"
 
 for /l %%i in (%fromLevel%, 1, %toLevel%) do (
 	< nul set /p a="Level %%i:	"
