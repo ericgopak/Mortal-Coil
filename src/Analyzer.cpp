@@ -384,16 +384,8 @@ void Analyzer::solutionFound(Cell* cell, int dir)
                 int newStateMask = previousStateMask.back() | (1 << exitIndex1) | (1 << exitIndex2);
 
                 cell = moveForward(cell, leftDirection);
-
-                //preOccupyAction(cell, dir); // TODO: use moveForward / moveBackwards!
-                //occupy(cell, dir);
-                //postOccupyAction(cell, dir);
                 analyzeComponent(level->getComponents()[getComponentCurrentIndex()], newStateMask);
-
                 cell = moveBackwards(cell, leftDirection);
-                /*preRestoreAction(cell, dir);
-                restore(cell, dir);
-                postRestoreAction(cell, dir);*/
 
                 uncollectResults();
             }
@@ -420,14 +412,7 @@ void Analyzer::solutionFound(Cell* cell, int dir)
 
 
                 cell = moveForward(cell, rightDirection);
-                /*preOccupyAction(cell, dir);
-                occupy(cell, dir);
-                postOccupyAction(cell, dir);*/
                 analyzeComponent(level->getComponents()[getComponentCurrentIndex()], newStateMask);
-                /*preRestoreAction(cell, dir);
-                restore(cell, dir);
-                postRestoreAction(cell, dir);*/
-
                 cell = moveBackwards(cell, rightDirection);
 
                 uncollectResults();
@@ -456,16 +441,8 @@ void Analyzer::solutionFound(Cell* cell, int dir)
                 assert((previousStateMask.back() & (1 << exitIndex1)) == 0 && (previousStateMask.back() & (1 << exitIndex2)) == 0 && "Erroneous state mask!");
                 int newStateMask = previousStateMask.back() | (1 << exitIndex1) | (1 << exitIndex2);
 
-                /*preOccupyAction(cell, dir);
-                occupy(cell, dir);
-                postOccupyAction(cell, dir);*/
                 cell = moveForward(cell, dir);
-
                 analyzeComponent(level->getComponents()[getComponentCurrentIndex()], newStateMask);
-                /*preRestoreAction(cell, dir);
-                restore(cell, dir);
-                postRestoreAction(cell, dir);*/
-
                 cell = moveBackwards(cell, dir);
 
                 uncollectResults();
