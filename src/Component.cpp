@@ -39,6 +39,8 @@ HeadToBody* SolutionTree::followStateMask(const int stateMask)
 
 SolutionTree::SolutionTree()
     : solutionCount(0)
+    , startingSolutionCount(0)
+    , endingSolutionCount(0)
 {
 }
 
@@ -47,14 +49,18 @@ int SolutionTree::getSolutionCount() const
     return solutionCount;
 }
 
-void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution)
+void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding)
 {
-    // TODO: check for solution uniqueness
+    assert(solution.size() > 0);
+
+    // TODO: check for solution uniqueness.
 
     SolutionTree* subtree = this;
     for (size_t i = 0; i < solution.size(); i++)
     {
         subtree->solutionCount++;
+        subtree->startingSolutionCount += isStarting;
+        subtree->endingSolutionCount += isEnding;
 
         const SolutionRecord& record = solution[i];
         HeadToBody* headToBody = &subtree->tree[std::get<0>(record)];
@@ -139,6 +145,11 @@ int Component::getIndexByExitCell(const Cell* exitCell) const
     return x;
 }
 
+int Component::getFreeExitsMask() const
+{
+    return (1 << exits.size()) - 1;
+}
+
 int Component::getFreeExitCellsMask() const
 {
     return (1 << exitCells.size()) - 1;
@@ -197,7 +208,6 @@ void Component::chooseSolution(const int stateMask, const SolutionHead& head, co
     BodyToTree* bodyToTree = headToBody->followHead(head);
     assert(bodyToTree != NULL && "Failed to choose given solution: solution head not found!");
     SolutionTree* subtree = bodyToTree->followBody(body);
-    //assert(subtree != NULL && "Failed to choose given solution: solution body not found!");
 
     remainingSolutions.push(subtree);
 }

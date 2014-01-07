@@ -53,6 +53,8 @@ class SolutionTree
 {
     std::map<int, HeadToBody> tree;
     int solutionCount;
+    int startingSolutionCount;
+    int endingSolutionCount;
 
 public:
 
@@ -60,7 +62,7 @@ public:
 
     HeadToBody* followStateMask(const int stateMask);
     int getSolutionCount() const;
-    void addSolution(const std::vector<SolutionRecord>& solution);
+    void addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding);
 };
 
 class Component : public AbstractComponent
@@ -88,6 +90,7 @@ public:
     const Cell* getExitCellByIndex(int index) const;
     int getIndexByExit(const Exit* exit) const;
     int getIndexByExitCell(const Cell* exitCell) const;
+    int getFreeExitsMask() const;
     int getFreeExitCellsMask() const;
     int getCurrentExitStateMask() const;
     int getCurrentExitCellStateMask() const;

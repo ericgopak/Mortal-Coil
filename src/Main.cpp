@@ -123,6 +123,7 @@ int main(int argc, char* argv[])
 
 #ifdef TRACE_STATISTICS
     Colorer::print<WHITE>("Max number of solutions: %d\n", Debug::mostSolutions);
+    Colorer::print<WHITE>("Solutions found: %d\n", Debug::totalSolutions);
     Colorer::print<WHITE>("Number of SPECIAL components: %d\n", level.getSpecialComponents().size());
 #endif
 

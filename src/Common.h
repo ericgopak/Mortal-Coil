@@ -2,7 +2,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-//#define TRACE_STATISTICS
+#define TRACE_STATISTICS
 
 #ifdef _DEBUG
 #   define TRACE_SOLUTIONS
@@ -51,6 +51,7 @@ namespace Debug
 
 #ifdef TRACE_STATISTICS
     extern int mostSolutions;
+    extern int totalSolutions;
     extern int gotTooManyTemporaryEndsCounter;
     extern int gotInvalidNextTouchesCounter;
     extern int gotIsolatedCellsCounter;

@@ -6,7 +6,8 @@
 
 class Analyzer : public Simulator
 {
-    std::vector<const Exit*> previousExit;
+    //std::vector<const Exit*> previousExit;
+    std::vector<const SolutionHead> previousHead;
     std::vector<int> previousStateMask;
     std::vector<SolutionRecord> solutionRecordHolder;
     int componentCurrentIndex;
@@ -38,6 +39,8 @@ public:
     virtual bool potentialSolution(Cell* cell, int dir) const;
     virtual void solutionFound(Cell* cell, int dir);
 
-    void collectResults(const Exit* exit1, const Exit* exit2);
+    void proceedAnalyzing(Cell* cell, int dir);
+
+    void collectResults(const SolutionHead& head, const SolutionBody& body);
     void uncollectResults();
 };
