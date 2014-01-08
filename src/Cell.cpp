@@ -193,9 +193,9 @@ void Cell::setNextCell(int dir, Cell* ncell)
     nextCell[dir] = ncell;
 }
 
-Exit::Exit(const Cell* cell, int dir)
-    : Cell(*cell)
-    , dir(dir)
+Exit::Exit(Cell* cell, int dir)
+    : dir(dir)
+    , hostCell(cell)
     , opposingExit(NULL)
 {
 }
@@ -212,25 +212,40 @@ void Exit::setOpposingExit(const Exit* opposingExit)
 
 bool Exit::operator < (const Exit &e) const
 {
-    if (y != e.y)
+    if (hostCell->getY() != e.hostCell->getY())
     {
-        return y < e.y;
+        return hostCell->getY() < e.hostCell->getY();
     }
-    if (x != e.x)
+    if (hostCell->getX() != e.hostCell->getX())
     {
-        return x < e.x;
+        return hostCell->getX() < e.hostCell->getX();
     }
     return dir < e.dir;
 }
 
 bool Exit::operator == (const Exit &e) const
 {
-    return x == e.x && y == e.y && dir == e.dir;
+    return hostCell->getX() == e.hostCell->getX() && hostCell->getY() == e.hostCell->getY() && dir == e.dir;
+}
+
+int Exit::getX() const
+{
+    return hostCell->getX();
+}
+
+int Exit::getY() const
+{
+    return hostCell->getY();
 }
 
 int Exit::getDir() const
 {
     return dir;
+}
+
+const Cell* Exit::getHostCell() const
+{
+    return hostCell;
 }
 
 #ifdef TRACE_SOLUTIONS

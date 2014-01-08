@@ -6,6 +6,8 @@ class Solver : public Simulator
 {
     const char* outputFilename;
 
+    int cellsVisited;
+
 public:
     Solver(Level* currentLevel, const char* outputFilename);
 
@@ -27,6 +29,6 @@ public:
     void removeTemporaryEndBlocks(Cell* cell, int dir) const;
 
     void solve(int row, int col, int firstComponentId);
-    //void follow(const Exit* exit);
+    void follow(const SolutionHead& head);
     void trySolving(int startX, int startY);
 };

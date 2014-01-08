@@ -88,19 +88,42 @@ public:
 #endif
 };
 
-class Exit : public Cell
+//class Exit : public Cell
+class Exit
 {
     int dir;
+    Cell* hostCell;
     const Exit* opposingExit;
 
 public:
-    Exit(const Cell* cell, int dir);
-
-    const Exit* getOpposingExit() const;
-    void setOpposingExit(const Exit* opposingExit);
+    Exit(Cell* cell, int dir);
 
     bool operator < (const Exit &e) const;
     bool operator == (const Exit &e) const;
 
+    int getX() const;
+    int getY() const;
     int getDir() const;
+    const Cell* getHostCell() const;
+    const Exit* getOpposingExit() const;
+
+    void setOpposingExit(const Exit* opposingExit);
 };
+
+
+//class Exit : public Cell
+//{
+//    int dir;
+//    const Exit* opposingExit;
+//
+//public:
+//    Exit(const Cell* cell, int dir);
+//
+//    const Exit* getOpposingExit() const;
+//    void setOpposingExit(const Exit* opposingExit);
+//
+//    bool operator < (const Exit &e) const;
+//    bool operator == (const Exit &e) const;
+//
+//    int getDir() const;
+//};

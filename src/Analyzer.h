@@ -10,6 +10,7 @@ class Analyzer : public Simulator
     std::vector<const SolutionHead> previousHead;
     std::vector<int> previousStateMask;
     std::vector<SolutionRecord> solutionRecordHolder;
+    std::vector<std::string> decisionHolder;
     int componentCurrentIndex;
 
     static int depth;
@@ -26,6 +27,8 @@ public:
     void analyzeComponent(Component& component, int stateMask);
 
     void preprocess();
+
+    void backtrack(Cell* cell, int dir);
 
     virtual void preAction(Cell* cell, int dir) const;
     virtual void postAction(Cell* cell, int dir) const;

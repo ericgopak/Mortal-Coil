@@ -17,7 +17,7 @@ struct SolutionHead
 struct SolutionBody
 {
     int endX, endY, endDir;
-    //std::string solution; // TODO: consider compressing (1 bit per decision)
+    std::string solution; // TODO: consider compressing (1 bit per decision)
 
     bool operator < (const SolutionBody& body) const;
 };
@@ -27,24 +27,24 @@ class SolutionTree;
 typedef std::tuple<int, SolutionHead, SolutionBody> SolutionRecord;
 
 // Solution tree implementation
-class BodyToTree
+struct BodyToTree
 {
-    friend class SolutionTree;
+//    friend class SolutionTree;
 
     std::map<SolutionBody, SolutionTree> bodyToTree;
 
-public:
+//public:
 
     SolutionTree* followBody(const SolutionBody& solutionBody);
 };
 
-class HeadToBody
+struct HeadToBody
 {
-    friend class SolutionTree;
+//    friend class SolutionTree;
 
     std::map<SolutionHead, BodyToTree> headToBody;
 
-public:
+//public:
 
     BodyToTree* followHead(const SolutionHead& solutionHead);
 };
@@ -62,6 +62,8 @@ public:
 
     HeadToBody* followStateMask(const int stateMask);
     int getSolutionCount() const;
+    int getStartingSolutionCount() const;
+    int getEndingSolutionCount() const;
     void addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding);
 };
 
@@ -75,6 +77,8 @@ class Component : public AbstractComponent
 
     std::stack<SolutionTree*> remainingSolutions;
 
+    int currentStateMask;
+
 public:
     Component();
 
@@ -85,15 +89,20 @@ public:
     SolutionTree* getSolutions(); // TODO: reconsider
     const std::vector<const Exit*>& getExits() const;
     const std::vector<const Cell*>& getExitCells() const;
-    const SolutionTree* getRemainingSolutions() const;
+    SolutionTree* getRemainingSolutions() const;
     const Exit* getExitByIndex(int index) const;
     const Cell* getExitCellByIndex(int index) const;
     int getIndexByExit(const Exit* exit) const;
     int getIndexByExitCell(const Cell* exitCell) const;
     int getFreeExitsMask() const;
     int getFreeExitCellsMask() const;
-    int getCurrentExitStateMask() const;
+    int getInnerExitStateMask() const;
+    int getOuterExitStateMask() const;
+    int getActualExitStateMask() const;
     int getCurrentExitCellStateMask() const;
+
+    int getCurrentStateMask() const;
+    void setCurrentStateMask(int mask);
 
     void addExit(const Exit* e);
     void addExitCell(const Cell* cell);
@@ -103,4 +112,6 @@ public:
 
     void incrementOccupied(int num = 1);
     void decrementOccupied(int num = 1);
+
+    void toggleExitState(const SolutionHead& head);
 };

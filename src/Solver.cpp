@@ -4,9 +4,14 @@
 #include "Component.h"
 #include "Solver.h"
 
+#include <sstream>
+#include <iostream>
+#include <iterator>
+
 Solver::Solver(Level* currentLevel, const char* _outputFilename)
     : Simulator(currentLevel)
     , outputFilename(_outputFilename)
+    , cellsVisited(0)
 {
 }
 
@@ -332,13 +337,13 @@ void Solver::solve(int row, int col, int firstComponentId)
         trySolving(e1->getX(), e1->getY());
         if (level->Solved)
         {
-            level->prepareSolution(e1->getX(), e1->getY());
+            //level->prepareSolution(e1->getX(), e1->getY());
             return;
         }
         trySolving(e2->getX(), e2->getY());
         if (level->Solved)
         {
-            level->prepareSolution(e2->getX(), e2->getY());
+            //level->prepareSolution(e2->getX(), e2->getY());
             return;
         }
         assert(level->Solved && "Failed to solve the level with 2 ends!");
@@ -350,7 +355,7 @@ void Solver::solve(int row, int col, int firstComponentId)
         trySolving(e->getX(), e->getY());
         if (level->Solved)
         {
-            level->prepareSolution(e->getX(), e->getY());
+            //level->prepareSolution(e->getX(), e->getY());
             return;
         }
         else
@@ -374,7 +379,7 @@ void Solver::solve(int row, int col, int firstComponentId)
                     trySolving(x, y);
                     if (level->Solved)
                     {
-                        level->prepareSolution(x, y);
+                        //level->prepareSolution(x, y);
                         return;
                     }
                 }
@@ -398,7 +403,7 @@ void Solver::solve(int row, int col, int firstComponentId)
                     trySolving(x, y);
                     if (level->Solved)
                     {
-                        level->prepareSolution(x, y);
+                        //level->prepareSolution(x, y);
                         return;
                     }
                 }
@@ -436,7 +441,7 @@ void Solver::solve(int row, int col, int firstComponentId)
                 
                 if (level->Solved)
                 {
-                    level->prepareSolution(startX, startY);
+                    //level->prepareSolution(startX, startY);
                     return;
                 }
             }
@@ -446,107 +451,104 @@ void Solver::solve(int row, int col, int firstComponentId)
     assert(level->Solved && "Failed to solve the level! Something's definitely wrong...");
 }
 
-//void Solver::follow(const Exit* exit)
-//{
-////TODO: check if can actually move to that component
-////TODO: check if final component (count fully-traversed components, if only one left untraversed, and current component has some free cells left - then we are trying to finish)
-////TODO: think of accumulating answer (add sequence of Cell* to every Path, nay?)
-//
-////TODO: figure out how to start and how to terminate
-//    // Get opposing exit
-//    int dir = exit->getDir();
-//    const Exit* opposingExit = exit->getNextCell(dir)->getExit(dir ^ 2); // TODO: consider saving a pointer in Exit class
-//
-//    if (opposingExit->isFree() == false)
-//    {
-//        return;
-//    }
-//
-//    Component* compFrom = &level->getComponents()[exit->getComponentId()];
-//    Component* compTo = &level->getComponents()[opposingExit->getComponentId()];
-//
-//    //if (compFrom->getSolutionCount() == 0)
-//    //{
-//    //    // Must be an 'end'
-//    //    if (level->Free == 1)
-//    //    {
-//    //        printf("LAST END!\n");
-//    //    }
-//    //    else
-//    //    {
-//    //        printf("FIRST END???\n");
-//    //    }
-//    //}
-//    //
-//    //if (compTo->getSolutionCount() == 0)
-//    //{
-//    //    // Must be an 'end'
-//    //    if (level->Free == 1)
-//    //    {
-//    //        printf("LAST END???\n");
-//    //    }
-//    //    else
-//    //    {
-//    //        printf("FIRST END!\n");
-//    //    }
-//    //}
-//
-//    const SolutionMap* solutions = compTo->getSolutions();
-//    FOREACH(*solutions, it)
-//    {
-//        if (*it->first.getStart() == *opposingExit)
-//        {
-//            //printf("Following (%d, %d, %d)...\n", opposingExit->getX(), opposingExit->getY(), opposingExit->getDir());
-//            const Exit* nextExit = it->first.getFinish();
-//            int length = it->first.getLength();
-//
-//            compTo->chooseSolution(&it->first);
-//            level->Free -= length;
-//            compTo->incrementOccupied(length);
-//
-//            if (compTo->getOccupiedCount() == compTo->getSize())
-//            {
-//                level->componentsFullyTraversed++;
-//            }
-//            
-//            if (level->componentsFullyTraversed + 1 == level->getComponentCount())
-//            {
-//                // Almost done
-//                printf("ALMOST DONE! In component %d\n", nextExit->getComponentId());
-//            }
-//
-//            follow(nextExit);
-//            
-//            if (compTo->getOccupiedCount() == compTo->getSize())
-//            {
-//                level->componentsFullyTraversed--;
-//            }
-//
-//            compTo->decrementOccupied(length);
-//            level->Free += it->first.getLength();
-//            compTo->unchooseSolution();
-//        }
-//    }
-//}
+void Solver::follow(const SolutionHead& head)
+{
+    // Get opposing exit
+    Cell* fromCell = level->getCell(head.startY, head.startX);
+
+    Component* comp = &level->getComponents()[fromCell->getComponentId()];
+
+    SolutionTree* solutions = comp->getRemainingSolutions();
+
+    const int stateMask = comp->getActualExitStateMask();
+
+    HeadToBody* headToBody = solutions->followStateMask(stateMask);
+    if (headToBody == NULL)
+    {
+        // No solutions
+        int bp = 0;
+    }
+    else
+    {
+        BodyToTree* bodyToTree = headToBody->followHead(head);
+        if (bodyToTree == NULL)
+        {
+            // No solutions
+            int bp = 0;
+        }
+        else
+        {
+            FOREACH(bodyToTree->bodyToTree, btt)
+            {
+                const SolutionBody& body = btt->first;
+
+                SolutionTree* subtree = &btt->second;
+
+                TRACE(printf("Trying (%d, %d, %d) --> (%d, %d, %d)\n", head.startX, head.startY, head.startDir, body.endX, body.endY, body.endDir));
+
+                Cell* toCell = level->getCell(body.endY, body.endX);
+                fromCell->setFree(false);
+                toCell->setFree(false);
+                comp->chooseSolution(stateMask, head, body);
+
+                int dir = body.endDir;
+                SolutionHead nextHead = {body.endX + dx[dir], body.endY + dy[dir], dir};
+
+                if (subtree->getSolutionCount() == 0) // Current component traversed completely
+                {
+                    cellsVisited += comp->getSize();
+
+                    if (cellsVisited == level->Free) // TODO: consider using sort of a constant here
+                    {
+//Colorer::print<WHITE>("SOLUTION FOUND!!!\n");
+//level->traceComponent();
+                        level->Solved = true;
+
+                        level->Answer = body.solution + level->Answer;
+
+                        return;
+                    }
+                }
+
+//level->traceComponent();
+                if (level->getCell(nextHead.startY, nextHead.startX)->isFree())
+                {
+                    follow(nextHead);
+                    if (level->Solved)
+                    {
+                        level->Answer = body.solution + level->Answer;
+                        return;
+                    }
+                }
+
+                fromCell->setFree(true);
+                toCell->setFree(true);
+                comp->unchooseSolution();
+
+                if (subtree->getSolutionCount() == 0)
+                {
+                    cellsVisited -= comp->getSize();
+                }
+            }
+        }
+    }
+}
 
 void Solver::trySolving(int startX, int startY)
 {
     Cell* cell = level->getCell(startY, startX);
+    Component* comp = &level->getComponents()[cell->getComponentId()];
 
     for (int d = 0; d < 4; d++)
     {
-        /*if (cell->hasExit(d))
+        SolutionHead head = {startX, startY, d};
+        if (comp->getSolutions()->getStartingSolutionCount() > 0)
         {
-            const Exit* exit = cell->getExit(d);
-            follow(exit);
-        }*/
-
-        if (mayStartFrom(cell, d))
-        {
-            backtrack(cell, d);
-
-            if (stopBacktracking())
+            Debug::INITIAL_CELL = cell; // Awkwardly ugly hack
+            follow(head);
+            if (level->Solved)
             {
+                level->setSolutionStartXY(startX, startY);
                 return;
             }
         }

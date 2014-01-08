@@ -56,9 +56,9 @@ public:
     bool checkTouchingObstacles(Cell* cell) const;
     void untouchObstacles(Cell* cell) const;
 
-    void backtrack(Cell* cell, int direction);
+    //void backtrack(Cell* cell, int direction);
 
-    virtual void trySolving(int startX, int startY);
+    //virtual void trySolving(int startX, int startY);
 
     virtual bool mayStartFrom(Cell* cell, int dir) const;
     virtual bool shouldConsider(Cell* cell, int dir) const;

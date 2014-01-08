@@ -49,6 +49,16 @@ int SolutionTree::getSolutionCount() const
     return solutionCount;
 }
 
+int SolutionTree::getStartingSolutionCount() const
+{
+    return startingSolutionCount;
+}
+
+int SolutionTree::getEndingSolutionCount() const
+{
+    return endingSolutionCount;
+}
+
 void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding)
 {
     assert(solution.size() > 0);
@@ -72,6 +82,7 @@ void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution, bool
 Component::Component()
     : AbstractComponent()
     , occupied(0)
+    , currentStateMask(0)
 {
     // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
@@ -84,6 +95,7 @@ Component::Component(const Component& c)
     , occupied(c.occupied)
     , solutions(c.solutions)
     , exits(c.exits)
+    , currentStateMask(0)
 {
     // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
@@ -111,7 +123,7 @@ const std::vector<const Cell*>& Component::getExitCells() const
     return exitCells;
 }
 
-const SolutionTree* Component::getRemainingSolutions() const
+SolutionTree* Component::getRemainingSolutions() const
 {
     assert(remainingSolutions.size() > 0);
     return remainingSolutions.top();
@@ -155,18 +167,42 @@ int Component::getFreeExitCellsMask() const
     return (1 << exitCells.size()) - 1;
 }
 
-int Component::getCurrentExitStateMask() const
+int Component::getInnerExitStateMask() const
 {
     int mask = 0;
     for (size_t i = 0; i < exits.size(); i++)
     {
-        const Cell* exit = getExitByIndex(i);
-        if (exit->isFree() == false)
+        const Exit* exit = getExitByIndex(i);
+if (exit->getHostCell() == Debug::INITIAL_CELL)
+{
+    continue; // UGLY HACK: DO NOT COUNT SPECIAL CASES
+}
+
+        if (exit->getHostCell()->isFree() == false)
         {
             mask |= 1 << i;
         }
     }
     return mask;
+}
+
+int Component::getOuterExitStateMask() const
+{
+    int mask = 0;
+    for (size_t i = 0; i < exits.size(); i++)
+    {
+        const Exit* exit = getExitByIndex(i)->getOpposingExit();
+        if (exit->getHostCell()->isFree() == false)
+        {
+            mask |= 1 << i;
+        }
+    }
+    return mask;
+}
+
+int Component::getActualExitStateMask() const
+{
+    return getInnerExitStateMask() | getOuterExitStateMask();
 }
 
 int Component::getCurrentExitCellStateMask() const
@@ -183,6 +219,15 @@ int Component::getCurrentExitCellStateMask() const
     return mask;
 }
 
+int Component::getCurrentStateMask() const
+{
+    return currentStateMask;
+}
+
+void Component::setCurrentStateMask(int mask)
+{
+    currentStateMask = mask;
+}
 
 SolutionTree* Component::getSolutions()
 {
@@ -226,4 +271,20 @@ void Component::incrementOccupied(int num)
 void Component::decrementOccupied(int num)
 {
     occupied -= num;
+}
+
+void Component::toggleExitState(const SolutionHead& head)
+{
+    // Find exit index and update currentStateMask
+    int index = -1;
+    for (size_t i = 0; i < exits.size(); i++)
+    {
+        if (exits[i]->getX() == head.startX && exits[i]->getY() && exits[i]->getDir() == head.startDir)
+        {
+            index = i;
+            break;
+        }
+    }
+    assert(index != -1);
+    currentStateMask ^= 1 << index;
 }

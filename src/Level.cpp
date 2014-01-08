@@ -242,51 +242,51 @@ void Level::prependSolutionCell(Cell* cell, int dir)
     solution.push_front(cell);
 }
 
-void Level::prepareSolution(int startX, int startY)
-{
-    setSolutionStartXY(startX, startY);
-
-    Answer.clear();
-
-    int currDir = -1;
-    for (size_t i = 1; i < solution.size(); i++)
-    {
-        const Cell* a = solution[i - 1];
-        const Cell* b = solution[i];
-        int x1 = a->getX();
-        int y1 = a->getY();
-        int x2 = b->getX();
-        int y2 = b->getY();
-        
-        int dir = -1;
-        if (x1 < x2)
-        {
-            dir = 0;
-        }
-        else if (y1 < y2)
-        {
-            dir = 1;
-        }
-        else if (x1 > x2)
-        {
-            dir = 2;
-        }
-        else if (y1 > y2)
-        {
-            dir = 3;
-        }
-        else
-        {
-            assert(false && "Something's wrong with the answer - found cells with equal coordinates!");
-        }
-        
-        if (dir != currDir)
-        {
-            Answer += Direction[dir];
-            currDir = dir;
-        }
-    }
-}
+//void Level::prepareSolution(int startX, int startY)
+//{
+//    setSolutionStartXY(startX, startY);
+//
+//    Answer.clear();
+//
+//    int currDir = -1;
+//    for (size_t i = 1; i < solution.size(); i++)
+//    {
+//        const Cell* a = solution[i - 1];
+//        const Cell* b = solution[i];
+//        int x1 = a->getX();
+//        int y1 = a->getY();
+//        int x2 = b->getX();
+//        int y2 = b->getY();
+//        
+//        int dir = -1;
+//        if (x1 < x2)
+//        {
+//            dir = 0;
+//        }
+//        else if (y1 < y2)
+//        {
+//            dir = 1;
+//        }
+//        else if (x1 > x2)
+//        {
+//            dir = 2;
+//        }
+//        else if (y1 > y2)
+//        {
+//            dir = 3;
+//        }
+//        else
+//        {
+//            assert(false && "Something's wrong with the answer - found cells with equal coordinates!");
+//        }
+//        
+//        if (dir != currDir)
+//        {
+//            Answer += Direction[dir];
+//            currDir = dir;
+//        }
+//    }
+//}
 
 void Level::printCell(const Cell* cell, int id) const
 {

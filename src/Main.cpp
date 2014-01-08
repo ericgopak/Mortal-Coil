@@ -144,6 +144,7 @@ int main(int argc, char* argv[])
 
     if (level.Solved)
     {
+//Colorer::print<YELLOW>("Solution: %s\n", level.Answer.c_str());
         level.outputToFile(OUTPUT_FILENAME);
     }
 

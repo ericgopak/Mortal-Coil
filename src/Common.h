@@ -2,7 +2,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#define TRACE_STATISTICS
+//#define TRACE_STATISTICS
 
 #ifdef _DEBUG
 #   define TRACE_SOLUTIONS
@@ -41,9 +41,12 @@ const int BitCount[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4}; // Bi
 const int P[4] = {1, 2, 4, 8}; // TODO: really?
 
 class Level;
+class Cell;
 
 namespace Debug
 {
+    extern const Cell* INITIAL_CELL;
+
     extern const Level* level;
 
     extern int depth;
