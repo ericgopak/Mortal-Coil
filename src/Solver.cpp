@@ -15,7 +15,7 @@ Solver::Solver(Level* currentLevel, const char* _outputFilename)
 {
 }
 
-void Solver::preOccupyAction(Cell* cell, int dir) const
+void Solver::preOccupyAction(Cell* cell, int dir)
 {
     assert(cell->isFree());
 
@@ -24,7 +24,7 @@ void Solver::preOccupyAction(Cell* cell, int dir) const
     TRACE(cell->setDepth(tracer.depth));
 }
 
-void Solver::postOccupyAction(Cell* cell, int dir) const
+void Solver::postOccupyAction(Cell* cell, int dir)
 {
     assert(cell->isFree() == false);
 
@@ -32,7 +32,7 @@ void Solver::postOccupyAction(Cell* cell, int dir) const
     addTemporaryEndBlocks(cell, dir);
 }
 
-void Solver::preRestoreAction(Cell* cell, int dir) const
+void Solver::preRestoreAction(Cell* cell, int dir)
 {
     assert(cell->isFree() == false);
 
@@ -40,7 +40,7 @@ void Solver::preRestoreAction(Cell* cell, int dir) const
     removeTemporaryEndBlocks(cell, dir);
 }
 
-void Solver::postRestoreAction(Cell* cell, int dir) const
+void Solver::postRestoreAction(Cell* cell, int dir)
 {
     assert(cell->isFree());
 
@@ -49,11 +49,11 @@ void Solver::postRestoreAction(Cell* cell, int dir) const
     TRACE(cell->setDepth(-1));
 }
 
-void Solver::preAction(Cell* cell, int dir) const
+void Solver::preAction(Cell* cell, int dir)
 {
 }
 
-void Solver::postAction(Cell* cell, int dir) const
+void Solver::postAction(Cell* cell, int dir)
 {
     if (level->Solved)
     {
@@ -451,6 +451,17 @@ void Solver::solve(int row, int col, int firstComponentId)
     assert(level->Solved && "Failed to solve the level! Something's definitely wrong...");
 }
 
+void changeExitCellsState(Component* comp, bool block, StateMask stateChange)
+{
+    for (size_t i = 0; i < comp->getExitCells().size(); i++)
+    {
+        if (stateChange & (1 << i))
+        {
+            const_cast<Cell*>(comp->getExitCells()[i])->setFree(!block); // UGLY HACK!
+        }
+    }
+}
+
 void Solver::follow(const SolutionHead& head)
 {
     // Get opposing exit
@@ -460,17 +471,19 @@ void Solver::follow(const SolutionHead& head)
 
     SolutionTree* solutions = comp->getRemainingSolutions();
 
-    const int stateMask = comp->getActualExitStateMask();
+    //const int stateMask = comp->getActualExitStateMask();
+    const int outerExitsStateMask = comp->getOuterExitStateMask();
 
-    HeadToBody* headToBody = solutions->followStateMask(stateMask);
-    if (headToBody == NULL)
-    {
-        // No solutions
-        int bp = 0;
-    }
-    else
-    {
-        BodyToTree* bodyToTree = headToBody->followHead(head);
+    //HeadToBody* headToBody = solutions->followStateMask(stateMask);
+    //if (headToBody == NULL)
+    //{
+    //    // No solutions
+    //    int bp = 0;
+    //}
+    //else
+    //{
+        //BodyToTree* bodyToTree = headToBody->followHead(head);
+        BodyToTree* bodyToTree = solutions->followHead(head);
         if (bodyToTree == NULL)
         {
             // No solutions
@@ -482,17 +495,39 @@ void Solver::follow(const SolutionHead& head)
             {
                 const SolutionBody& body = btt->first;
 
+                if ((body.mustBeBlockedMask & outerExitsStateMask) != body.mustBeBlockedMask)
+                {
+//level->traceComponent();
+                    continue;
+                }
+
+                if ((body.mustBeFreeMask & outerExitsStateMask) != 0)
+                {
+//level->traceComponent();
+                    continue;
+                }
+
                 SolutionTree* subtree = &btt->second;
 
                 TRACE(printf("Trying (%d, %d, %d) --> (%d, %d, %d)\n", head.startX, head.startY, head.startDir, body.endX, body.endY, body.endDir));
 
                 Cell* toCell = level->getCell(body.endY, body.endX);
+
+                const StateMask originalInnerState = comp->getCurrentExitCellStateMask();
+                StateMask toBeChangedMask = ~originalInnerState & body.stateChangeMask;
+                changeExitCellsState(comp, true, toBeChangedMask);
+
+#ifdef TRACE_SOLUTIONS
                 fromCell->setFree(false);
                 toCell->setFree(false);
-                comp->chooseSolution(stateMask, head, body);
+level->traceComponent();
+#endif
 
-                int dir = body.endDir;
-                SolutionHead nextHead = {body.endX + dx[dir], body.endY + dy[dir], dir};
+                //fromCell->setFree(false);
+                //blockExits(toCell);
+                //toCell->setFree(false);
+                //comp->chooseSolution(stateMask, head, body);
+                comp->chooseSolution(head, body);
 
                 if (subtree->getSolutionCount() == 0) // Current component traversed completely
                 {
@@ -510,6 +545,9 @@ void Solver::follow(const SolutionHead& head)
                     }
                 }
 
+                int dir = body.endDir;
+                SolutionHead nextHead = {body.endX + dx[dir], body.endY + dy[dir], dir};
+
 //level->traceComponent();
                 if (level->getCell(nextHead.startY, nextHead.startX)->isFree())
                 {
@@ -521,8 +559,12 @@ void Solver::follow(const SolutionHead& head)
                     }
                 }
 
+#ifdef TRACE_SOLUTIONS
                 fromCell->setFree(true);
                 toCell->setFree(true);
+#endif
+                changeExitCellsState(comp, false, toBeChangedMask);
+                
                 comp->unchooseSolution();
 
                 if (subtree->getSolutionCount() == 0)
@@ -531,7 +573,7 @@ void Solver::follow(const SolutionHead& head)
                 }
             }
         }
-    }
+    //}
 }
 
 void Solver::trySolving(int startX, int startY)
@@ -544,7 +586,7 @@ void Solver::trySolving(int startX, int startY)
         SolutionHead head = {startX, startY, d};
         if (comp->getSolutions()->getStartingSolutionCount() > 0)
         {
-            Debug::INITIAL_CELL = cell; // Awkwardly ugly hack
+            //Debug::INITIAL_CELL = cell; // Awkwardly ugly hack
             follow(head);
             if (level->Solved)
             {

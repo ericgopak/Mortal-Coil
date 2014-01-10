@@ -131,6 +131,10 @@ int main(int argc, char* argv[])
 
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
+
+//firstCol = 7;
+//firstRow = 7;
+
     solver.solve(firstRow, firstCol, firstComponentId);
 
     TRACE(Colorer::print<WHITE>(level.Solved ? "SOLVED\n" : "FAILED TO SOLVE\n"));
@@ -144,7 +148,7 @@ int main(int argc, char* argv[])
 
     if (level.Solved)
     {
-//Colorer::print<YELLOW>("Solution: %s\n", level.Answer.c_str());
+//Colorer::print<YELLOW>("Solution: x=%d y=%d\n%s\n", level.getSolutionStartX(), level.getSolutionStartY(), level.Answer.c_str());
         level.outputToFile(OUTPUT_FILENAME);
     }
 

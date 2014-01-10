@@ -33,10 +33,10 @@ public:
     Simulator(Level* currentLevel);
     ~Simulator();
 
-    void occupy(Cell* cell, int dir) const;
-    void restore(Cell* cell, int dir) const;
-    Cell* moveForward(Cell* cell, int dir) const;
-    Cell* moveBackwards(Cell* cell, int dir) const;
+    void occupy(Cell* cell, int dir);
+    void restore(Cell* cell, int dir);
+    Cell* moveForward(Cell* cell, int dir);
+    Cell* moveBackwards(Cell* cell, int dir);
 
     void findComponents() const;
     void findObstacles() const;
@@ -64,12 +64,12 @@ public:
     virtual bool shouldConsider(Cell* cell, int dir) const;
     virtual bool stopBacktracking() const;
 
-    virtual void preOccupyAction(Cell* cell, int dir) const = 0;
-    virtual void postOccupyAction(Cell* cell, int dir) const = 0;
-    virtual void preRestoreAction(Cell* cell, int dir) const = 0;
-    virtual void postRestoreAction(Cell* cell, int dir) const = 0;
-    virtual void preAction(Cell* cell, int dir) const = 0;
-    virtual void postAction(Cell* cell, int dir) const = 0;
+    virtual void preOccupyAction(Cell* cell, int dir) = 0;
+    virtual void postOccupyAction(Cell* cell, int dir) = 0;
+    virtual void preRestoreAction(Cell* cell, int dir) = 0;
+    virtual void postRestoreAction(Cell* cell, int dir) = 0;
+    virtual void preAction(Cell* cell, int dir) = 0;
+    virtual void postAction(Cell* cell, int dir) = 0;
     
     virtual bool potentialSolution(Cell* cell, int dir) const = 0;
     virtual void solutionFound(Cell* cell, int dir) = 0;

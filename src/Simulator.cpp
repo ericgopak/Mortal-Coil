@@ -32,7 +32,7 @@ Simulator::TraceInfo::TraceInfo()
 }
 #endif
 
-void Simulator::occupy(Cell* cell, int dir) const
+void Simulator::occupy(Cell* cell, int dir)
 {
     assert(cell->isFree() && "Occupying already non-free cell!");
 
@@ -41,7 +41,7 @@ void Simulator::occupy(Cell* cell, int dir) const
     level->getComponents()[cell->getComponentId()].incrementOccupied();
 }
 
-void Simulator::restore(Cell* cell, int dir) const
+void Simulator::restore(Cell* cell, int dir)
 {
     assert(cell->isFree() == false && "Restoring already free cell!");
 
@@ -50,7 +50,7 @@ void Simulator::restore(Cell* cell, int dir) const
     level->getComponents()[cell->getComponentId()].decrementOccupied();
 }
 
-Cell* Simulator::moveForward(Cell* cell, int dir) const
+Cell* Simulator::moveForward(Cell* cell, int dir)
 {
     TRACE(
         Debug::currentX = cell->getX();
@@ -65,7 +65,7 @@ Cell* Simulator::moveForward(Cell* cell, int dir) const
     return cell->getNextCell(dir);
 }
 
-Cell* Simulator::moveBackwards(Cell* cell, int dir) const
+Cell* Simulator::moveBackwards(Cell* cell, int dir)
 {
     cell = cell->getNextCell(dir ^ 2);
 

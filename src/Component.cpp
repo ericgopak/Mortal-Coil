@@ -30,17 +30,27 @@ BodyToTree* HeadToBody::followHead(const SolutionHead& solutionHead)
         : &headToBody[solutionHead];
 }
 
-HeadToBody* SolutionTree::followStateMask(const int stateMask)
+//HeadToBody* SolutionTree::followStateMask(const int stateMask)
+//{
+//    return tree.find(stateMask) == tree.end()
+//        ? NULL
+//        : &tree[stateMask];
+//}
+
+BodyToTree* SolutionTree::followHead(const SolutionHead& solutionHead)
 {
-    return tree.find(stateMask) == tree.end()
+    return tree.headToBody.find(solutionHead) == tree.headToBody.end()
         ? NULL
-        : &tree[stateMask];
+        : &tree.headToBody[solutionHead];
 }
 
 SolutionTree::SolutionTree()
     : solutionCount(0)
     , startingSolutionCount(0)
     , endingSolutionCount(0)
+    // These masks are supposed to be AND-ed afterwards
+    , mustBeBlockedMask(~0)
+    , mustBeFreeMask(~0)
 {
 }
 
@@ -59,24 +69,42 @@ int SolutionTree::getEndingSolutionCount() const
     return endingSolutionCount;
 }
 
+void SolutionTree::addSolution(SolutionTree* tree, const std::vector<SolutionRecord>& solution, int solutionIndex, bool isStarting, bool isEnding)
+{
+    if (solutionIndex >= (int)solution.size())
+    {
+        return;
+    }
+
+    SolutionTree* subtree = tree;
+    //for (size_t i = 0; i < solution.size(); i++)
+    //{
+        subtree->solutionCount++;
+        subtree->startingSolutionCount += isStarting;
+        subtree->endingSolutionCount += isEnding;
+
+        const SolutionRecord& record = solution[solutionIndex];
+
+        subtree->mustBeBlockedMask &= std::get<0>(record);
+        subtree->mustBeFreeMask    &= std::get<1>(record);
+
+        HeadToBody* headToBody = &subtree->tree;
+        BodyToTree* bodyToTree = &headToBody->headToBody[std::get<2>(record)];
+        subtree = &bodyToTree->bodyToTree[std::get<3>(record)];
+
+        addSolution(subtree, solution, solutionIndex + 1, isStarting, isEnding);
+    //}
+}
+
 void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding)
 {
     assert(solution.size() > 0);
 
     // TODO: check for solution uniqueness.
 
-    SolutionTree* subtree = this;
-    for (size_t i = 0; i < solution.size(); i++)
-    {
-        subtree->solutionCount++;
-        subtree->startingSolutionCount += isStarting;
-        subtree->endingSolutionCount += isEnding;
+//TODO: !!! AND masks appropriately
 
-        const SolutionRecord& record = solution[i];
-        HeadToBody* headToBody = &subtree->tree[std::get<0>(record)];
-        BodyToTree* bodyToTree = &headToBody->headToBody[std::get<1>(record)];
-        subtree = &bodyToTree->bodyToTree[std::get<2>(record)];
-    }
+    addSolution(this, solution, 0, isStarting, isEnding);
 }
 
 Component::Component()
@@ -167,24 +195,24 @@ int Component::getFreeExitCellsMask() const
     return (1 << exitCells.size()) - 1;
 }
 
-int Component::getInnerExitStateMask() const
-{
-    int mask = 0;
-    for (size_t i = 0; i < exits.size(); i++)
-    {
-        const Exit* exit = getExitByIndex(i);
-if (exit->getHostCell() == Debug::INITIAL_CELL)
-{
-    continue; // UGLY HACK: DO NOT COUNT SPECIAL CASES
-}
-
-        if (exit->getHostCell()->isFree() == false)
-        {
-            mask |= 1 << i;
-        }
-    }
-    return mask;
-}
+//int Component::getInnerExitStateMask() const
+//{
+//    int mask = 0;
+//    for (size_t i = 0; i < exits.size(); i++)
+//    {
+//        const Exit* exit = getExitByIndex(i);
+//if (exit->getHostCell() == Debug::INITIAL_CELL)
+//{
+//    continue; // UGLY HACK: DO NOT COUNT SPECIAL CASES // TODO: check if fixed
+//}
+//
+//        if (exit->getHostCell()->isFree() == false)
+//        {
+//            mask |= 1 << i;
+//        }
+//    }
+//    return mask;
+//}
 
 int Component::getOuterExitStateMask() const
 {
@@ -200,10 +228,10 @@ int Component::getOuterExitStateMask() const
     return mask;
 }
 
-int Component::getActualExitStateMask() const
-{
-    return getInnerExitStateMask() | getOuterExitStateMask();
-}
+//int Component::getActualExitStateMask() const
+//{
+//    return getInnerExitStateMask() | getOuterExitStateMask();
+//}
 
 int Component::getCurrentExitCellStateMask() const
 {
@@ -245,12 +273,14 @@ void Component::addExitCell(const Cell* cell)
     exitCells.push_back(cell);
 }
 
-void Component::chooseSolution(const int stateMask, const SolutionHead& head, const SolutionBody& body)
+//void Component::chooseSolution(const int stateMask, const SolutionHead& head, const SolutionBody& body)
+void Component::chooseSolution(const SolutionHead& head, const SolutionBody& body)
 {
     SolutionTree* currentOptions = remainingSolutions.top();
-    HeadToBody* headToBody = currentOptions->followStateMask(stateMask);
-    assert(headToBody != NULL && "Failed to choose given solution: state mask not found!");
-    BodyToTree* bodyToTree = headToBody->followHead(head);
+    //HeadToBody* headToBody = currentOptions->followStateMask(stateMask);
+    //assert(headToBody != NULL && "Failed to choose given solution: state mask not found!");
+    //BodyToTree* bodyToTree = headToBody->followHead(head);
+    BodyToTree* bodyToTree = currentOptions->followHead(head);
     assert(bodyToTree != NULL && "Failed to choose given solution: solution head not found!");
     SolutionTree* subtree = bodyToTree->followBody(body);
 
