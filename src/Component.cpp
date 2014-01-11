@@ -2,6 +2,8 @@
 #include "Component.h"
 #include "Colorer.h"
 
+#include <string>
+
 bool SolutionHead::operator < (const SolutionHead& head) const
 {
     if (startY != head.startY) return startY < head.startY;
@@ -13,7 +15,12 @@ bool SolutionBody::operator < (const SolutionBody& body) const
 {
     if (endY != body.endY) return endY < body.endY;
     if (endX != body.endX) return endX < body.endX;
-    return endDir < body.endDir;
+    if (endDir != body.endDir) return endDir < body.endDir;
+    if (mustBeBlockedMask != body.mustBeBlockedMask) return mustBeBlockedMask < body.mustBeBlockedMask;
+    if (mustBeFreeMask    != body.mustBeFreeMask   ) return mustBeFreeMask    < body.mustBeFreeMask;
+    if (stateChangeMask   != body.stateChangeMask  ) return stateChangeMask   < body.stateChangeMask;
+
+    return solution < body.solution;
 }
 
 SolutionTree* BodyToTree::followBody(const SolutionBody& solutionBody)

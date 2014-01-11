@@ -25,6 +25,9 @@
     o No SPECIAL components in following levels: 24, 28
     o Interesting largest component in Level 28 (2 portals to itself)
 
+# Known bugs
+    o When starting analysis right in front of an exit it happens to turn sideways
+
 ****************************************************************************************************/
 
 #include "Common.h"
@@ -132,8 +135,8 @@ int main(int argc, char* argv[])
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
 
-//firstCol = 7;
-//firstRow = 7;
+//firstCol = 12;
+//firstRow = 11;
 
     solver.solve(firstRow, firstCol, firstComponentId);
 
