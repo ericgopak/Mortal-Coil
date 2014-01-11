@@ -523,10 +523,6 @@ void Solver::follow(const SolutionHead& head)
 level->traceComponent();
 #endif
 
-                //fromCell->setFree(false);
-                //blockExits(toCell);
-                //toCell->setFree(false);
-                //comp->chooseSolution(stateMask, head, body);
                 comp->chooseSolution(head, body);
 
                 if (subtree->getSolutionCount() == 0) // Current component traversed completely
@@ -586,7 +582,6 @@ void Solver::trySolving(int startX, int startY)
         SolutionHead head = {startX, startY, d};
         if (comp->getSolutions()->getStartingSolutionCount() > 0)
         {
-            //Debug::INITIAL_CELL = cell; // Awkwardly ugly hack
             follow(head);
             if (level->Solved)
             {

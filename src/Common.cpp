@@ -4,8 +4,6 @@ class Level;
 
 namespace Debug
 {
-    const Cell* INITIAL_CELL = NULL;
-
     const Level* level = NULL;
 
     int depth = 0;

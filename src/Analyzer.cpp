@@ -198,7 +198,7 @@ void Analyzer::analyzeComponents()
 
                 generateAllSimpleSolutions(&component);
             }
-            else
+            else if (exits.size() == 4)
             {
                 throw std::exception("Found single-cell component with 4 exits! Congrats!");
             }
@@ -535,9 +535,7 @@ void Analyzer::preprocess()
     // Split obstacles into components with Flood-fill
     findObstacles();
 
-    // Note: must be after createBonds
     // Split free cells into components with Flood-fill
-    // Additionally initialize all Exit's
     findComponents();
 
     // Find biggest component
@@ -555,7 +553,11 @@ void Analyzer::preprocess()
     level->setMostCells(best);
     level->setBiggest(bestid);
 
+    // Finds component exits along its outer perimeter
     findComponentExits();
+
+    // TODO: if component is a 'donut' - flood inner cells as well (this way there won't be any inner exits)
+    floodInnerSubcomponents();
 
     // Assign opposing exit to every existing one
     findOpposingExits();

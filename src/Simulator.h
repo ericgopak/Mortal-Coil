@@ -42,6 +42,8 @@ public:
     void findObstacles() const;
     void floodComponent(int x, int y, int num) const;
     void floodObstacle(int x, int y, int num) const;
+    void floodInnerSubcomponents(Component* comp);
+    void floodInnerSubcomponents();
     void findComponentExits() const;
 
     void findTouchingObstacles() const;

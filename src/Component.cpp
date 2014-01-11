@@ -208,10 +208,6 @@ int Component::getFreeExitCellsMask() const
 //    for (size_t i = 0; i < exits.size(); i++)
 //    {
 //        const Exit* exit = getExitByIndex(i);
-//if (exit->getHostCell() == Debug::INITIAL_CELL)
-//{
-//    continue; // UGLY HACK: DO NOT COUNT SPECIAL CASES // TODO: check if fixed
-//}
 //
 //        if (exit->getHostCell()->isFree() == false)
 //        {

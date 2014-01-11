@@ -1,5 +1,4 @@
 #include <cstdio>
-#include "Windows.h"
 #include "Colorer.h"
 
 namespace Colorer

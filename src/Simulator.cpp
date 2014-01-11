@@ -175,6 +175,38 @@ void Simulator::floodObstacle(int x, int y, int num) const
     }
 }
 
+void Simulator::floodInnerSubcomponents()
+{
+    FOREACH(level->getComponents(), comp)
+    {
+        floodInnerSubcomponents(&*comp);
+    }
+}
+
+// TODO: Test on level17
+void Simulator::floodInnerSubcomponents(Component* comp)
+{
+    // Assuming all exits have been found
+
+    // Idea: if there are inner cells with exits that are not in comp->getExitCells
+    // then remove these exits together with opposingExits and absorb the opposing component
+    // TODO: get rid of ALL exits in that component
+
+    FOREACH(comp->getCells(), c)
+    {
+        const Cell* cell = *c;
+
+        if (cell->hasExits())
+        {
+            auto exitCells = comp->getExitCells();
+            if (std::find(exitCells.begin(), exitCells.end(), cell) == exitCells.end())
+            {
+                // TODO: implement
+            }
+        }
+    }
+}
+
 static void collectExitsAlongPerimeter(Cell* cell, int dir, const Cell* const entryPoint, Component* const component)
 {
     Cell* left = cell->getNextCell(Left[dir]);
@@ -284,6 +316,7 @@ void Simulator::findComponentExits() const
                 // Assumption: first cell encountered is along the perimeter
                 collectExitsAlongPerimeter(cell, 3, cell, comp); // Start by going up. We know there is an obstacle to the left
 
+                // TODO: move out from this function
                 if (comp->getSize() > 1 && comp->getExitCells().size() == 1)
                 {
                     level->addTemporaryEndBlock(comp);

@@ -45,8 +45,6 @@ class Cell;
 
 namespace Debug
 {
-    extern const Cell* INITIAL_CELL;
-
     extern const Level* level;
 
     extern int depth;
