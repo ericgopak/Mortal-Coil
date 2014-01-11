@@ -56,16 +56,14 @@ static void generateAllSimpleSolutions(Component* component)
                 {
                     decision = Direction[e2->getDir()];
                 }
-
+                // TODO: consider mask ~((1 << i) | (1 << j))
                 MustBeBlockedMask mustBeBlockedMask = 1 << i; // TODO: could also be 0 -> unify with Solver & Analyzer
                 MustBeFreeMask mustBeFreeMask = 1 << j;
 
                 //SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), decision};
-                StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exits are getting blocked
+                StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
                 SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
 
-                // In-exit must be blocked
-                // Out-exit must be free
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
                 std::vector<SolutionRecord> v(1, solution);
@@ -84,15 +82,33 @@ static void generateAllSimpleSolutions(Component* component)
                 MustBeBlockedMask mustBeBlockedMask = 0;
                 MustBeFreeMask mustBeFreeMask = (1 << j) | (1 << i); // This distinguishes starting from through solutions
 
-                StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exits are getting blocked
+                StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
                 SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
 
-                // In-exit must be blocked
-                // Out-exit must be free
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
                 std::vector<SolutionRecord> v(1, solution);
                 component->getSolutions()->addSolution(v, 1, 0); // Is starting, not ending
+            }
+
+            // Ending solutions
+            {
+                const Exit* e1 = component->getExits()[i];
+                const Exit* e2 = component->getExits()[j];
+
+                SolutionHead head = {e1->getX(), e1->getY(), e1->getDir() ^ 2};
+                std::string decision; // Do nothing
+
+                MustBeBlockedMask mustBeBlockedMask = (1 << component->getExits().size()) - 1; // ~0
+                MustBeFreeMask mustBeFreeMask = 0;
+
+                StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
+                SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
+
+                SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
+
+                std::vector<SolutionRecord> v(1, solution);
+                component->getSolutions()->addSolution(v, 0, 1); // Is starting, not ending
             }
         }
     }
