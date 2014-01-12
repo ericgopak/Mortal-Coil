@@ -111,8 +111,10 @@ public:
     int getTotalSolutionCount() const;
     SolutionTree* getNonStartingSolutions();
     SolutionTree* getStartingSolutions();
-    int Component::getNonStartingSolutionCount() const;
-    int Component::getStartingSolutionCount() const;
+    int getNonStartingSolutionCount() const;
+    int getStartingSolutionCount() const;
+    int getThroughSolutionCount() const;
+    int getEndingSolutionCount() const;
     const std::vector<const Exit*>& getExits() const;
     const std::vector<const Cell*>& getExitCells() const;
     SolutionTree* getRemainingSolutions() const;

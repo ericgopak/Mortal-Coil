@@ -519,8 +519,6 @@ void Solver::follow(const SolutionHead& head)
 level->traceComponent();
 #endif
 
-            //comp->chooseSolution(head, body);
-
             if (subtree->getSolutionCount() == 0) // Current component traversed completely
             {
                 cellsVisited += comp->getSize();

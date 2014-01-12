@@ -185,6 +185,16 @@ int Component::getStartingSolutionCount() const
     return startingSolutions.getSolutionCount();
 }
 
+int Component::getThroughSolutionCount() const
+{
+    return nonStartingSolutions.getSolutionCount() - nonStartingSolutions.getEndingSolutionCount();
+}
+
+int Component::getEndingSolutionCount() const
+{
+    return startingSolutions.getEndingSolutionCount() + nonStartingSolutions.getEndingSolutionCount();
+}
+
 const std::vector<const Exit*>& Component::getExits() const
 {
     return exits;

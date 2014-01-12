@@ -14,6 +14,8 @@ namespace Debug
     int totalSolutionsCounter = 0;
     int startingSolutionsCounter = 0;
     int nonStartingSolutionsCounter = 0;
+    int throughSolutionsCounter = 0;
+    int endingSolutionsCounter = 0;
     int gotTooManyTemporaryEndsCounter = 0;
     int gotInvalidNextTouchesCounter = 0;
     int gotIsolatedCellsCounter = 0;

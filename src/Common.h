@@ -57,6 +57,8 @@ namespace Debug
     extern int totalSolutionsCounter;
     extern int startingSolutionsCounter;
     extern int nonStartingSolutionsCounter;
+    extern int throughSolutionsCounter;
+    extern int endingSolutionsCounter;
     extern int gotTooManyTemporaryEndsCounter;
     extern int gotInvalidNextTouchesCounter;
     extern int gotIsolatedCellsCounter;
