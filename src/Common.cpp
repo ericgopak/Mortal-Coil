@@ -11,7 +11,9 @@ namespace Debug
 
 #ifdef TRACE_STATISTICS
     int mostSolutions = 0;
-    int totalSolutions = 0;
+    int totalSolutionsCounter = 0;
+    int startingSolutionsCounter = 0;
+    int nonStartingSolutionsCounter = 0;
     int gotTooManyTemporaryEndsCounter = 0;
     int gotInvalidNextTouchesCounter = 0;
     int gotIsolatedCellsCounter = 0;

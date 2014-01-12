@@ -519,7 +519,7 @@ void Solver::follow(const SolutionHead& head)
 level->traceComponent();
 #endif
 
-            comp->chooseSolution(head, body);
+            //comp->chooseSolution(head, body);
 
             if (subtree->getSolutionCount() == 0) // Current component traversed completely
             {
@@ -536,6 +536,8 @@ level->traceComponent();
                     return;
                 }
             }
+
+            comp->chooseSolution(subtree);
 
             int dir = body.endDir;
             SolutionHead nextHead = {body.endX + dx[dir], body.endY + dy[dir], dir};
@@ -574,14 +576,18 @@ void Solver::trySolving(int startX, int startY)
     for (int d = 0; d < 4; d++)
     {
         SolutionHead head = {startX, startY, d};
-        if (comp->getSolutions()->getStartingSolutionCount() > 0)
+        if (comp->getStartingSolutionCount() > 0)
         {
+            comp->chooseSolution(comp->getStartingSolutions());
+
             follow(head);
             if (level->Solved)
             {
                 level->setSolutionStartXY(startX, startY);
                 return;
             }
+
+            comp->unchooseSolution();
         }
     }
 }

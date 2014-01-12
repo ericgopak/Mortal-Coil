@@ -46,7 +46,7 @@ static void generateAllSimpleSolutions(Component* component)
                 continue;
             }
 
-            // Through solutions
+            // Non-starting solutions
             {
                 const Exit* e1 = component->getExits()[i];
                 const Exit* e2 = component->getExits()[j];
@@ -67,7 +67,8 @@ static void generateAllSimpleSolutions(Component* component)
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
                 std::vector<SolutionRecord> v(1, solution);
-                component->getSolutions()->addSolution(v, 0, 0);
+                //component->getSolutions()->addSolution(v, 0, 0);
+                component->getNonStartingSolutions()->addSolution(v, 0, 0);
             }
 
             // Starting solutions
@@ -88,7 +89,8 @@ static void generateAllSimpleSolutions(Component* component)
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
                 std::vector<SolutionRecord> v(1, solution);
-                component->getSolutions()->addSolution(v, 1, 0); // Is starting, not ending
+                //component->getSolutions()->addSolution(v, 1, 0); // Is starting, not ending
+                component->getStartingSolutions()->addSolution(v, 1, 0); // Is starting, not ending
             }
 
             // Ending solutions
@@ -108,7 +110,8 @@ static void generateAllSimpleSolutions(Component* component)
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
                 std::vector<SolutionRecord> v(1, solution);
-                component->getSolutions()->addSolution(v, 0, 1); // Is starting, not ending
+                //component->getSolutions()->addSolution(v, 0, 1); // Ending, not starting
+                component->getNonStartingSolutions()->addSolution(v, 0, 1); // Ending, not starting
             }
         }
     }
@@ -158,8 +161,10 @@ void Analyzer::analyzeComponents()
                 std::vector<SolutionRecord> v1(1, solution1);
                 std::vector<SolutionRecord> v2(1, solution2);
 
-                component.getSolutions()->addSolution(v1, 1, 0);
-                component.getSolutions()->addSolution(v2, 0, 1);
+                //component.getSolutions()->addSolution(v1, 1, 0);
+                //component.getSolutions()->addSolution(v2, 0, 1);
+                component.getStartingSolutions()->addSolution(v1, 1, 0);
+                component.getNonStartingSolutions()->addSolution(v2, 0, 1);
             }
             else if (exits.size() == 2)
             {
@@ -186,11 +191,11 @@ void Analyzer::analyzeComponents()
 
             TRACE(Colorer::print<WHITE>("Component %d got %d solution%c\n", i, component.getSolutionCount(), component.getSolutionCount() == 1 ? ' ' : 's'));
 
-            if (component.getSolutionCount() == 1)
+            if (component.getNonStartingSolutionCount() == 1)
             {
-                TRACE(Colorer::print<YELLOW>("Component %d has ONLY ONE Solution!\n", i));
+                TRACE(Colorer::print<YELLOW>("Component %d has ONLY ONE non-starting Solution!\n", i));
             }
-            else if (component.getSolutionCount() == 0)
+            else if (component.getNonStartingSolutionCount() == 0)
             {
                 TRACE(Colorer::print<YELLOW>("Component %d is SPECIAL!\n", getComponentCurrentIndex(), i));
                 TRACE(level->traceComponent(i));
@@ -200,10 +205,12 @@ void Analyzer::analyzeComponents()
         }
 
 #ifdef TRACE_STATISTICS
-        Debug::totalSolutions += component.getSolutionCount();
-        if (component.getSolutionCount() > Debug::mostSolutions)
+        Debug::totalSolutionsCounter += component.getTotalSolutionCount();
+        Debug::startingSolutionsCounter += component.getStartingSolutionCount();
+        Debug::nonStartingSolutionsCounter += component.getNonStartingSolutionCount();
+        if (component.getTotalSolutionCount() > Debug::mostSolutions)
         {
-            Debug::mostSolutions = component.getSolutionCount();
+            Debug::mostSolutions = component.getTotalSolutionCount();
         }
 #endif
     }
@@ -320,7 +327,7 @@ void Analyzer::analyzeComponent(Component& component)
     {
         if (solutionRecordHolder.size() > 0)
         {
-            int solutionNumber = component.getSolutionCount() + 1;
+            int solutionNumber = component.getTotalSolutionCount() + 1;
             /*TRACE(
                 level->traceComponent(componentCurrentIndex);
                 Colorer::print<WHITE>("Oh yeah! Found full solution %d:    ", solutionNumber);
@@ -346,7 +353,15 @@ void Analyzer::analyzeComponent(Component& component)
 
                 bool isStarting = solutionIsStarting(solutionRecordHolder);
                 bool isEnding   = solutionIsEnding(solutionRecordHolder);
-                component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
+                //component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
+                if (isStarting)
+                {
+                    component.getStartingSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
+                }
+                else
+                {
+                    component.getNonStartingSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
+                }
             }
 #ifdef TRACE_STATISTICS
             else

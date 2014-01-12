@@ -137,20 +137,22 @@ Component::Component()
     // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
-    remainingSolutions.push(&solutions);
+    //remainingSolutions.push(&solutions);
+    remainingSolutions.push(&startingSolutions);
 }
 
 Component::Component(const Component& c)
     : AbstractComponent(c)
     , occupied(c.occupied)
-    , solutions(c.solutions)
+    , startingSolutions(c.startingSolutions)
+    , nonStartingSolutions(c.nonStartingSolutions)
     , exits(c.exits)
     , currentStateMask(0)
 {
     // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
-    remainingSolutions.push(&solutions);
+    remainingSolutions.push(&nonStartingSolutions); // TODO: choose starting solutions for the first ones only
 }
 
 int Component::getOccupiedCount() const
@@ -158,9 +160,29 @@ int Component::getOccupiedCount() const
     return occupied;
 }
 
-int Component::getSolutionCount() const
+int Component::getTotalSolutionCount() const
 {
-    return solutions.getSolutionCount();
+    return startingSolutions.getSolutionCount() + nonStartingSolutions.getSolutionCount();
+}
+
+SolutionTree* Component::getNonStartingSolutions()
+{
+    return &nonStartingSolutions;
+}
+
+SolutionTree* Component::getStartingSolutions()
+{
+    return &startingSolutions;
+}
+
+int Component::getNonStartingSolutionCount() const
+{
+    return nonStartingSolutions.getSolutionCount();
+}
+
+int Component::getStartingSolutionCount() const
+{
+    return startingSolutions.getSolutionCount();
 }
 
 const std::vector<const Exit*>& Component::getExits() const
@@ -255,10 +277,10 @@ void Component::setCurrentStateMask(int mask)
     currentStateMask = mask;
 }
 
-SolutionTree* Component::getSolutions()
-{
-    return &solutions;
-}
+//SolutionTree* Component::getSolutions()
+//{
+//    return &solutions;
+//}
 
 void Component::addExit(const Exit* e)
 {
@@ -271,13 +293,8 @@ void Component::addExitCell(const Cell* cell)
     exitCells.push_back(cell);
 }
 
-void Component::chooseSolution(const SolutionHead& head, const SolutionBody& body)
+void Component::chooseSolution(SolutionTree* subtree)
 {
-    SolutionTree* currentOptions = remainingSolutions.top();
-    BodyToTree* bodyToTree = currentOptions->followHead(head);
-    assert(bodyToTree != NULL && "Failed to choose given solution: solution head not found!");
-    SolutionTree* subtree = bodyToTree->followBody(body);
-
     remainingSolutions.push(subtree);
 }
 

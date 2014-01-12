@@ -90,7 +90,9 @@ public:
 class Component : public AbstractComponent
 {
     int occupied;
-    SolutionTree solutions;
+    //SolutionTree solutions;
+    SolutionTree startingSolutions;
+    SolutionTree nonStartingSolutions;
     // Arranged counter-clockwise along the perimeter
     std::vector<const Exit*> exits;
     // Arranged clockwise along the perimeter
@@ -106,8 +108,11 @@ public:
     Component(const Component& c);
 
     int getOccupiedCount() const;
-    int getSolutionCount() const;
-    SolutionTree* getSolutions(); // TODO: reconsider
+    int getTotalSolutionCount() const;
+    SolutionTree* getNonStartingSolutions();
+    SolutionTree* getStartingSolutions();
+    int Component::getNonStartingSolutionCount() const;
+    int Component::getStartingSolutionCount() const;
     const std::vector<const Exit*>& getExits() const;
     const std::vector<const Cell*>& getExitCells() const;
     SolutionTree* getRemainingSolutions() const;
@@ -125,7 +130,7 @@ public:
 
     void addExit(const Exit* e);
     void addExitCell(const Cell* cell);
-    void chooseSolution(const SolutionHead& head, const SolutionBody& body);
+    void chooseSolution(SolutionTree* subtree);
     void unchooseSolution();
 
     void incrementOccupied(int num = 1);
