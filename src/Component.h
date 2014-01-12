@@ -38,7 +38,6 @@ struct SolutionBody
 
 class SolutionTree;
 
-//typedef std::tuple<int, SolutionHead, SolutionBody> SolutionRecord;
 typedef std::tuple<MustBeBlockedMask, MustBeFreeMask, SolutionHead, SolutionBody> SolutionRecord;
 
 // Solution tree implementation
@@ -46,8 +45,8 @@ struct BodyToTree
 {
     friend class SolutionTree;
 
-std::map<SolutionBody, SolutionTree> bodyToTree; // TODO: try unordered_map
-    //std::unordered_map<SolutionBody, SolutionTree> bodyToTree;
+//std::map<SolutionBody, SolutionTree> bodyToTree; // TODO: try unordered_map
+    std::unordered_map<SolutionBody, SolutionTree, SolutionBody> bodyToTree;
 
 public:
 
@@ -68,7 +67,6 @@ public:
 
 class SolutionTree
 {
-    //std::map<int, HeadToBody> tree;
     HeadToBody tree;
     int solutionCount;
     int startingSolutionCount;
@@ -81,7 +79,6 @@ public:
 
     SolutionTree();
 
-    //HeadToBody* followStateMask(const int stateMask);
     BodyToTree* followHead(const SolutionHead& solutionHead);
     int getSolutionCount() const;
     int getStartingSolutionCount() const;
@@ -96,6 +93,7 @@ class Component : public AbstractComponent
     SolutionTree solutions;
     // Arranged counter-clockwise along the perimeter
     std::vector<const Exit*> exits;
+    // Arranged clockwise along the perimeter
     std::vector<const Cell*> exitCells;
 
     std::stack<SolutionTree*> remainingSolutions;
@@ -119,9 +117,7 @@ public:
     int getIndexByExitCell(const Cell* exitCell) const;
     int getFreeExitsMask() const;
     int getFreeExitCellsMask() const;
-    //int getInnerExitStateMask() const;
     int getOuterExitStateMask() const;
-    //int getActualExitStateMask() const;
     int getCurrentExitCellStateMask() const;
 
     int getCurrentStateMask() const;
@@ -129,8 +125,6 @@ public:
 
     void addExit(const Exit* e);
     void addExitCell(const Cell* cell);
-    //void addSolution(SolutionTree* newSolution);
-    //void chooseSolution(const int stateMask, const SolutionHead& head, const SolutionBody& body);
     void chooseSolution(const SolutionHead& head, const SolutionBody& body);
     void unchooseSolution();
 

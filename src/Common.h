@@ -2,7 +2,8 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-//#define TRACE_STATISTICS
+#define TRACE_STATISTICS
+#define TRACE_MAIN_STEPS
 
 #ifdef _DEBUG
 #   define TRACE_SOLUTIONS
@@ -16,7 +17,7 @@
 
 #define MAX_EXPECTED_COMPONENTS 50000 // Max number of components
 #define MAX_EXPECTED_COMPONENT_EXITS 30 // Max number of exits in a single component
-//#define MAX_EXPECTED_SOLUTION_COUNT 21280 // Max number of unique solutions of a component
+//#define MAX_EXPECTED_SOLUTION_COUNT > 300'000... // Max number of unique solutions of a component
 
 #define FOREACH(x, it) for (decltype((x).begin()) it = (x).begin(); it != (x).end(); it++)
 #define FOREACH_CONST(x, it) for (decltype((x).cbegin()) it = (x).cbegin(); it != (x).cend(); it++)

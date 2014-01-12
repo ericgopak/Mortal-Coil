@@ -51,7 +51,6 @@ public:
     bool isThrough() const;
     bool hasExits() const;
 
-    bool mayBeFirst() const; // TODO: seems obolete... remove!
     bool hasExit(int dir) const;
     const Exit* getExit(int dir) const;
     Cell* getNextCell(int dir) const;

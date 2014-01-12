@@ -4,11 +4,22 @@
 
 #define INITIAL_STATE_MASK 0
 
-typedef std::tuple<int, int, const Exit*, const Exit*> UniqueSolutionFragment;
+#include <vector>
+//#include <unordered_set>
+
+typedef std::pair<const Exit*, const Exit*> UniqueSolutionFragment;
+
+//class SolutionFragmentHasher
+//{
+//public:
+//    size_t operator() (const std::vector<UniqueSolutionFragment>& fragmentVector) const;
+//};
 
 class Analyzer : public Simulator
 {
-    std::set<std::vector<SolutionRecord>> uniqueSolutions;
+    //std::unordered_set<std::vector<UniqueSolutionFragment>, SolutionFragmentHasher> uniqueSolutions;
+    std::set<std::vector<UniqueSolutionFragment>> uniqueSolutions;
+    //std::set<std::vector<SolutionRecord>> uniqueSolutions;
 
     //std::vector<const Exit*> previousExit;
     std::vector<const SolutionHead> previousHead;
@@ -31,7 +42,6 @@ public:
 
     bool solutionIsStarting(const std::vector<SolutionRecord>& solution) const;
     bool solutionIsEnding(const std::vector<SolutionRecord>& solution) const;
-    //std::vector<const Exit*> getExitSequenceFromSolution(const std::vector<SolutionRecord>& solution) const;
     std::vector<UniqueSolutionFragment> getUniqueSolutionFragments(const std::vector<SolutionRecord>& solution) const;
 
     void analyzeComponents();

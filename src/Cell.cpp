@@ -76,11 +76,6 @@ bool Cell::hasExits() const
     return getExits().size() > 0;
 }
 
-bool Cell::mayBeFirst() const
-{
-    return getExits().size() > 0;
-}
-
 bool Cell::hasExit(int dir) const
 {
     return (exitMask & (1 << dir)) != 0;

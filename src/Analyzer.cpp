@@ -3,6 +3,18 @@
 #include "Component.h"
 #include "Analyzer.h"
 
+// Using FNV_hash and XORing pointer addresses
+//size_t SolutionFragmentHasher::operator() (const std::vector<UniqueSolutionFragment>& fragmentVector) const
+//{
+//    size_t hash = 2166136261; // FNV_offset_basis
+//    for (size_t i = 0; i < fragmentVector.size(); i++)
+//    {
+//        hash = hash ^ (size_t)fragmentVector[i].first ^ (size_t)fragmentVector[i].second;
+//        hash = hash * 16777619;
+//    }
+//    return hash;
+//}
+
 Analyzer::Analyzer(Level* currentLevel)
     : Simulator(currentLevel)
     , componentCurrentIndex(-1)
@@ -21,18 +33,6 @@ void Analyzer::setComponentCurrentIndex(int index)
 {
     componentCurrentIndex = index;
 }
-
-//static SolutionBody getBodyFromExits(const Exit* e1, const Exit* e2)
-//{
-//    SolutionBody body = {e2->getX(), e2->getY(), e2->getDir()};
-//
-//    if ((e1->getDir() ^ 2) != e2->getDir())
-//    {
-//        body.solution += Direction[e2->getDir()];
-//    }
-//
-//    return body;
-//}
 
 // Get all solutions for 1-sized components
 static void generateAllSimpleSolutions(Component* component)
@@ -164,40 +164,9 @@ void Analyzer::analyzeComponents()
             else if (exits.size() == 2)
             {
                 generateAllSimpleSolutions(&component);
-
-                /*const Exit* e1 = exits[0];
-                const Exit* e2 = exits[1];
-
-                std::string decision1;
-                std::string decision2;
-                if ((e1->getDir() ^ 2) != e2->getDir())
-                {
-                    decision1 += Direction[e2->getDir()];
-                }
-                if ((e2->getDir() ^ 2) != e1->getDir())
-                {
-                    decision2 += Direction[e1->getDir()];
-                }
-
-                SolutionHead h1 = {e1->getX(), e1->getY(), e1->getDir() ^ 2};
-                SolutionHead h2 = {e2->getX(), e2->getY(), e2->getDir() ^ 2};
-
-                SolutionBody b1 = {e2->getX(), e2->getY(), e2->getDir(), decision1};
-                SolutionBody b2 = {e1->getX(), e1->getY(), e1->getDir(), decision2};
-
-                SolutionRecord solution1(, h1, b1);
-                SolutionRecord solution2(, h2, b2);
-
-                std::vector<SolutionRecord> v1(1, solution1);
-                std::vector<SolutionRecord> v2(1, solution2);
-
-                component.getSolutions()->addSolution(v1, 0, 0);
-                component.getSolutions()->addSolution(v2, 0, 0);*/
             }
             else if (exits.size() == 3) // Single-cell component with 3 exits
             {
-//                assert(false && "Should not ever happen!");
-
                 generateAllSimpleSolutions(&component);
             }
             else if (exits.size() == 4)
@@ -277,7 +246,7 @@ bool Analyzer::solutionIsEnding(const std::vector<SolutionRecord>& solution) con
 
     const Cell* cell = level->getCell(endY, endX);
     const Component* comp = &level->getComponents()[cell->getComponentId()];
-// TODO: confirm - is the problem with mustBeFreeMask?
+
     // Exit in front and it must be free
     if (cell->hasExit(endDir) && (mustBeFreeMask & (1 << comp->getIndexByExit(cell->getExit(endDir)))) != 0)
     {
@@ -287,10 +256,8 @@ bool Analyzer::solutionIsEnding(const std::vector<SolutionRecord>& solution) con
     return isEnding;
 }
 
-//std::vector<const Exit*> Analyzer::getExitSequenceFromSolution(const std::vector<SolutionRecord>& solution) const
 std::vector<UniqueSolutionFragment> Analyzer::getUniqueSolutionFragments(const std::vector<SolutionRecord>& solution) const
 {
-    // TODO: assign masks as well!!!
     const size_t n = solution.size();
 
     std::vector<UniqueSolutionFragment> res(n);
@@ -301,59 +268,47 @@ std::vector<UniqueSolutionFragment> Analyzer::getUniqueSolutionFragments(const s
     }
 
     // First fragment
-    std::get<0>(res[0]) = std::get<0>(solution[0]); // mustBeBlocked
-    std::get<1>(res[0]) = std::get<1>(solution[0]); // mustBeFree
-
     if (solutionIsStarting(solution))
     {
-        std::get<2>(res[0]) = NULL;
+        std::get<0>(res[0]) = NULL;
     }
     else
     {
         const SolutionHead& head = std::get<2>(solution[0]);
-        std::get<2>(res[0]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
+        std::get<0>(res[0]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
     }
 
     if (n > 1)
     {
         const SolutionBody& body = std::get<3>(solution[0]);
-        std::get<3>(res[0]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+        std::get<1>(res[0]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
     }
 
     // Middle fragments
     for (size_t i = 1; i < solution.size() - 1; i++)
     {
-        std::get<0>(res[i]) = std::get<0>(solution[i]);
-        std::get<1>(res[i]) = std::get<1>(solution[i]);
-
         const SolutionHead& head = std::get<2>(solution[i]);
         const SolutionBody& body = std::get<3>(solution[i]);
-        std::get<2>(res[i]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
-        std::get<3>(res[i]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+        std::get<0>(res[i]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
+        std::get<1>(res[i]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
     }
 
     if (n > 1)
     {
         // Penultimate fragment
         const SolutionHead& head = std::get<2>(solution[solution.size() - 1]);
-        std::get<2>(res[n - 1]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
+        std::get<0>(res[n - 1]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
     }
 
     // Ultimate fragment
-    if (n > 1) // Just don't repeat the code for the first fragment
-    {
-        std::get<0>(res[n - 1]) = std::get<0>(solution[n - 1]);
-        std::get<1>(res[n - 1]) = std::get<1>(solution[n - 1]);
-    }
-
     if (solutionIsEnding(solution))
     {
-        std::get<3>(res[n - 1]) = NULL;
+        std::get<1>(res[n - 1]) = NULL;
     }
     else
     {
         const SolutionBody& body = std::get<3>(solution[solution.size() - 1]);
-        std::get<3>(res[n - 1]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+        std::get<1>(res[n - 1]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
     }
 
     return res;
@@ -382,57 +337,23 @@ void Analyzer::analyzeComponent(Component& component)
                 }
                 printf("\n");
             );*/
-//int x = std::get<2>(solutionRecordHolder[0]).startX;
-//int y = std::get<2>(solutionRecordHolder[0]).startY;
-////if ((*component.getCells().begin())->getComponentId() == 25)
-//if (solutionRecordHolder.size() == 3 && x == 16 && y == 6)
-//{
-//    if (std::get<2>(solutionRecordHolder[1]).startX == 13
-//     && std::get<2>(solutionRecordHolder[1]).startY == 9)
-//    {
-//level->traceComponent();
-////int dir = std::get<2>(solutionRecordHolder[0]).startDir;
-//int bp = 0;
-//    }
-//}
-            bool isStarting = solutionIsStarting(solutionRecordHolder);
-            bool isEnding   = solutionIsEnding(solutionRecordHolder);
 
             auto newSolution = getUniqueSolutionFragments(solutionRecordHolder);
 
-            bool unique = true;
-            FOREACH_CONST(uniqueSolutions, sol)
+            if (uniqueSolutions.find(newSolution) == uniqueSolutions.end())
             {
-                auto solution = *sol;
-                if (solution.size() != solutionRecordHolder.size())
-                {
-                    continue;
-                }
+                uniqueSolutions.insert(newSolution);
 
-                auto oldSolution = getUniqueSolutionFragments(solution);
-
-                if (newSolution == oldSolution)
-                {
-                    unique = false;
-                    break;
-                }
-            }
-
-            if (unique == false)
-            {
-                int bp = 0;
-#ifdef TRACE_STATISTICS
-                Debug::similarSolutionsCounter++;
-#endif
-            }
-            else
-            {
-//level->traceComponent();
-                uniqueSolutions.insert(solutionRecordHolder);
+                bool isStarting = solutionIsStarting(solutionRecordHolder);
+                bool isEnding   = solutionIsEnding(solutionRecordHolder);
                 component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
             }
-
-            //component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
+#ifdef TRACE_STATISTICS
+            else
+            {
+                Debug::similarSolutionsCounter++;
+            }
+#endif
         }
         else
         {
@@ -455,11 +376,10 @@ void Analyzer::analyzeComponent(Component& component)
                 for (int dir = 0; dir < 4; dir++)
                 {
                     if (cell->getNextCell(dir)->isObstacle() == false
-                        //&& cell->getComponentId() == cell->getNextCell(dir)->getComponentId() TODO: what was this condition for??? == "If not an exit"?
+                        //&& cell->getComponentId() == cell->getNextCell(dir)->getComponentId() TODO: Get rid of this kind of solutions!
                         )
                     {
                         assert(cell->getNextCell(dir)->isFree());
-                        //assert(stateMask == 0);
 
                         int lastDepthCopy = prevDepth; // TODO: consider storing in outer stack
                         prevDepth = depth;
@@ -494,93 +414,33 @@ void Analyzer::analyzeComponent(Component& component)
                             int exitIndex = level->getComponents()[cell->getComponentId()].getIndexByExit(cell->getExit(dir ^ 2));
                             decisionHolder[decisionHolder.size() - 1].push_back(Direction[dir]);
                             mustBeFreeStateMask.push_back(1 << exitIndex);
-
-                            //previousStateMask.push_back(stateMask | (1 << exitIndex));
-                            //mustBeFreeStateMask.push_back(1 << exitIndex);
-                            //mustBeFreeStateMask.push_back(0);
                             mustBeBlockedStateMask.push_back(0);
 
-                            // TODO: WHY TO CONVERT TO OBSTACLE? IT MAKES NO SENSE!
-
-                            //prevCell->setType(true); // Convert to obstacle in order not to count it as a (potential) temporary end
-                            //prevCell->setFree(false);
                             backtrack(cell, dir);
-                            /*prevCell->setType(false);
-                            prevCell->setFree(true);*/
-                            //previousStateMask.pop_back();
+
                             mustBeFreeStateMask.pop_back();
                             mustBeBlockedStateMask.pop_back();
                             decisionHolder[decisionHolder.size() - 1].pop_back();
                         }
-                        else
-                        // Starting solution
-                        //if (prevCell->isObstacle() || level->getComponents()[prevCell->getComponentId()].getSize() != 1)
-                        if (prevCell->isObstacle() == false && level->getComponents()[prevCell->getComponentId()].getSize() == 1) // Special case: there's a narrow exit behind
+                        else if (prevCell->isObstacle() == false && level->getComponents()[prevCell->getComponentId()].getSize() == 1)
                         {
                             // There is no point in starting from the exitCell with 1-sized component behind
-
-                            //decisionHolder[decisionHolder.size() - 1].push_back(Direction[dir]);
-                            ////TODO: remove this 'if' ?
-                            //if (cell->hasExit(dir ^ 2))
-                            //{
-                            //    int exitIndex = level->getComponents()[cell->getComponentId()].getIndexByExit(cell->getExit(dir ^ 2));
-                            //    mustBeFreeStateMask.push_back(1 << exitIndex);
-                            //}
-                            //else
-                            //{
-                            //    mustBeFreeStateMask.push_back(0);
-                            //}
-                            ////previousStateMask.push_back(stateMask);
-                            ////mustBeFreeStateMask.push_back(0);
-                            ////mustBeFreeStateMask.push_back(0);
-                            //mustBeBlockedStateMask.push_back(0);
-                            //backtrack(cell, dir);
-                            //// TODO: consider pushing this cell onto temporaryEnds!
-                            ////previousStateMask.pop_back();
-                            //mustBeFreeStateMask.pop_back();
-                            //mustBeBlockedStateMask.pop_back();
-
-                            //decisionHolder[decisionHolder.size() - 1].pop_back();
+                            // Do nothing
                         }
                         else // Normal cases
                         {
                             decisionHolder[decisionHolder.size() - 1].push_back(Direction[dir]);
 
                             mustBeFreeStateMask.push_back(0);
-                            //previousStateMask.push_back(stateMask);
-                            //mustBeFreeStateMask.push_back(0);
-                            //mustBeFreeStateMask.push_back(0);
                             mustBeBlockedStateMask.push_back(0);
+
                             backtrack(cell, dir);
-                            // TODO: consider pushing this cell onto temporaryEnds!
-                            //previousStateMask.pop_back();
+
                             mustBeFreeStateMask.pop_back();
                             mustBeBlockedStateMask.pop_back();
 
                             decisionHolder[decisionHolder.size() - 1].pop_back();
                         }
-                        //if (cell->hasExit(dir ^ 2) && level->getComponents()[prevCell->getComponentId()].getSize() == 1)
-                        //{
-                        //    int exitIndex = level->getComponents()[cell->getComponentId()].getIndexByExit(cell->getExit(dir ^ 2));
-                        //    previousStateMask.push_back(stateMask | (1 << exitIndex)); // Non-starting solution
-                        //    prevCell->setType(true); // Convert to obstacle in order not to count it as a (potential) temporary end
-                        //    prevCell->setFree(false);
-                        //    backtrack(cell, dir);
-                        //    prevCell->setType(false);
-                        //    prevCell->setFree(true);
-                        //    previousStateMask.pop_back();
-                        //}
-                        //else // Starting solution
-                        //{
-                        //    decisionHolder[decisionHolder.size() - 1].push_back(Direction[dir]);
-
-                        //    previousStateMask.push_back(stateMask);
-                        //    backtrack(cell, dir);
-                        //    // TODO: consider pushing this cell onto temporaryEnds!
-                        //    previousStateMask.pop_back();
-
-                        //    decisionHolder[decisionHolder.size() - 1].pop_back();
-                        //}
 
                         previousHead.pop_back();
                         prevDepth = lastDepthCopy;
@@ -592,7 +452,6 @@ void Analyzer::analyzeComponent(Component& component)
         {
             for (size_t i = 0; i < component.getExits().size(); i++)
             {
-                //if (((1 << i) & stateMask) == 0) // if exit is (supposedly) free // TODO: use another mask
                 if (component.getExits()[i]->getHostCell()->isFree())
                 {
                     const Exit* e = component.getExitByIndex(i);
@@ -606,28 +465,22 @@ void Analyzer::analyzeComponent(Component& component)
                         prevDepth = depth;
 
                         SolutionHead head = {cell->getX(), cell->getY(), dir ^ 2}; // TODO: does it leave a copy on the stack? What about @previousHead.push_back({...});@ ?
-
                         previousHead.push_back(head);
-                        //previousStateMask.push_back(stateMask | (1 << i)); // Through solution: mask the exit out
                         mustBeFreeStateMask.push_back(0);
-                        // TODO: test this
-                        //mustBeBlockedStateMask.push_back(0);
                         mustBeBlockedStateMask.push_back(1 << i);
 
                         prevCell->setType(true); // Convert to obstacle in order not to count it as a (potential) temporary end
                         prevCell->setFree(false);
-//printf("BEFORE:\n");
-//level->traceComponent();
+
                         backtrack(cell, dir ^ 2);
-//printf("AFTER:\n");
-//level->traceComponent();
+
                         prevCell->setFree(true);
                         prevCell->setType(false);
 
                         previousHead.pop_back();
-                        //previousStateMask.pop_back();
                         mustBeFreeStateMask.pop_back();
                         mustBeBlockedStateMask.pop_back();
+
                         prevDepth = lastDepthCopy;
                     }
                 }
@@ -704,8 +557,6 @@ void Analyzer::backtrack(Cell* cell, int direction)
     }
 
     TRACE(tracer.depth++);
-
-    //level->traceComponent();
 
     preAction(cell, direction);
 
@@ -790,7 +641,6 @@ void Analyzer::postOccupyAction(Cell* cell, int dir)
     if (left->isTemporaryEnd())
     {
         level->addTemporaryEnd(left);
-//level->traceComponent();
         if (left->getComponentId() == cell->getComponentId())
         {
             level->addTemporaryEndsInCurrentComponent(left);
@@ -799,7 +649,6 @@ void Analyzer::postOccupyAction(Cell* cell, int dir)
     if (right->isTemporaryEnd())
     {
         level->addTemporaryEnd(right);
-//level->traceComponent();
         if (right->getComponentId() == cell->getComponentId())
         {
             level->addTemporaryEndsInCurrentComponent(right);
@@ -808,7 +657,6 @@ void Analyzer::postOccupyAction(Cell* cell, int dir)
     if (behind->isTemporaryEnd()) // May happen to the first cell in a line
     {
         level->addTemporaryEnd(behind);
-//level->traceComponent();
         if (behind->getComponentId() == cell->getComponentId())
         {
             level->addTemporaryEndsInCurrentComponent(behind);
@@ -869,12 +717,14 @@ void Analyzer::postRestoreAction(Cell* cell, int dir)
     TRACE(cell->setLayer(-1));
 }
 
+// TODO: consider checking only front direction
 bool Analyzer::reachedFinalCell(Cell* cell, int dir) const
 {
     // Very last free cell in the component
     const Component* comp = &level->getComponents()[cell->getComponentId()];
     if (comp->getOccupiedCount() + 1 == comp->getSize())
     {
+        // TODO: consider moving this check to solutionFound()
         return true;
     }
 
@@ -931,7 +781,6 @@ bool Analyzer::potentialSolution(Cell* cell, int dir) const
 
 void Analyzer::collectResults(const SolutionHead& head, const SolutionBody& body)
 {
-    //SolutionRecord record(previousStateMask.back(), head, body);
     SolutionRecord record(mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), head, body);
     solutionRecordHolder.push_back(record);
 }
@@ -948,27 +797,18 @@ void Analyzer::proceedAnalyzing(Cell* cell, int dir)
 
     int outExitIndex = level->getComponents()[getComponentCurrentIndex()].getIndexByExit(outExit);
 
-    //assert((previousStateMask.back() & (1 << outExitIndex)) == 0 && "Erroneous state mask!");
     assert((mustBeFreeStateMask.back() & (1 << outExitIndex)) == 0 && "Erroneous state mask!");
 
     const MustBeFreeMask prevMask = mustBeFreeStateMask.back();
     mustBeFreeStateMask.pop_back();
     mustBeFreeStateMask.push_back(prevMask | (1 << outExitIndex));
 
-    //SolutionBody body = {outExit->getX(), outExit->getY(), outExit->getDir(), decisionHolder.back()};
-    //SolutionBody body = {outExit->getX(), outExit->getY(), outExit->getDir(), mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), decisionHolder.back()};
     SolutionBody body = {outExit->getX(), outExit->getY(), outExit->getDir(), mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), stateChangeStack.back(), decisionHolder.back()};
     const SolutionHead& head = previousHead.back();
 
     collectResults(head, body);
 
-    //int newStateMask = previousStateMask.back() | (1 << outExitIndex);
-    //int newStateMask = previousStateMask.back() | (1 << outExitIndex);
-    //cell = moveForward(cell, dir);
-//level->traceComponent();
-    //analyzeComponent(level->getComponents()[getComponentCurrentIndex()], newStateMask);
     analyzeComponent(level->getComponents()[getComponentCurrentIndex()]);
-    //cell = moveBackwards(cell, dir);
 
     uncollectResults();
 
@@ -985,17 +825,16 @@ void Analyzer::solutionFound(Cell* cell, int dir)
         // Occupy and finish
         Cell* ncell = moveForward(cell, dir);
 
-        // TODO: update mustBeFree mask
         MustBeFreeMask mustBeFreeMask = mustBeFreeStateMask.back();
         if (cell->hasExit(dir))
         {
             mustBeFreeMask |= 1 << comp.getIndexByExit(cell->getExit(dir));
         }
 
-        //SolutionBody body = {cell->getX(), cell->getY(), dir, mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), decisionHolder.back()};
         SolutionBody body = {cell->getX(), cell->getY(), dir, mustBeBlockedStateMask.back(), mustBeFreeMask, stateChangeStack.back(), decisionHolder.back()};
         const SolutionHead& head = previousHead.back();
 
+        // TODO: consider updating masks here
         //int prevMask = previousStateMask.back();
 
         //int  leftDirection = Left[dir];
@@ -1022,7 +861,6 @@ void Analyzer::solutionFound(Cell* cell, int dir)
         //}
 
         collectResults(head, body);
-        //analyzeComponent(comp, previousStateMask.back()); // TODO: replace mask with -1
         analyzeComponent(comp);
         uncollectResults();
 
@@ -1035,7 +873,6 @@ void Analyzer::solutionFound(Cell* cell, int dir)
     }
 
     // Otherwise assuming cell->hasExits()
-    //if (cell->getNextCell(dir)->isObstacle())
     if (cell->getNextCell(dir)->isFree() == false) // May stumble upon itself
     {
         // Try left / right
@@ -1047,7 +884,6 @@ void Analyzer::solutionFound(Cell* cell, int dir)
             if (cell->hasExit(leftDirection))
             {
                 Cell* ncell = moveForward(cell, leftDirection);
-//level->traceComponent();
                 proceedAnalyzing(cell, leftDirection);
                 moveBackwards(ncell, leftDirection);
             }
@@ -1071,7 +907,6 @@ void Analyzer::solutionFound(Cell* cell, int dir)
             if (cell->hasExit(rightDirection))
             {
                 Cell* ncell = moveForward(cell, rightDirection);
-//level->traceComponent();
                 proceedAnalyzing(cell, rightDirection);
                 moveBackwards(ncell, rightDirection);
             }
@@ -1090,8 +925,6 @@ void Analyzer::solutionFound(Cell* cell, int dir)
     {
         if (cell->hasExit(dir))
         {
-//level->traceComponent();
-            // TODO: this condition seems to be true overall
             if (cell->getNextCell(dir)->isFree())
             {
                 Cell* ncell = moveForward(cell, dir);
@@ -1105,15 +938,10 @@ void Analyzer::solutionFound(Cell* cell, int dir)
                 cell->getNextCell(dir)->setFree(false); // Otherwise loops infinitely (turning left,right,left,...)
 
                 int exitIndex = level->getComponents()[getComponentCurrentIndex()].getIndexByExit(cell->getExit(dir));
-                //const int prevMask = previousStateMask.back();
                 const int prevBlockedMask = mustBeBlockedStateMask.back();
-                //previousStateMask.pop_back();
                 mustBeBlockedStateMask.pop_back();
-                //assert(((1 << exitIndex) & prevMask) == 0 && "Erroneous state mask!");
                 assert(((1 << exitIndex) & prevBlockedMask) == 0 && "Erroneous state mask!");
-                //int newMask = prevMask | (1 << exitIndex);
                 int newMask = prevBlockedMask | (1 << exitIndex);
-                //previousStateMask.push_back(newMask);
                 mustBeBlockedStateMask.push_back(newMask);
 
                 int leftDirection = Left[dir];
@@ -1140,9 +968,7 @@ void Analyzer::solutionFound(Cell* cell, int dir)
                     decisionHolder[decisionHolder.size() - 1].pop_back();
                 }
 
-                //previousStateMask.pop_back();
                 mustBeBlockedStateMask.pop_back();
-                //previousStateMask.push_back(prevMask);
                 mustBeBlockedStateMask.push_back(prevBlockedMask);
 
                 cell->getNextCell(dir)->setFree(true);

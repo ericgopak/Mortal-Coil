@@ -3,7 +3,6 @@
     Author: Eric Gopak
 
 # Ideas:
-    o !!! Consider only the solutions with different blocked exits sequence
     o Generate starting solutions only before follow() (not during Analysis)
     o Stop if there is isolated exit (check if mask contains isolated bit, like xxx010xxx)
     o Use Pits (level->Ends) as one-sized temporaryEndBlock
@@ -121,8 +120,9 @@ int main(int argc, char* argv[])
         }
     );
 
-    TRACE(Colorer::print<RED>("Analyzing...\n"));
-//Colorer::print<RED>("Analyzing...\n");
+#ifdef TRACE_MAIN_STEPS
+    Colorer::print<RED>("Analyzing...\n");
+#endif
 
     analyzer.analyzeComponents();
 
@@ -130,33 +130,31 @@ int main(int argc, char* argv[])
     Colorer::print<WHITE>("Max number of solutions: %d\n", Debug::mostSolutions);
     Colorer::print<WHITE>("Solutions found: %d\n", Debug::totalSolutions);
     Colorer::print<WHITE>("Number of SPECIAL components: %d\n", level.getSpecialComponents().size());
+    Colorer::print<WHITE>("Found %d similar solutions!\n", Debug::similarSolutionsCounter);
 #endif
 
-    TRACE(Colorer::print<RED>("Solving...\n"));
-//Colorer::print<RED>("Solving...\n");
+#ifdef TRACE_MAIN_STEPS
+    Colorer::print<RED>("Solving...\n");
+#endif
 
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
 
-//firstCol = 16;
-//firstRow = 6;
-
     solver.solve(firstRow, firstCol, firstComponentId);
 
-    TRACE(Colorer::print<WHITE>(level.Solved ? "SOLVED\n" : "FAILED TO SOLVE\n"));
-
 #ifdef TRACE_STATISTICS
-    printf("Got too many temporary ends %d times!\n", Debug::gotTooManyTemporaryEndsCounter);
+    /*printf("Got too many temporary ends %d times!\n", Debug::gotTooManyTemporaryEndsCounter);
     printf("Got invalid next touches %d times!\n", Debug::gotInvalidNextTouchesCounter);
     printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
-    printf("Got too many temporary end blocks %d times!\n", Debug::gotTooManyTemporaryEndBlocksCounter);
+    printf("Got too many temporary end blocks %d times!\n", Debug::gotTooManyTemporaryEndBlocksCounter);*/
     printf("Avoided ending solutions %d times!\n", Debug::avoidedEndingSolutionCounter);
-    printf("Found %d similar solutions!\n", Debug::similarSolutionsCounter);
 #endif
 
     if (level.Solved)
     {
-//Colorer::print<YELLOW>("Solution: x=%d y=%d\n%s\n", level.getSolutionStartX(), level.getSolutionStartY(), level.Answer.c_str());
+#ifdef TRACE_MAIN_STEPS
+    Colorer::print<YELLOW>("Solution: x=%d y=%d\n%s\n", level.getSolutionStartX(), level.getSolutionStartY(), level.Answer.c_str());
+#endif
         level.outputToFile(OUTPUT_FILENAME);
     }
 

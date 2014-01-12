@@ -490,91 +490,9 @@ bool Simulator::mayStartFrom(Cell* cell, int dir) const
 bool Simulator::shouldConsider(Cell* cell, int dir) const
 {
     return cell->isFree();
-
-    /*if (!cell->isFree())
-    {
-        return false;
-    }
-    return true;*/
 }
 
 bool Simulator::stopBacktracking() const
 {
     return level->Solved;
 }
-
-//void Simulator::trySolving(int startX, int startY)
-//{
-//    Cell* cell = level->getCell(startY, startX);
-//
-//    for (int d = 0; d < 4; d++)
-//    {
-//        if (mayStartFrom(cell, d))
-//        {
-//            backtrack(cell, d);
-//
-//            if (stopBacktracking())
-//            {
-//                return;
-//            }
-//        }
-//    }
-//}
-
-//void Simulator::backtrack(Cell* cell, int direction)
-//{
-//    if (!shouldConsider(cell, direction))
-//    {
-//        return;
-//    }
-//
-//    TRACE(tracer.depth++);
-//
-//    //level->traceComponent();
-//
-//    preAction(cell, direction);
-//
-//    if (potentialSolution(cell, direction))
-//    {
-//        if (reachedFinalCell(cell, direction))
-//        {
-//            solutionFound(cell, direction);
-//        }
-//        else
-//        {
-//            if (cell->getNextCell(direction)->isFree()) // Forward
-//            {
-//                cell = moveForward(cell, direction);
-//                backtrack(cell, direction);
-//                cell = moveBackwards(cell, direction);
-//            }
-//            else
-//            {
-//                // Turn left
-//                int leftDirection = Left[direction];
-//                if (cell->getNextCell(leftDirection)->isFree())
-//                {
-//                    cell = moveForward(cell, leftDirection);
-//                    backtrack(cell, leftDirection);
-//                    cell = moveBackwards(cell, leftDirection);
-//                }
-//
-//                if (stopBacktracking() == false) // Do not terminate in order to guarantee proper postAction()
-//                {
-//                    // Turn right
-//                    int rightDirection = Right[direction];
-//                    if (cell->getNextCell(rightDirection)->isFree())
-//                    {
-//                        cell = moveForward(cell, rightDirection);
-//                        backtrack(cell, rightDirection);
-//                        cell = moveBackwards(cell, rightDirection);
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    postAction(cell, direction);
-//
-//    TRACE(tracer.depth--);
-//}

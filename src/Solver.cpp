@@ -337,13 +337,11 @@ void Solver::solve(int row, int col, int firstComponentId)
         trySolving(e1->getX(), e1->getY());
         if (level->Solved)
         {
-            //level->prepareSolution(e1->getX(), e1->getY());
             return;
         }
         trySolving(e2->getX(), e2->getY());
         if (level->Solved)
         {
-            //level->prepareSolution(e2->getX(), e2->getY());
             return;
         }
         assert(level->Solved && "Failed to solve the level with 2 ends!");
@@ -355,7 +353,6 @@ void Solver::solve(int row, int col, int firstComponentId)
         trySolving(e->getX(), e->getY());
         if (level->Solved)
         {
-            //level->prepareSolution(e->getX(), e->getY());
             return;
         }
         else
@@ -379,7 +376,6 @@ void Solver::solve(int row, int col, int firstComponentId)
                     trySolving(x, y);
                     if (level->Solved)
                     {
-                        //level->prepareSolution(x, y);
                         return;
                     }
                 }
@@ -403,7 +399,6 @@ void Solver::solve(int row, int col, int firstComponentId)
                     trySolving(x, y);
                     if (level->Solved)
                     {
-                        //level->prepareSolution(x, y);
                         return;
                     }
                 }
@@ -441,7 +436,6 @@ void Solver::solve(int row, int col, int firstComponentId)
                 
                 if (level->Solved)
                 {
-                    //level->prepareSolution(startX, startY);
                     return;
                 }
             }
@@ -501,13 +495,11 @@ void Solver::follow(const SolutionHead& head)
 
             if ((body.mustBeBlockedMask & outerExitsStateMask) != body.mustBeBlockedMask)
             {
-//level->traceComponent();
                 continue;
             }
 
             if ((body.mustBeFreeMask & outerExitsStateMask) != 0)
             {
-//level->traceComponent();
                 continue;
             }
 
@@ -548,7 +540,6 @@ level->traceComponent();
             int dir = body.endDir;
             SolutionHead nextHead = {body.endX + dx[dir], body.endY + dy[dir], dir};
 
-//level->traceComponent();
             if (level->getCell(nextHead.startY, nextHead.startX)->isFree())
             {
                 follow(nextHead);

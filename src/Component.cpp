@@ -20,7 +20,6 @@ bool SolutionHead::operator == (const SolutionHead& head) const
 
 size_t SolutionHead::operator ()(const SolutionHead& head) const
 {
-    //return (((startY & 65535) << 15) ^ ((startX & 65535) << 2)) ^ startDir;
     return (((head.startY & 65535) << 15) ^ ((head.startX & 65535) << 2)) ^ head.startDir;
 }
 
@@ -49,7 +48,6 @@ bool SolutionBody::operator == (const SolutionBody& body) const
 
 size_t SolutionBody::operator ()(const SolutionBody& body) const
 {
-    //return (((endY & 65535) << 15) ^ ((endX & 65535) << 2)) ^ endDir;
     return (((body.endY & 65535) << 15) ^ ((body.endX & 65535) << 2)) ^ body.endDir;
 }
 
@@ -66,13 +64,6 @@ BodyToTree* HeadToBody::followHead(const SolutionHead& solutionHead)
         ? NULL
         : &headToBody[solutionHead];
 }
-
-//HeadToBody* SolutionTree::followStateMask(const int stateMask)
-//{
-//    return tree.find(stateMask) == tree.end()
-//        ? NULL
-//        : &tree[stateMask];
-//}
 
 BodyToTree* SolutionTree::followHead(const SolutionHead& solutionHead)
 {
@@ -114,30 +105,26 @@ void SolutionTree::addSolution(SolutionTree* tree, const std::vector<SolutionRec
     }
 
     SolutionTree* subtree = tree;
-    //for (size_t i = 0; i < solution.size(); i++)
-    //{
-        subtree->solutionCount++;
-        subtree->startingSolutionCount += isStarting;
-        subtree->endingSolutionCount += isEnding;
 
-        const SolutionRecord& record = solution[solutionIndex];
+    subtree->solutionCount++;
+    subtree->startingSolutionCount += isStarting;
+    subtree->endingSolutionCount += isEnding;
 
-        subtree->mustBeBlockedMask &= std::get<0>(record);
-        subtree->mustBeFreeMask    &= std::get<1>(record);
+    const SolutionRecord& record = solution[solutionIndex];
 
-        HeadToBody* headToBody = &subtree->tree;
-        BodyToTree* bodyToTree = &headToBody->headToBody[std::get<2>(record)];
-        subtree = &bodyToTree->bodyToTree[std::get<3>(record)];
+    subtree->mustBeBlockedMask &= std::get<0>(record);
+    subtree->mustBeFreeMask    &= std::get<1>(record);
 
-        addSolution(subtree, solution, solutionIndex + 1, isStarting, isEnding);
-    //}
+    HeadToBody* headToBody = &subtree->tree;
+    BodyToTree* bodyToTree = &headToBody->headToBody[std::get<2>(record)];
+    subtree = &bodyToTree->bodyToTree[std::get<3>(record)];
+
+    addSolution(subtree, solution, solutionIndex + 1, isStarting, isEnding);
 }
 
 void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding)
 {
     assert(solution.size() > 0);
-
-    // TODO: check for solution uniqueness.
 
     addSolution(this, solution, 0, isStarting, isEnding);
 }
@@ -230,21 +217,6 @@ int Component::getFreeExitCellsMask() const
     return (1 << exitCells.size()) - 1;
 }
 
-//int Component::getInnerExitStateMask() const
-//{
-//    int mask = 0;
-//    for (size_t i = 0; i < exits.size(); i++)
-//    {
-//        const Exit* exit = getExitByIndex(i);
-//
-//        if (exit->getHostCell()->isFree() == false)
-//        {
-//            mask |= 1 << i;
-//        }
-//    }
-//    return mask;
-//}
-
 int Component::getOuterExitStateMask() const
 {
     int mask = 0;
@@ -258,11 +230,6 @@ int Component::getOuterExitStateMask() const
     }
     return mask;
 }
-
-//int Component::getActualExitStateMask() const
-//{
-//    return getInnerExitStateMask() | getOuterExitStateMask();
-//}
 
 int Component::getCurrentExitCellStateMask() const
 {
@@ -304,13 +271,9 @@ void Component::addExitCell(const Cell* cell)
     exitCells.push_back(cell);
 }
 
-//void Component::chooseSolution(const int stateMask, const SolutionHead& head, const SolutionBody& body)
 void Component::chooseSolution(const SolutionHead& head, const SolutionBody& body)
 {
     SolutionTree* currentOptions = remainingSolutions.top();
-    //HeadToBody* headToBody = currentOptions->followStateMask(stateMask);
-    //assert(headToBody != NULL && "Failed to choose given solution: state mask not found!");
-    //BodyToTree* bodyToTree = headToBody->followHead(head);
     BodyToTree* bodyToTree = currentOptions->followHead(head);
     assert(bodyToTree != NULL && "Failed to choose given solution: solution head not found!");
     SolutionTree* subtree = bodyToTree->followBody(body);
