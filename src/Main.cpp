@@ -3,12 +3,10 @@
     Author: Eric Gopak
 
 # Ideas:
+    o !!! Consider only the solutions with different blocked exits sequence
+    o Generate starting solutions only before follow() (not during Analysis)
     o Stop if there is isolated exit (check if mask contains isolated bit, like xxx010xxx)
     o Use Pits (level->Ends) as one-sized temporaryEndBlock
-    o Force backtrack() visit every cell only ONCE!
-    o Pruning: if new exit got blocked - check if there are at least 2 exits left (if it's not the very last component)
-    o Redefine 'exits' to be the ones that cannot be blocked during solve()
-    o Disallow ANY 'tails' in analysis solutions
 
 # Optimization ideas:
     o Rewrite std::set with std::unordered_set. Better with std::vector. Best with C-style array.
@@ -19,11 +17,14 @@
     o see http://msdn.microsoft.com/en-us/library/y0dh78ez%28VS.80%29.aspx
 
 # Figure out how to:
+    o check if current component is (not) the last one (perhaps store solution fragment lengths + update cellsVisited for every follow()?)
+    o efficiently retrieve remaining solutions (O(logN) --> O(1))
     o filter solutions if pits appear (exits are split into separated sets)
 
 # Notes
     o No SPECIAL components in following levels: 24, 28
     o Interesting largest component in Level 28 (2 portals to itself)
+    o 'Donut' component in level 17
 
 # Known bugs
     o When starting analysis right in front of an exit it happens to turn sideways
@@ -121,6 +122,7 @@ int main(int argc, char* argv[])
     );
 
     TRACE(Colorer::print<RED>("Analyzing...\n"));
+//Colorer::print<RED>("Analyzing...\n");
 
     analyzer.analyzeComponents();
 
@@ -131,6 +133,7 @@ int main(int argc, char* argv[])
 #endif
 
     TRACE(Colorer::print<RED>("Solving...\n"));
+//Colorer::print<RED>("Solving...\n");
 
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
@@ -144,6 +147,7 @@ int main(int argc, char* argv[])
     printf("Got invalid next touches %d times!\n", Debug::gotInvalidNextTouchesCounter);
     printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
     printf("Got too many temporary end blocks %d times!\n", Debug::gotTooManyTemporaryEndBlocksCounter);
+    printf("Avoided ending solutions %d times!\n", Debug::avoidedEndingSolutionCounter);
 #endif
 
     if (level.Solved)

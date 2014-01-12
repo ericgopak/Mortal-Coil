@@ -471,105 +471,108 @@ void Solver::follow(const SolutionHead& head)
 
     SolutionTree* solutions = comp->getRemainingSolutions();
 
-    //const int stateMask = comp->getActualExitStateMask();
+    // Does not work - we can only find out if a component will be ending
+    // (it makes this component 'special' starting from this move)
+//    if (solutions->getSolutionCount() == solutions->getEndingSolutionCount())
+//    {
+//        // Only ending solutions remained - check if this truly is the last component
+//        if (level->Free - cellsVisited > comp->getSize())
+//        {
+//#ifdef TRACE_STATISTICS
+//            Debug::avoidedEndingSolutionCounter++;
+//#endif
+//            return;
+//        }
+//    }
+
     const int outerExitsStateMask = comp->getOuterExitStateMask();
 
-    //HeadToBody* headToBody = solutions->followStateMask(stateMask);
-    //if (headToBody == NULL)
-    //{
-    //    // No solutions
-    //    int bp = 0;
-    //}
-    //else
-    //{
-        //BodyToTree* bodyToTree = headToBody->followHead(head);
-        BodyToTree* bodyToTree = solutions->followHead(head);
-        if (bodyToTree == NULL)
+    BodyToTree* bodyToTree = solutions->followHead(head);
+    if (bodyToTree == NULL)
+    {
+        // No solutions
+        int bp = 0;
+    }
+    else
+    {
+        FOREACH(bodyToTree->bodyToTree, btt)
         {
-            // No solutions
-            int bp = 0;
-        }
-        else
-        {
-            FOREACH(bodyToTree->bodyToTree, btt)
+            const SolutionBody& body = btt->first;
+
+            if ((body.mustBeBlockedMask & outerExitsStateMask) != body.mustBeBlockedMask)
             {
-                const SolutionBody& body = btt->first;
-
-                if ((body.mustBeBlockedMask & outerExitsStateMask) != body.mustBeBlockedMask)
-                {
 //level->traceComponent();
-                    continue;
-                }
+                continue;
+            }
 
-                if ((body.mustBeFreeMask & outerExitsStateMask) != 0)
-                {
+            if ((body.mustBeFreeMask & outerExitsStateMask) != 0)
+            {
 //level->traceComponent();
-                    continue;
-                }
+                continue;
+            }
 
-                SolutionTree* subtree = &btt->second;
+            SolutionTree* subtree = &btt->second;
 
-                TRACE(printf("Trying (%d, %d, %d) --> (%d, %d, %d)\n", head.startX, head.startY, head.startDir, body.endX, body.endY, body.endDir));
+            TRACE(printf("Trying (%d, %d, %d) --> (%d, %d, %d)\n", head.startX, head.startY, head.startDir, body.endX, body.endY, body.endDir));
 
-                Cell* toCell = level->getCell(body.endY, body.endX);
+            Cell* toCell = level->getCell(body.endY, body.endX);
 
-                const StateMask originalInnerState = comp->getCurrentExitCellStateMask();
-                StateMask toBeChangedMask = ~originalInnerState & body.stateChangeMask;
-                changeExitCellsState(comp, true, toBeChangedMask);
+            const StateMask originalInnerState = comp->getCurrentExitCellStateMask();
+            StateMask toBeChangedMask = ~originalInnerState & body.stateChangeMask;
+            changeExitCellsState(comp, true, toBeChangedMask);
 
 #ifdef TRACE_SOLUTIONS
-                fromCell->setFree(false);
-                toCell->setFree(false);
+            fromCell->setFree(false);
+            toCell->setFree(false);
 level->traceComponent();
 #endif
 
-                comp->chooseSolution(head, body);
+            comp->chooseSolution(head, body);
 
-                if (subtree->getSolutionCount() == 0) // Current component traversed completely
+            if (subtree->getSolutionCount() == 0) // Current component traversed completely
+            {
+                cellsVisited += comp->getSize();
+
+                if (cellsVisited == level->Free) // TODO: consider using sort of a constant here // Assumption: cells are not being occupied in follow()
                 {
-                    cellsVisited += comp->getSize();
-
-                    if (cellsVisited == level->Free) // TODO: consider using sort of a constant here
-                    {
 //Colorer::print<WHITE>("SOLUTION FOUND!!!\n");
 //level->traceComponent();
-                        level->Solved = true;
+                    level->Solved = true;
 
-                        level->Answer = body.solution + level->Answer;
+                    level->Answer = body.solution + level->Answer;
 
-                        return;
-                    }
-                }
-
-                int dir = body.endDir;
-                SolutionHead nextHead = {body.endX + dx[dir], body.endY + dy[dir], dir};
-
-//level->traceComponent();
-                if (level->getCell(nextHead.startY, nextHead.startX)->isFree())
-                {
-                    follow(nextHead);
-                    if (level->Solved)
-                    {
-                        level->Answer = body.solution + level->Answer;
-                        return;
-                    }
-                }
-
-#ifdef TRACE_SOLUTIONS
-                fromCell->setFree(true);
-                toCell->setFree(true);
-#endif
-                changeExitCellsState(comp, false, toBeChangedMask);
-                
-                comp->unchooseSolution();
-
-                if (subtree->getSolutionCount() == 0)
-                {
-                    cellsVisited -= comp->getSize();
+                    return;
                 }
             }
+
+            int dir = body.endDir;
+            SolutionHead nextHead = {body.endX + dx[dir], body.endY + dy[dir], dir};
+
+//level->traceComponent();
+            if (level->getCell(nextHead.startY, nextHead.startX)->isFree())
+            {
+                follow(nextHead);
+                if (level->Solved)
+                {
+                    level->Answer = body.solution + level->Answer;
+                    return;
+                }
+            }
+
+#ifdef TRACE_SOLUTIONS
+            fromCell->setFree(true);
+            toCell->setFree(true);
+#endif
+            changeExitCellsState(comp, false, toBeChangedMask);
+                
+            comp->unchooseSolution();
+
+            if (subtree->getSolutionCount() == 0)
+            {
+                cellsVisited -= comp->getSize();
+            }
         }
-    //}
+    }
 }
 
 void Solver::trySolving(int startX, int startY)

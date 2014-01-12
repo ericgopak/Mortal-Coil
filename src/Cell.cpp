@@ -131,11 +131,6 @@ const std::vector<Exit>& Cell::getExits() const
     return exits;
 }
 
-//std::set<Obstacle*>* Cell::getTouchingObstacles()
-//{
-//    return &touchingObstacles;
-//}
-
 void Cell::addExit(const Exit& exit)
 {
     assert(exits.size() < 4);

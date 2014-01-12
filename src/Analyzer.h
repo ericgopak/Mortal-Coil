@@ -26,7 +26,6 @@ public:
     void setComponentCurrentIndex(int index);
 
     void analyzeComponents();
-    //void analyzeComponent(Component& component, int stateMask);
     void analyzeComponent(Component& component);
 
     void preprocess();

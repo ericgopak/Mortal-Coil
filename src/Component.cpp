@@ -11,6 +11,19 @@ bool SolutionHead::operator < (const SolutionHead& head) const
     return startDir < head.startDir;
 }
 
+bool SolutionHead::operator == (const SolutionHead& head) const
+{
+    return startY == head.startY
+        && startX == head.startX
+        && startDir == head.startDir;
+}
+
+size_t SolutionHead::operator ()(const SolutionHead& head) const
+{
+    //return (((startY & 65535) << 15) ^ ((startX & 65535) << 2)) ^ startDir;
+    return (((head.startY & 65535) << 15) ^ ((head.startX & 65535) << 2)) ^ head.startDir;
+}
+
 bool SolutionBody::operator < (const SolutionBody& body) const
 {
     if (endY != body.endY) return endY < body.endY;
@@ -21,6 +34,12 @@ bool SolutionBody::operator < (const SolutionBody& body) const
     if (stateChangeMask   != body.stateChangeMask  ) return stateChangeMask   < body.stateChangeMask;
 
     return solution < body.solution;
+}
+
+size_t SolutionBody::operator ()(const SolutionBody& body) const
+{
+    //return (((endY & 65535) << 15) ^ ((endX & 65535) << 2)) ^ endDir;
+    return (((body.endY & 65535) << 15) ^ ((body.endX & 65535) << 2)) ^ body.endDir;
 }
 
 SolutionTree* BodyToTree::followBody(const SolutionBody& solutionBody)
@@ -108,8 +127,6 @@ void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution, bool
     assert(solution.size() > 0);
 
     // TODO: check for solution uniqueness.
-
-//TODO: !!! AND masks appropriately
 
     addSolution(this, solution, 0, isStarting, isEnding);
 }

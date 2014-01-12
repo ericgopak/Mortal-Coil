@@ -26,6 +26,7 @@
 #include <ctime>
 #include <assert.h>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <vector>
 #include <stack>
@@ -57,6 +58,7 @@ namespace Debug
     extern int gotInvalidNextTouchesCounter;
     extern int gotIsolatedCellsCounter;
     extern int gotTooManyTemporaryEndBlocksCounter;
+    extern int avoidedEndingSolutionCounter;
 #endif
 #ifdef TRACE_SOLUTIONS
     extern int currentX;

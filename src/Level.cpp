@@ -132,12 +132,14 @@ int Level::getObstacleCount() const
     return obstacles.size();
 }
 
-const std::set<const Cell*>& Level::getTemporaryEnds() const
+//const std::set<const Cell*>& Level::getTemporaryEnds() const
+const std::vector<const Cell*>& Level::getTemporaryEnds() const
 {
     return temporaryEnds;
 }
 
-const std::set<const Cell*>& Level::getTemporaryEndsInCurrentComponent() const
+//const std::set<const Cell*>& Level::getTemporaryEndsInCurrentComponent() const
+const std::vector<const Cell*>& Level::getTemporaryEndsInCurrentComponent() const
 {
     return temporaryEndsInCurrentComponent;
 }
@@ -185,28 +187,36 @@ void Level::setBiggest(int index)
 
 void Level::addTemporaryEnd(const Cell* cell)
 {
-    assert(temporaryEnds.find(cell) == temporaryEnds.end());
-    temporaryEnds.insert(cell);
+    /*assert(temporaryEnds.find(cell) == temporaryEnds.end());
+    temporaryEnds.insert(cell);*/
+    assert(std::find(temporaryEnds.begin(), temporaryEnds.end(), cell) == temporaryEnds.end());
+    temporaryEnds.push_back(cell);
 }
 
 void Level::removeTemporaryEnd(const Cell* cell)
 {
-    assert(temporaryEnds.find(cell) != temporaryEnds.end());
-    temporaryEnds.erase(cell);
+    /*assert(temporaryEnds.find(cell) != temporaryEnds.end());
+    temporaryEnds.erase(cell);*/
+    assert(cell == temporaryEnds.back());
+    temporaryEnds.pop_back();
 }
 
 void Level::addTemporaryEndsInCurrentComponent(const Cell* cell)
 {
-//    traceComponent();
+    //traceComponent();
 
-    assert(temporaryEndsInCurrentComponent.find(cell) == temporaryEndsInCurrentComponent.end());
-    temporaryEndsInCurrentComponent.insert(cell);
+    /*assert(temporaryEndsInCurrentComponent.find(cell) == temporaryEndsInCurrentComponent.end());
+    temporaryEndsInCurrentComponent.insert(cell);*/
+    assert(std::find(temporaryEndsInCurrentComponent.begin(), temporaryEndsInCurrentComponent.end(), cell) == temporaryEndsInCurrentComponent.end());
+    temporaryEndsInCurrentComponent.push_back(cell);
 }
 
 void Level::removeTemporaryEndsInCurrentComponent(const Cell* cell)
 {
-    assert(temporaryEndsInCurrentComponent.find(cell) != temporaryEndsInCurrentComponent.end());
-    temporaryEndsInCurrentComponent.erase(cell);
+//traceComponent();
+    //assert(temporaryEndsInCurrentComponent.find(cell) != temporaryEndsInCurrentComponent.end());
+    assert(temporaryEndsInCurrentComponent.back() == cell);
+    temporaryEndsInCurrentComponent.pop_back();
 }
 
 void Level::addTemporaryEndBlock(const Component* comp)
@@ -311,7 +321,8 @@ void Level::printCell(const Cell* cell, int id) const
     }
     else
 #endif
-        if (temporaryEnds.find(cell) != temporaryEnds.end())
+        //if (temporaryEnds.find(cell) != temporaryEnds.end())
+        if (std::find(temporaryEnds.begin(), temporaryEnds.end(), cell) != temporaryEnds.end())
     {
         background = BACKGROUND_YELLOW;
     }

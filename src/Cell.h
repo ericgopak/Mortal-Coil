@@ -37,7 +37,6 @@ protected:
     int nextMask; // Mask of free neighbours
 
     NextTouchMap neighboursTouchingSameObstacle;
-    //std::set< ::Obstacle*> touchingObstacles;
 
 public:
 
@@ -65,12 +64,10 @@ public:
     int getComponentId() const;
     int getNextMask() const;
     const std::vector<Exit>& getExits() const;
-    //std::set< ::Obstacle*>* getTouchingObstacles();
 
     void addExit(const Exit& exit);
     void setOpposingExit(const Exit* exit, const Exit* opposingExit);
     void addNextTouch(int obstacleId, const Cell* cell);
-    //void addTouchingObstacle(::Obstacle* obst);
 
     void setType(bool obstacle);
     void setXY(int x, int y);
@@ -88,7 +85,6 @@ public:
 #endif
 };
 
-//class Exit : public Cell
 class Exit
 {
     int dir;
@@ -109,21 +105,3 @@ public:
 
     void setOpposingExit(const Exit* opposingExit);
 };
-
-
-//class Exit : public Cell
-//{
-//    int dir;
-//    const Exit* opposingExit;
-//
-//public:
-//    Exit(const Cell* cell, int dir);
-//
-//    const Exit* getOpposingExit() const;
-//    void setOpposingExit(const Exit* opposingExit);
-//
-//    bool operator < (const Exit &e) const;
-//    bool operator == (const Exit &e) const;
-//
-//    int getDir() const;
-//};

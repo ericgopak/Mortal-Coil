@@ -239,7 +239,6 @@ void Analyzer::analyzeComponents()
     }
 }
 
-//void Analyzer::analyzeComponent(Component& component, int stateMask)
 void Analyzer::analyzeComponent(Component& component)
 {
     if (component.getOccupiedCount() == component.getSize())
@@ -247,7 +246,6 @@ void Analyzer::analyzeComponent(Component& component)
         if (solutionRecordHolder.size() > 0)
         {
             int solutionNumber = component.getSolutionCount() + 1;
-////if ((*component.getCells().begin())->getComponentId() == 1) {
             TRACE(
                 level->traceComponent(componentCurrentIndex);
                 Colorer::print<WHITE>("Oh yeah! Found full solution %d:    ", solutionNumber);
@@ -264,44 +262,33 @@ void Analyzer::analyzeComponent(Component& component)
                 }
                 printf("\n");
             );
-//}
-            bool isStarting = true;
-            bool isEnding = false;
 
-            const int& startX   = std::get<2>(solutionRecordHolder[0]).startX;
-            const int& startY   = std::get<2>(solutionRecordHolder[0]).startY;
-            const int& startDir = std::get<2>(solutionRecordHolder[0]).startDir;
-            if (level->getCell(startY, startX)->hasExit(startDir) && level->getCell(startY, startX)->isTemporaryEnd()) // TODO: test
+            const SolutionRecord& firstRecord = solutionRecordHolder[0];
+            MustBeBlockedMask mustBeBlockedMask = std::get<0>(firstRecord);
+            MustBeBlockedMask mustBeFreeMask = std::get<1>(firstRecord);
+
+            bool isStarting = true;
+            bool isEnding = true;
+
+            const int& startX   = std::get<2>(firstRecord).startX;
+            const int& startY   = std::get<2>(firstRecord).startY;
+            const int& startDir = std::get<2>(firstRecord).startDir;
+
+            // Exit behind and this exit must not be free
+            if (level->getCell(startY, startX)->hasExit(startDir ^ 2)
+                && (mustBeFreeMask & (1 << component.getIndexByExit(level->getCell(startY, startX)->getExit(startDir ^ 2)))) == 0)
             {
                 isStarting = false;
             }
 
-//            if (level->getCell(startY, startX)->hasExit(startDir))
-//            {
-//int solutionNumber = component.getSolutionCount() + 1;
-//level->traceComponent(componentCurrentIndex);
-//Colorer::print<WHITE>("Oh yeah! Found full solution %d:    ", solutionNumber);
-//for (size_t i = 0; i < solutionRecordHolder.size(); i++)
-//{
-//    const SolutionRecord& record = solutionRecordHolder[i];
-//    Colorer::print<WHITE>("[%d | %d] --> (%d,%d,%d) --> (%d,%d,%d)  [%s]    "
-//        , std::get<0>(record)
-//        , std::get<1>(record)
-//        , std::get<2>(record).startX, std::get<2>(record).startY, std::get<2>(record).startDir
-//        , std::get<3>(record).endX,   std::get<3>(record).endY,   std::get<3>(record).endDir
-//        , std::get<3>(record).solution.c_str()
-//    );
-//}
-//printf("\n");
-//            }
-
-            const int& endX   = std::get<3>(solutionRecordHolder[solutionRecordHolder.size() - 1]).endX;
-            const int& endY   = std::get<3>(solutionRecordHolder[solutionRecordHolder.size() - 1]).endY;
-            const int& endDir = std::get<3>(solutionRecordHolder[solutionRecordHolder.size() - 1]).endDir;
-            if (level->getCell(endY, endX)->hasExit(endDir) == false) // TODO: test
+            const SolutionRecord& lastRecord = solutionRecordHolder[solutionRecordHolder.size() - 1];
+            const int& endX   = std::get<3>(lastRecord).endX;
+            const int& endY   = std::get<3>(lastRecord).endY;
+            const int& endDir = std::get<3>(lastRecord).endDir;
+            // Exit in front and it must be free
+            if (level->getCell(endY, endX)->hasExit(endDir) && (mustBeFreeMask & (1 << component.getIndexByExit(level->getCell(endY, endX)->getExit(endDir)))) != 0)
             {
-                assert(component.getOccupiedCount() == component.getSize());
-                isEnding = true;
+                isEnding = false;
             }
 
             component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
@@ -318,7 +305,6 @@ void Analyzer::analyzeComponent(Component& component)
         decisionHolder.push_back("");
         stateChangeStack.push_back(0);
 
-        // Consider starting solutions
         if (solutionRecordHolder.size() == 0)
         {
             FOREACH(component.getCells(), c)
@@ -343,48 +329,50 @@ void Analyzer::analyzeComponent(Component& component)
 
                         Cell* prevCell = cell->getNextCell(dir ^ 2);
 
-                        //// Non-starting solution
-                        //if (cell->hasExit(dir ^ 2))
-                        //{
-                        //    int exitIndex = level->getComponents()[cell->getComponentId()].getIndexByExit(cell->getExit(dir ^ 2));
-
-                        //    //previousStateMask.push_back(stateMask | (1 << exitIndex));
-                        //    //mustBeFreeStateMask.push_back(1 << exitIndex);
-                        //    mustBeFreeStateMask.push_back(0);
-                        //    mustBeBlockedStateMask.push_back(0);
-
-                        //    prevCell->setType(true); // Convert to obstacle in order not to count it as a (potential) temporary end
-                        //    prevCell->setFree(false);
-                        //    backtrack(cell, dir);
-                        //    prevCell->setType(false);
-                        //    prevCell->setFree(true);
-                        //    //previousStateMask.pop_back();
-                        //    mustBeFreeStateMask.pop_back();
-                        //    mustBeBlockedStateMask.pop_back();
-                        //}
-
-                        // Starting solution
-                        if (cell->hasExit(dir ^ 2)) // Special case: there's an exit ahead
+                        // Consider non-starting solutions
+                        if (cell->hasExit(dir ^ 2))
                         {
                             int exitIndex = level->getComponents()[cell->getComponentId()].getIndexByExit(cell->getExit(dir ^ 2));
 
-                            //previousStateMask.push_back(stateMask | (1 << exitIndex));
-                            //mustBeFreeStateMask.push_back(1 << exitIndex);
                             mustBeFreeStateMask.push_back(0);
-                            mustBeBlockedStateMask.push_back(0);
+                            mustBeBlockedStateMask.push_back(1 << exitIndex);
 
                             prevCell->setType(true); // Convert to obstacle in order not to count it as a (potential) temporary end
                             prevCell->setFree(false);
                             backtrack(cell, dir);
                             prevCell->setType(false);
                             prevCell->setFree(true);
-                            //previousStateMask.pop_back();
+
                             mustBeFreeStateMask.pop_back();
                             mustBeBlockedStateMask.pop_back();
                         }
+
+                        // Consider starting solutions
+                        if (cell->hasExit(dir ^ 2)) // Special case: there's an exit behind
+                        {
+                            int exitIndex = level->getComponents()[cell->getComponentId()].getIndexByExit(cell->getExit(dir ^ 2));
+                            decisionHolder[decisionHolder.size() - 1].push_back(Direction[dir]);
+                            mustBeFreeStateMask.push_back(1 << exitIndex);
+
+                            //previousStateMask.push_back(stateMask | (1 << exitIndex));
+                            //mustBeFreeStateMask.push_back(1 << exitIndex);
+                            //mustBeFreeStateMask.push_back(0);
+                            mustBeBlockedStateMask.push_back(0);
+
+                            // TODO: WHY TO CONVERT TO OBSTACLE? IT MAKES NO SENSE!
+
+                            //prevCell->setType(true); // Convert to obstacle in order not to count it as a (potential) temporary end
+                            //prevCell->setFree(false);
+                            backtrack(cell, dir);
+                            /*prevCell->setType(false);
+                            prevCell->setFree(true);*/
+                            //previousStateMask.pop_back();
+                            mustBeFreeStateMask.pop_back();
+                            mustBeBlockedStateMask.pop_back();
+                            decisionHolder[decisionHolder.size() - 1].pop_back();
+                        }
                         else
                         // Starting solution
-                        // There is no point in starting from the exitCell with 1-sized component behind
                         //if (prevCell->isObstacle() || level->getComponents()[prevCell->getComponentId()].getSize() != 1)
                         if (prevCell->isObstacle() == false && level->getComponents()[prevCell->getComponentId()].getSize() == 1) // Special case: there's a narrow exit behind
                         {
@@ -417,16 +405,7 @@ void Analyzer::analyzeComponent(Component& component)
                         {
                             decisionHolder[decisionHolder.size() - 1].push_back(Direction[dir]);
 
-                            // TODO: remove this 'if'
-                            if (cell->hasExit(dir ^ 2))
-                            {
-                                int exitIndex = level->getComponents()[cell->getComponentId()].getIndexByExit(cell->getExit(dir ^ 2));
-                                mustBeFreeStateMask.push_back(1 << exitIndex);
-                            }
-                            else
-                            {
-                                mustBeFreeStateMask.push_back(0);
-                            }
+                            mustBeFreeStateMask.push_back(0);
                             //previousStateMask.push_back(stateMask);
                             //mustBeFreeStateMask.push_back(0);
                             //mustBeFreeStateMask.push_back(0);
@@ -490,7 +469,9 @@ void Analyzer::analyzeComponent(Component& component)
                         previousHead.push_back(head);
                         //previousStateMask.push_back(stateMask | (1 << i)); // Through solution: mask the exit out
                         mustBeFreeStateMask.push_back(0);
-                        mustBeBlockedStateMask.push_back(0);
+                        // TODO: test this
+                        //mustBeBlockedStateMask.push_back(0);
+                        mustBeBlockedStateMask.push_back(1 << i);
 
                         prevCell->setType(true); // Convert to obstacle in order not to count it as a (potential) temporary end
                         prevCell->setFree(false);
@@ -703,15 +684,17 @@ void Analyzer::postOccupyAction(Cell* cell, int dir)
 
 void Analyzer::preRestoreAction(Cell* cell, int dir)
 {
-    const Cell* left  = cell->getNextCell(Left[dir]);
-    const Cell* right = cell->getNextCell(Right[dir]);
+    // Note: use reverse sequence! (working with stacks)
+
     const Cell* behind = cell->getNextCell(dir ^ 2);
-    if (left->isTemporaryEnd())
+    const Cell* right = cell->getNextCell(Right[dir]);
+    const Cell* left  = cell->getNextCell(Left[dir]);
+    if (behind->isTemporaryEnd()) // May happen to the first cell in a line
     {
-        level->removeTemporaryEnd(left);
-        if (left->getComponentId() == cell->getComponentId())
+        level->removeTemporaryEnd(behind);
+        if (behind->getComponentId() == cell->getComponentId())
         {
-            level->removeTemporaryEndsInCurrentComponent(left);
+            level->removeTemporaryEndsInCurrentComponent(behind);
         }
     }
     if (right->isTemporaryEnd())
@@ -722,12 +705,12 @@ void Analyzer::preRestoreAction(Cell* cell, int dir)
             level->removeTemporaryEndsInCurrentComponent(right);
         }
     }
-    if (behind->isTemporaryEnd()) // May happen to the first cell in a line
+    if (left->isTemporaryEnd())
     {
-        level->removeTemporaryEnd(behind);
-        if (behind->getComponentId() == cell->getComponentId())
+        level->removeTemporaryEnd(left);
+        if (left->getComponentId() == cell->getComponentId())
         {
-            level->removeTemporaryEndsInCurrentComponent(behind);
+            level->removeTemporaryEndsInCurrentComponent(left);
         }
     }
 

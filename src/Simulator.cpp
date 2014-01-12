@@ -489,11 +489,13 @@ bool Simulator::mayStartFrom(Cell* cell, int dir) const
 
 bool Simulator::shouldConsider(Cell* cell, int dir) const
 {
-    if (!cell->isFree())
+    return cell->isFree();
+
+    /*if (!cell->isFree())
     {
         return false;
     }
-    return true;
+    return true;*/
 }
 
 bool Simulator::stopBacktracking() const

@@ -17,6 +17,9 @@ struct SolutionHead
     int startX, startY, startDir;
 
     bool operator < (const SolutionHead& head) const;
+    bool operator == (const SolutionHead& head) const;
+
+    size_t operator ()(const SolutionHead& head) const;
 };
 
 struct SolutionBody
@@ -28,6 +31,9 @@ struct SolutionBody
     std::string solution; // TODO: consider compressing (1 bit per decision)
 
     bool operator < (const SolutionBody& body) const;
+    bool operator == (const SolutionBody& body) const;
+
+    size_t operator ()(const SolutionBody& body) const;
 };
 
 class SolutionTree;
@@ -41,6 +47,7 @@ struct BodyToTree
     friend class SolutionTree;
 
     std::map<SolutionBody, SolutionTree> bodyToTree;
+    //std::unordered_map<SolutionBody, SolutionTree> bodyToTree;
 
 public:
 
@@ -51,7 +58,8 @@ struct HeadToBody
 {
     friend class SolutionTree;
 
-    std::map<SolutionHead, BodyToTree> headToBody;
+    //std::map<SolutionHead, BodyToTree> headToBody;
+    std::unordered_map<SolutionHead, BodyToTree, SolutionHead> headToBody;
 
 public:
 
