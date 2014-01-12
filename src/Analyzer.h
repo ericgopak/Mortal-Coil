@@ -4,8 +4,12 @@
 
 #define INITIAL_STATE_MASK 0
 
+typedef std::tuple<int, int, const Exit*, const Exit*> UniqueSolutionFragment;
+
 class Analyzer : public Simulator
 {
+    std::set<std::vector<SolutionRecord>> uniqueSolutions;
+
     //std::vector<const Exit*> previousExit;
     std::vector<const SolutionHead> previousHead;
     std::vector<MustBeBlockedMask> mustBeBlockedStateMask; // Mask of must-be-previously-blocked exits for current solution fragment
@@ -24,6 +28,11 @@ public:
     int getComponentCurrentIndex() const;
 
     void setComponentCurrentIndex(int index);
+
+    bool solutionIsStarting(const std::vector<SolutionRecord>& solution) const;
+    bool solutionIsEnding(const std::vector<SolutionRecord>& solution) const;
+    //std::vector<const Exit*> getExitSequenceFromSolution(const std::vector<SolutionRecord>& solution) const;
+    std::vector<UniqueSolutionFragment> getUniqueSolutionFragments(const std::vector<SolutionRecord>& solution) const;
 
     void analyzeComponents();
     void analyzeComponent(Component& component);

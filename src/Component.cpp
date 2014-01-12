@@ -26,14 +26,25 @@ size_t SolutionHead::operator ()(const SolutionHead& head) const
 
 bool SolutionBody::operator < (const SolutionBody& body) const
 {
-    if (endY != body.endY) return endY < body.endY;
-    if (endX != body.endX) return endX < body.endX;
+    if (endY   != body.endY  ) return endY   < body.endY;
+    if (endX   != body.endX  ) return endX   < body.endX;
     if (endDir != body.endDir) return endDir < body.endDir;
     if (mustBeBlockedMask != body.mustBeBlockedMask) return mustBeBlockedMask < body.mustBeBlockedMask;
-    if (mustBeFreeMask    != body.mustBeFreeMask   ) return mustBeFreeMask    < body.mustBeFreeMask;
-    if (stateChangeMask   != body.stateChangeMask  ) return stateChangeMask   < body.stateChangeMask;
+    if (mustBeFreeMask    != body.mustBeFreeMask   ) return mustBeFreeMask    < body.mustBeFreeMask   ;
+    if (stateChangeMask   != body.stateChangeMask  ) return stateChangeMask   < body.stateChangeMask  ;
 
     return solution < body.solution;
+}
+
+bool SolutionBody::operator == (const SolutionBody& body) const
+{
+    return endY   == body.endY
+        && endX   == body.endX
+        && endDir == body.endDir
+        && mustBeBlockedMask == body.mustBeBlockedMask
+        && mustBeFreeMask    == body.mustBeFreeMask
+        && stateChangeMask   == body.stateChangeMask
+        && solution          == body.solution;
 }
 
 size_t SolutionBody::operator ()(const SolutionBody& body) const

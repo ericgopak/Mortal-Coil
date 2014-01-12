@@ -59,6 +59,7 @@ namespace Debug
     extern int gotIsolatedCellsCounter;
     extern int gotTooManyTemporaryEndBlocksCounter;
     extern int avoidedEndingSolutionCounter;
+    extern int similarSolutionsCounter;
 #endif
 #ifdef TRACE_SOLUTIONS
     extern int currentX;

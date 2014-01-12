@@ -46,7 +46,7 @@ struct BodyToTree
 {
     friend class SolutionTree;
 
-    std::map<SolutionBody, SolutionTree> bodyToTree;
+std::map<SolutionBody, SolutionTree> bodyToTree; // TODO: try unordered_map
     //std::unordered_map<SolutionBody, SolutionTree> bodyToTree;
 
 public:

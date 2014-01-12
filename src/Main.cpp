@@ -138,6 +138,9 @@ int main(int argc, char* argv[])
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
 
+//firstCol = 16;
+//firstRow = 6;
+
     solver.solve(firstRow, firstCol, firstComponentId);
 
     TRACE(Colorer::print<WHITE>(level.Solved ? "SOLVED\n" : "FAILED TO SOLVE\n"));
@@ -148,6 +151,7 @@ int main(int argc, char* argv[])
     printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
     printf("Got too many temporary end blocks %d times!\n", Debug::gotTooManyTemporaryEndBlocksCounter);
     printf("Avoided ending solutions %d times!\n", Debug::avoidedEndingSolutionCounter);
+    printf("Found %d similar solutions!\n", Debug::similarSolutionsCounter);
 #endif
 
     if (level.Solved)

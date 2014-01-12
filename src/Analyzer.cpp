@@ -118,6 +118,8 @@ void Analyzer::analyzeComponents()
 {
     for (int i = 0; i < level->getComponentCount(); i++)
     {
+        uniqueSolutions.clear();
+
         Component& component = level->getComponents()[i];
 
         if (component.getSize() == 1)
@@ -211,7 +213,6 @@ void Analyzer::analyzeComponents()
             TRACE(printf("CONSIDERING %d (size: %d  exits: %d  exitCells: %d)\n", i, component.getSize(), component.getExits().size(), component.getExitCells().size()));
 
             assert(solutionRecordHolder.size() == 0);
-            //analyzeComponent(component, INITIAL_STATE_MASK);
             analyzeComponent(component);
 
             TRACE(Colorer::print<WHITE>("Component %d got %d solution%c\n", i, component.getSolutionCount(), component.getSolutionCount() == 1 ? ' ' : 's'));
@@ -239,6 +240,125 @@ void Analyzer::analyzeComponents()
     }
 }
 
+bool Analyzer::solutionIsStarting(const std::vector<SolutionRecord>& solution) const
+{
+    bool isStarting = true;
+
+    //MustBeBlockedMask mustBeBlockedMask = std::get<0>(solution[0]);
+    MustBeBlockedMask mustBeFreeMask = std::get<1>(solution[0]);
+
+    const int& startX   = std::get<2>(solution[0]).startX;
+    const int& startY   = std::get<2>(solution[0]).startY;
+    const int& startDir = std::get<2>(solution[0]).startDir;
+
+    const Cell* cell = level->getCell(startY, startX);
+    const Component* comp = &level->getComponents()[cell->getComponentId()];
+
+    // Exit behind and this exit must not be free
+    if (cell->hasExit(startDir ^ 2)
+        && (mustBeFreeMask & (1 << comp->getIndexByExit(level->getCell(startY, startX)->getExit(startDir ^ 2)))) == 0)
+    {
+        isStarting = false;
+    }
+
+    return isStarting;
+}
+
+bool Analyzer::solutionIsEnding(const std::vector<SolutionRecord>& solution) const
+{
+    bool isEnding = true;
+
+    const SolutionRecord& lastRecord = solutionRecordHolder[solutionRecordHolder.size() - 1];
+    const int& endX   = std::get<3>(lastRecord).endX;
+    const int& endY   = std::get<3>(lastRecord).endY;
+    const int& endDir = std::get<3>(lastRecord).endDir;
+
+    MustBeBlockedMask mustBeFreeMask = std::get<1>(solution[solution.size() - 1]);
+
+    const Cell* cell = level->getCell(endY, endX);
+    const Component* comp = &level->getComponents()[cell->getComponentId()];
+// TODO: confirm - is the problem with mustBeFreeMask?
+    // Exit in front and it must be free
+    if (cell->hasExit(endDir) && (mustBeFreeMask & (1 << comp->getIndexByExit(cell->getExit(endDir)))) != 0)
+    {
+        isEnding = false;
+    }
+
+    return isEnding;
+}
+
+//std::vector<const Exit*> Analyzer::getExitSequenceFromSolution(const std::vector<SolutionRecord>& solution) const
+std::vector<UniqueSolutionFragment> Analyzer::getUniqueSolutionFragments(const std::vector<SolutionRecord>& solution) const
+{
+    // TODO: assign masks as well!!!
+    const size_t n = solution.size();
+
+    std::vector<UniqueSolutionFragment> res(n);
+
+    if (n == 0)
+    {
+        return res;
+    }
+
+    // First fragment
+    std::get<0>(res[0]) = std::get<0>(solution[0]); // mustBeBlocked
+    std::get<1>(res[0]) = std::get<1>(solution[0]); // mustBeFree
+
+    if (solutionIsStarting(solution))
+    {
+        std::get<2>(res[0]) = NULL;
+    }
+    else
+    {
+        const SolutionHead& head = std::get<2>(solution[0]);
+        std::get<2>(res[0]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
+    }
+
+    if (n > 1)
+    {
+        const SolutionBody& body = std::get<3>(solution[0]);
+        std::get<3>(res[0]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+    }
+
+    // Middle fragments
+    for (size_t i = 1; i < solution.size() - 1; i++)
+    {
+        std::get<0>(res[i]) = std::get<0>(solution[i]);
+        std::get<1>(res[i]) = std::get<1>(solution[i]);
+
+        const SolutionHead& head = std::get<2>(solution[i]);
+        const SolutionBody& body = std::get<3>(solution[i]);
+        std::get<2>(res[i]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
+        std::get<3>(res[i]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+    }
+
+    if (n > 1)
+    {
+        // Penultimate fragment
+        const SolutionHead& head = std::get<2>(solution[solution.size() - 1]);
+        std::get<2>(res[n - 1]) = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
+    }
+
+    // Ultimate fragment
+    if (n > 1) // Just don't repeat the code for the first fragment
+    {
+        std::get<0>(res[n - 1]) = std::get<0>(solution[n - 1]);
+        std::get<1>(res[n - 1]) = std::get<1>(solution[n - 1]);
+    }
+
+    if (solutionIsEnding(solution))
+    {
+        std::get<3>(res[n - 1]) = NULL;
+    }
+    else
+    {
+        const SolutionBody& body = std::get<3>(solution[solution.size() - 1]);
+        std::get<3>(res[n - 1]) = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+    }
+
+    return res;
+}
+
 void Analyzer::analyzeComponent(Component& component)
 {
     if (component.getOccupiedCount() == component.getSize())
@@ -246,7 +366,7 @@ void Analyzer::analyzeComponent(Component& component)
         if (solutionRecordHolder.size() > 0)
         {
             int solutionNumber = component.getSolutionCount() + 1;
-            TRACE(
+            /*TRACE(
                 level->traceComponent(componentCurrentIndex);
                 Colorer::print<WHITE>("Oh yeah! Found full solution %d:    ", solutionNumber);
                 for (size_t i = 0; i < solutionRecordHolder.size(); i++)
@@ -261,37 +381,58 @@ void Analyzer::analyzeComponent(Component& component)
                     );
                 }
                 printf("\n");
-            );
+            );*/
+//int x = std::get<2>(solutionRecordHolder[0]).startX;
+//int y = std::get<2>(solutionRecordHolder[0]).startY;
+////if ((*component.getCells().begin())->getComponentId() == 25)
+//if (solutionRecordHolder.size() == 3 && x == 16 && y == 6)
+//{
+//    if (std::get<2>(solutionRecordHolder[1]).startX == 13
+//     && std::get<2>(solutionRecordHolder[1]).startY == 9)
+//    {
+//level->traceComponent();
+////int dir = std::get<2>(solutionRecordHolder[0]).startDir;
+//int bp = 0;
+//    }
+//}
+            bool isStarting = solutionIsStarting(solutionRecordHolder);
+            bool isEnding   = solutionIsEnding(solutionRecordHolder);
 
-            const SolutionRecord& firstRecord = solutionRecordHolder[0];
-            MustBeBlockedMask mustBeBlockedMask = std::get<0>(firstRecord);
-            MustBeBlockedMask mustBeFreeMask = std::get<1>(firstRecord);
+            auto newSolution = getUniqueSolutionFragments(solutionRecordHolder);
 
-            bool isStarting = true;
-            bool isEnding = true;
-
-            const int& startX   = std::get<2>(firstRecord).startX;
-            const int& startY   = std::get<2>(firstRecord).startY;
-            const int& startDir = std::get<2>(firstRecord).startDir;
-
-            // Exit behind and this exit must not be free
-            if (level->getCell(startY, startX)->hasExit(startDir ^ 2)
-                && (mustBeFreeMask & (1 << component.getIndexByExit(level->getCell(startY, startX)->getExit(startDir ^ 2)))) == 0)
+            bool unique = true;
+            FOREACH_CONST(uniqueSolutions, sol)
             {
-                isStarting = false;
+                auto solution = *sol;
+                if (solution.size() != solutionRecordHolder.size())
+                {
+                    continue;
+                }
+
+                auto oldSolution = getUniqueSolutionFragments(solution);
+
+                if (newSolution == oldSolution)
+                {
+                    unique = false;
+                    break;
+                }
             }
 
-            const SolutionRecord& lastRecord = solutionRecordHolder[solutionRecordHolder.size() - 1];
-            const int& endX   = std::get<3>(lastRecord).endX;
-            const int& endY   = std::get<3>(lastRecord).endY;
-            const int& endDir = std::get<3>(lastRecord).endDir;
-            // Exit in front and it must be free
-            if (level->getCell(endY, endX)->hasExit(endDir) && (mustBeFreeMask & (1 << component.getIndexByExit(level->getCell(endY, endX)->getExit(endDir)))) != 0)
+            if (unique == false)
             {
-                isEnding = false;
+                int bp = 0;
+#ifdef TRACE_STATISTICS
+                Debug::similarSolutionsCounter++;
+#endif
+            }
+            else
+            {
+//level->traceComponent();
+                uniqueSolutions.insert(solutionRecordHolder);
+                component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
             }
 
-            component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
+            //component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
         }
         else
         {
@@ -844,8 +985,15 @@ void Analyzer::solutionFound(Cell* cell, int dir)
         // Occupy and finish
         Cell* ncell = moveForward(cell, dir);
 
+        // TODO: update mustBeFree mask
+        MustBeFreeMask mustBeFreeMask = mustBeFreeStateMask.back();
+        if (cell->hasExit(dir))
+        {
+            mustBeFreeMask |= 1 << comp.getIndexByExit(cell->getExit(dir));
+        }
+
         //SolutionBody body = {cell->getX(), cell->getY(), dir, mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), decisionHolder.back()};
-        SolutionBody body = {cell->getX(), cell->getY(), dir, mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), stateChangeStack.back(), decisionHolder.back()};
+        SolutionBody body = {cell->getX(), cell->getY(), dir, mustBeBlockedStateMask.back(), mustBeFreeMask, stateChangeStack.back(), decisionHolder.back()};
         const SolutionHead& head = previousHead.back();
 
         //int prevMask = previousStateMask.back();
