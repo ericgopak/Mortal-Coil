@@ -32,6 +32,7 @@ for /l %%i in (%fromLevel%, 1, %toLevel%) do (
 
 	for %%e in (%solver%) do (
 		start "" /d "%cd%" /b /w "%%e" > %timesFile%
+rem		start "" /d "%cd%" /b /w "%%e"
 	)
 
 	if exist %outputFile% (

@@ -255,6 +255,10 @@ void Level::printCell(const Cell* cell, int id) const
             background = BACKGROUND_GRAY;
         }
     }
+    else if (components[cell->getComponentId()].isPortal())
+    {
+        background = BACKGROUND_RED;
+    }
     else
 #ifdef TRACE_SOLUTIONS
         if (cell->getLayer() != -1)

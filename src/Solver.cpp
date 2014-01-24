@@ -463,6 +463,14 @@ void Solver::follow(const SolutionHead& head)
 
     Component* comp = &level->getComponents()[fromCell->getComponentId()];
 
+    if (comp->isPortal())
+    {
+        // Try taking the portal
+        //TODO: ...
+    }
+
+
+
     SolutionTree* solutions = comp->getRemainingSolutions();
 
     // Does not work - we can only find out if a component will be ending

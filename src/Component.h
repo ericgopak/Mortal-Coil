@@ -38,6 +38,7 @@ struct SolutionBody
 
 class SolutionTree;
 
+// TODO: first 2 masks don't seem to be required - remove
 typedef std::tuple<MustBeBlockedMask, MustBeFreeMask, SolutionHead, SolutionBody> SolutionRecord;
 
 // Solution tree implementation
@@ -83,16 +84,23 @@ public:
     int getSolutionCount() const;
     int getStartingSolutionCount() const;
     int getEndingSolutionCount() const;
+
+    void getValidThroughSolutions(SolutionTree& res) const;
+
     void addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding);
     void addSolution(SolutionTree* tree, const std::vector<SolutionRecord>& solution, int solutionIndex, bool isStarting, bool isEnding);
+
+    std::vector<SolutionRecord> firstSolutionToRecords() const;
+    void convertToRecords(std::vector<std::vector<SolutionRecord>>& solutions, int depth = 0) const;
 };
 
 class Component : public AbstractComponent
 {
     int occupied;
-    //SolutionTree solutions;
     SolutionTree startingSolutions;
     SolutionTree nonStartingSolutions;
+    // TODO: consider copying only after checking if it actually will be used (i.e. if throughSolutionCount() == 2)
+    SolutionTree throughSolutions; // Copy of all non-starting and non-ending solutions
     // Arranged counter-clockwise along the perimeter
     std::vector<const Exit*> exits;
     // Arranged clockwise along the perimeter
@@ -100,7 +108,9 @@ class Component : public AbstractComponent
 
     std::stack<SolutionTree*> remainingSolutions;
 
-    int currentStateMask;
+    //int currentStateMask;
+
+    const Portal* portal;
 
 public:
     Component();
@@ -111,6 +121,7 @@ public:
     int getTotalSolutionCount() const;
     SolutionTree* getNonStartingSolutions();
     SolutionTree* getStartingSolutions();
+    SolutionTree* getThroughSolutions();
     int getNonStartingSolutionCount() const;
     int getStartingSolutionCount() const;
     int getThroughSolutionCount() const;
@@ -127,8 +138,13 @@ public:
     int getOuterExitStateMask() const;
     int getCurrentExitCellStateMask() const;
 
-    int getCurrentStateMask() const;
-    void setCurrentStateMask(int mask);
+    const Portal* getPortal() const;
+    bool isPortal() const;
+
+    void setPortal(const Portal* p);
+
+    //int getCurrentStateMask() const;
+    //void setCurrentStateMask(int mask);
 
     void addExit(const Exit* e);
     void addExitCell(const Cell* cell);
@@ -138,5 +154,5 @@ public:
     void incrementOccupied(int num = 1);
     void decrementOccupied(int num = 1);
 
-    void toggleExitState(const SolutionHead& head);
+    //void toggleExitState(const SolutionHead& head);
 };

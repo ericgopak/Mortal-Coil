@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Portal.h"
 
 //#define MAX_CAN_TOUCH  4 // Max # of components one cell can touch
 #define MAX_NEXT_TOUCH 8 // Max # of neighbouring cells touching the same component
@@ -18,17 +19,12 @@ class Cell
         Obstacle
     };
 
-protected:
     CellType type;
     int x, y;
     bool free;
     int obstacleId; // Index of an obstacle cell belongs to. 0 for the 'border'
     int componentId; // Index of the component the cell belongs to
     int exitMask;
-    TRACE(
-        int depth;
-        int layer;
-    );
 
     std::vector<Exit> exits;
     const Exit* exitsByDirection[4];
@@ -38,9 +34,19 @@ protected:
 
     NextTouchMap neighboursTouchingSameObstacle;
 
+    //Portal* portals[4]; // Portals in all 4 directions (max 2 possible, only 1 allowed!)
+    const Portal* portal;
+
+    TRACE(
+        int depth;
+        int layer;
+    );
+
 public:
 
     Cell(int x = -1, int y = -1);
+    // TODO: Rule of thumb
+    ~Cell();
 
     bool isObstacle() const;
     bool isFree() const;
@@ -64,6 +70,9 @@ public:
     int getNextMask() const;
     const std::vector<Exit>& getExits() const;
 
+    //const Portal** getPortals() const;
+    const Portal* getPortal() const;
+
     void addExit(const Exit& exit);
     void setOpposingExit(const Exit* exit, const Exit* opposingExit);
     void addNextTouch(int obstacleId, const Cell* cell);
@@ -75,6 +84,8 @@ public:
     void setFree(bool free);
     void setNextMask(int mask);
     void setNextCell(int dir, Cell* ncell);
+
+    void setPortal(const Portal* p);
     
 #ifdef TRACE_SOLUTIONS
     int getDepth() const;

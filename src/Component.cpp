@@ -129,15 +129,37 @@ void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution, bool
     addSolution(this, solution, 0, isStarting, isEnding);
 }
 
+std::vector<SolutionRecord> SolutionTree::firstSolutionToRecords() const
+{
+    std::vector<SolutionRecord> records;
+
+    const SolutionTree* subtree = this;
+    while (subtree->getSolutionCount() > 0)
+    {
+        const SolutionHead& head = subtree->tree.headToBody.begin()->first;
+        const SolutionBody& body = subtree->tree.headToBody.begin()->second.bodyToTree.begin()->first;
+        subtree = &subtree->tree.headToBody.begin()->second.bodyToTree.begin()->second;
+
+        records.push_back(SolutionRecord(body.mustBeBlockedMask, body.mustBeFreeMask, head, body));
+    }
+
+    return records;
+}
+
+void SolutionTree::convertToRecords(std::vector<std::vector<SolutionRecord>>& solutions, int depth) const
+{
+    // Do we need this? Maybe just traverse the tree instead?
+}
+
 Component::Component()
     : AbstractComponent()
     , occupied(0)
-    , currentStateMask(0)
+    //, currentStateMask(0)
+    , portal(NULL)
 {
     // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
-    //remainingSolutions.push(&solutions);
     remainingSolutions.push(&startingSolutions);
 }
 
@@ -147,7 +169,8 @@ Component::Component(const Component& c)
     , startingSolutions(c.startingSolutions)
     , nonStartingSolutions(c.nonStartingSolutions)
     , exits(c.exits)
-    , currentStateMask(0)
+    //, currentStateMask(0)
+    , portal(NULL)
 {
     // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
@@ -175,6 +198,11 @@ SolutionTree* Component::getStartingSolutions()
     return &startingSolutions;
 }
 
+SolutionTree* Component::getThroughSolutions()
+{
+    return &throughSolutions;
+}
+
 int Component::getNonStartingSolutionCount() const
 {
     return nonStartingSolutions.getSolutionCount();
@@ -187,6 +215,7 @@ int Component::getStartingSolutionCount() const
 
 int Component::getThroughSolutionCount() const
 {
+    assert(throughSolutions.getSolutionCount() == nonStartingSolutions.getSolutionCount() - nonStartingSolutions.getEndingSolutionCount());
     return nonStartingSolutions.getSolutionCount() - nonStartingSolutions.getEndingSolutionCount();
 }
 
@@ -277,15 +306,74 @@ int Component::getCurrentExitCellStateMask() const
     return mask;
 }
 
-int Component::getCurrentStateMask() const
+#include "Level.h" // TODO: remove
+
+void SolutionTree::getValidThroughSolutions(SolutionTree& res) const
 {
-    return currentStateMask;
+    const SolutionTree* subtree = this;
+
+    FOREACH(subtree->tree.headToBody, htb)
+    {
+        const SolutionHead& head = htb->first;
+
+        const Cell* fromCell = Debug::level->getCell(head.startY, head.startX);
+        const Exit* fromExit = fromCell->getExit(head.startDir ^ 2);
+        const Exit* opposingExit = fromExit->getOpposingExit();
+
+        // Good if incoming
+
+        // Restricting if bidirectional
+
+        // Bad otherwise
+
+        int counter1 = 0;
+
+        //FOREACH(htb->second.bodyToTree, btt)
+        //{
+        //    const SolutionBody& body = btt->first;
+        //    int counter2 = 0;
+
+
+        //    // TODO: check if children got any solutions
+        //    // if child->solutionCount == 0 then remove it
+        //}
+    }
+
+    //HeadToBody* headToBody = &subtree->tree;
+    //BodyToTree* bodyToTree = &headToBody->headToBody[head];
+    //subtree = &bodyToTree->bodyToTree[body];
+
+    //addSolution(subtree, solution, solutionIndex + 1, isStarting, isEnding);
+
+    ////FOREACH()
+    //{
+    //}
 }
 
-void Component::setCurrentStateMask(int mask)
+const Portal* Component::getPortal() const
 {
-    currentStateMask = mask;
+    return portal;
 }
+
+bool Component::isPortal() const
+{
+    return portal != NULL;
+}
+
+void Component::setPortal(const Portal* p)
+{
+    portal = p;
+}
+
+//int Component::getCurrentStateMask() const
+//{
+//    return currentStateMask;
+//}
+//
+//void Component::setCurrentStateMask(int mask)
+//{
+//    currentStateMask = mask;
+//}
 
 //SolutionTree* Component::getSolutions()
 //{
@@ -324,18 +412,18 @@ void Component::decrementOccupied(int num)
     occupied -= num;
 }
 
-void Component::toggleExitState(const SolutionHead& head)
-{
-    // Find exit index and update currentStateMask
-    int index = -1;
-    for (size_t i = 0; i < exits.size(); i++)
-    {
-        if (exits[i]->getX() == head.startX && exits[i]->getY() && exits[i]->getDir() == head.startDir)
-        {
-            index = i;
-            break;
-        }
-    }
-    assert(index != -1);
-    currentStateMask ^= 1 << index;
-}
+//void Component::toggleExitState(const SolutionHead& head)
+//{
+//    // Find exit index and update currentStateMask
+//    int index = -1;
+//    for (size_t i = 0; i < exits.size(); i++)
+//    {
+//        if (exits[i]->getX() == head.startX && exits[i]->getY() && exits[i]->getDir() == head.startDir)
+//        {
+//            index = i;
+//            break;
+//        }
+//    }
+//    assert(index != -1);
+//    currentStateMask ^= 1 << index;
+//}

@@ -3,6 +3,8 @@
     Author: Eric Gopak
 
 # Ideas:
+    o Try extending 'through solutions' logic over neighbouring components (i.e. consider through solutions of neighbours and how these interact)
+    o Check all discovered solutions for 'persistent' fragments - if any fragment is valid for ALL solutions then make it a Portal
     o Generate starting solutions only before follow() (not during Analysis)
     o Stop if there is isolated exit (check if mask contains isolated bit, like xxx010xxx)
     o Use Pits (level->Ends) as one-sized temporaryEndBlock
@@ -136,6 +138,12 @@ int main(int argc, char* argv[])
     Colorer::print<WHITE>("Number of SPECIAL components: %d\n", level.getSpecialComponents().size());
     Colorer::print<WHITE>("Found %d similar solutions!\n", Debug::similarSolutionsCounter);
 #endif
+
+#ifdef TRACE_MAIN_STEPS
+    Colorer::print<RED>("Creating Portals...\n");
+#endif
+
+    analyzer.createPortals();
 
 #ifdef TRACE_MAIN_STEPS
     Colorer::print<RED>("Solving...\n");

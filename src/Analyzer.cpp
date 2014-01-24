@@ -46,7 +46,7 @@ static void generateAllSimpleSolutions(Component* component)
                 continue;
             }
 
-            // Non-starting solutions
+            // Through solutions
             {
                 const Exit* e1 = component->getExits()[i];
                 const Exit* e2 = component->getExits()[j];
@@ -68,6 +68,7 @@ static void generateAllSimpleSolutions(Component* component)
 
                 std::vector<SolutionRecord> v(1, solution);
                 component->getNonStartingSolutions()->addSolution(v, 0, 0);
+                component->getThroughSolutions()->addSolution(v, 0, 0);
             }
 
             // Starting solutions
@@ -195,6 +196,11 @@ void Analyzer::analyzeComponents()
                 TRACE(Colorer::print<YELLOW>("Component %d CANNOT be ENDING!\n", i));
             }
 
+            if (component.getThroughSolutionCount() == 2)
+            {
+                TRACE(Colorer::print<YELLOW>("Component %d has ONLY TWO through Solutions!\n", i));
+            }
+
             if (component.getThroughSolutionCount() == 1)
             {
                 TRACE(Colorer::print<YELLOW>("Component %d has ONLY ONE through Solution!\n", i));
@@ -206,6 +212,8 @@ void Analyzer::analyzeComponents()
 
                 level->addSpecialComponent(&component, i);
             }
+
+            int bp = 0;
         }
 
 #ifdef TRACE_STATISTICS
@@ -368,6 +376,12 @@ void Analyzer::analyzeComponent(Component& component)
                 {
                     component.getNonStartingSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
                 }
+
+                if (!isStarting && !isEnding)
+                {
+level->traceComponent();
+                    component.getThroughSolutions()->addSolution(solutionRecordHolder, 0, 0);
+                }
             }
 #ifdef TRACE_STATISTICS
             else
@@ -513,6 +527,150 @@ void Analyzer::analyzeComponent(Component& component)
 
         TRACE(tracer.layer--);
     }
+}
+
+void Analyzer::createPortals()
+{
+    initializeSimplePortals();
+
+    expandPortals();
+}
+
+//  States of outer components' portal
+//  o Unknown (no portals found yet)
+//  o Biderectional (undirected) portal
+//      1 sharing exit
+//      2 not sharing exit
+//  o Uniderectional (directed) portal
+//      1 sharing exit (incoming / outgoing)
+//      2 not sharing exit
+void Analyzer::initializeSimplePortals()
+{
+    bool createdNewPortals = false;
+
+    for (int i = 0; i < level->getComponentCount(); i++)
+    {
+        Component* comp = &level->getComponents()[i];
+
+        SolutionTree possibleSolutions;
+        comp->getThroughSolutions()->getValidThroughSolutions(possibleSolutions);
+
+        /*std::vector<std::vector<SolutionRecord>> solutions;
+        comp->getThroughSolutions()->firstSolutionToRecords*/
+    }
+}
+
+void Analyzer::expandPortals()
+{
+    //loop
+        for (int i = 0; i < level->getComponentCount(); i++)
+        {
+            Component* comp = &level->getComponents()[i];
+
+            if (comp->getThroughSolutionCount() == 1)
+            {
+level->traceComponent(i);
+                printf("Creating a portal\n");
+
+                SolutionTree* tree = comp->getThroughSolutions();
+                std::vector<SolutionRecord> solution = tree->firstSolutionToRecords();
+
+                for (size_t j = 0; j < solution.size(); j++)
+                {
+                    printf("[%d|%d] (%d,%d,%d) --> (%d,%d,%d)    "
+                        , std::get<0>(solution[j])
+                        , std::get<1>(solution[j])
+                        , std::get<2>(solution[j]).startX, std::get<2>(solution[j]).startY, std::get<2>(solution[j]).startDir
+                        , std::get<3>(solution[j]).endX, std::get<3>(solution[j]).endY, std::get<3>(solution[j]).endDir
+                    );
+                }
+                printf("\n");
+
+                assert(solution.size() == 1 && "Solution longer than 1? How could that possible be?");
+
+                MustBeBlockedMask mustBeBlockedMask = std::get<0>(solution[0]);
+                MustBeFreeMask mustBeFreeMask = std::get<1>(solution[0]);
+                const int& startX   = std::get<2>(solution[0]).startX;
+                const int& startY   = std::get<2>(solution[0]).startY;
+                const int& startDir = std::get<2>(solution[0]).startDir;
+                const int& endX   = std::get<3>(solution[0]).endX;
+                const int& endY   = std::get<3>(solution[0]).endY;
+                const int& endDir = std::get<3>(solution[0]).endDir;
+
+                const Exit* fromExit = level->getCell(startY, startX)->getExit(startDir ^ 2);
+                const Exit* toExit = level->getCell(endY, endX)->getExit(endDir);
+
+                assert(fromExit && toExit && "Exit not found!");
+
+                Portal* p = new Portal();
+                p->setFirstGate(fromExit);
+                p->setLastGate(toExit);
+
+                level->getCell(startY, startX)->setPortal(p);
+                comp->setPortal(p);
+
+                // Now try expanding
+                bool expanded = true;
+                const Exit* nextExit = p->getLastGate();
+                while (expanded)
+                {
+                    expanded = false;
+
+                    Component* nextComp = &level->getComponents()[nextExit->getOpposingExit()->getHostCell()->getComponentId()];
+
+                    if (nextComp->isPortal())
+                    {
+                        assert(p->getLastGate() != nextComp->getPortal()->getLastGate());
+
+                        // Merge two portals
+
+                        p->setLastGate(nextComp->getPortal()->getLastGate());
+                        nextComp->setPortal(p);
+
+                        nextExit = p->getLastGate();
+
+                        expanded = true;
+
+//                        printf("Joined component:\n");
+//level->traceComponent((*nextComp->getCells().begin())->getComponentId());
+//int ok = 1;
+                    }
+                    else
+                    {
+                        int nextSolutionCount = nextComp->getThroughSolutionCount();
+
+                        if (1 <= nextSolutionCount && nextSolutionCount <= 2)
+                        {
+                            const Cell* fromCell = nextExit->getOpposingExit()->getHostCell();
+
+                            int fromX   = fromCell->getX();
+                            int fromY   = fromCell->getY();
+                            int fromDir = nextExit->getDir(); // Don't reverse
+
+                            SolutionTree* tree = nextComp->getThroughSolutions();
+                            SolutionHead head = {fromX, fromY, fromDir};
+                            const SolutionBody& body = tree->followHead(head)->bodyToTree.begin()->first;
+                            nextExit = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+
+                            p->setLastGate(nextExit);
+                            nextComp->setPortal(p);
+
+                            expanded = true;
+
+//                            printf("Expanded into component:\n");
+//level->traceComponent(nextExit->getHostCell()->getComponentId());
+
+                            int yay = 1;
+                        }
+                    }
+                }
+
+                        printf("Created new portal:\n");
+level->traceComponent();
+                int bp = 0;
+            }
+        }
+    //}
 }
 
 // Create components, preprocess them

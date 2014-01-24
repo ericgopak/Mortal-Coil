@@ -47,6 +47,10 @@ public:
     void analyzeComponents();
     void analyzeComponent(Component& component);
 
+    void createPortals();
+    void initializeSimplePortals();
+    void expandPortals();
+
     void preprocess();
 
     void backtrack(Cell* cell, int dir);

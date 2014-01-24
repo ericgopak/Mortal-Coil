@@ -71,6 +71,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -83,6 +84,7 @@
     <ClCompile Include="..\..\..\src\Level.cpp" />
     <ClCompile Include="..\..\..\src\Main.cpp" />
     <ClCompile Include="..\..\..\src\Obstacle.cpp" />
+    <ClCompile Include="..\..\..\src\Portal.cpp" />
     <ClCompile Include="..\..\..\src\Simulator.cpp" />
     <ClCompile Include="..\..\..\src\Solver.cpp" />
   </ItemGroup>
@@ -95,6 +97,7 @@
     <ClInclude Include="..\..\..\src\Component.h" />
     <ClInclude Include="..\..\..\src\Level.h" />
     <ClInclude Include="..\..\..\src\Obstacle.h" />
+    <ClInclude Include="..\..\..\src\Portal.h" />
     <ClInclude Include="..\..\..\src\Simulator.h" />
     <ClInclude Include="..\..\..\src\Solver.h" />
   </ItemGroup>

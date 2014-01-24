@@ -11,6 +11,7 @@ Cell::Cell(int x, int y)
     , componentId(-1)
     , nextMask(0)
     , exitMask(0)
+    , portal(NULL)
 #ifdef TRACE_SOLUTIONS
     , depth(-1)
     , layer(-1)
@@ -19,6 +20,22 @@ Cell::Cell(int x, int y)
     exits.reserve(4); // Mandatory! Otherwise pointers are gonna be invalidated
     nextCell[0] = nextCell[1] = nextCell[2] = nextCell[3] = NULL;
     exitsByDirection[0] = exitsByDirection[1] = exitsByDirection[2] = exitsByDirection[3] = NULL;
+    //portals[0] = portals[1] = portals[2] = portals[3] = NULL;
+}
+
+Cell::~Cell()
+{
+    if (portal != NULL)
+    {
+        delete portal;
+    }
+    /*for (int i = 0; i < 4; i++)
+    {
+        if (portals[i] != NULL)
+        {
+            delete portals[i];
+        }
+    }*/
 }
 
 bool Cell::isFree() const
@@ -124,6 +141,18 @@ int Cell::getNextMask() const
 const std::vector<Exit>& Cell::getExits() const
 {
     return exits;
+}
+
+//const Portal** Cell::getPortals() const
+const Portal* Cell::getPortal() const
+{
+    //return (const Portal**)portals;
+    return portal;
+}
+
+void Cell::setPortal(const Portal* p)
+{
+    portal = p;
 }
 
 void Cell::addExit(const Exit& exit)
