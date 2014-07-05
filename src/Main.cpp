@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
 
-    solver.solve(firstRow, firstCol, firstComponentId);
+    //solver.solve(firstRow, firstCol, firstComponentId);
 
 #ifdef TRACE_STATISTICS
     /*printf("Got too many temporary ends %d times!\n", Debug::gotTooManyTemporaryEndsCounter);

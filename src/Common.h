@@ -6,7 +6,7 @@
 //#define TRACE_MAIN_STEPS
 
 #ifdef _DEBUG
-#   define TRACE_SOLUTIONS
+//#   define TRACE_SOLUTIONS
 #endif
 
 #ifdef TRACE_SOLUTIONS

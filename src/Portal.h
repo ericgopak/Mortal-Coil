@@ -25,6 +25,7 @@ public:
     const Exit* getLastGate() const;
 
     //void addGate(const Exit* exit);
+	void setDirected(bool directed);
     void setFirstGate(const Exit* fromExit);
     void setLastGate(const Exit* toExit);
 };
