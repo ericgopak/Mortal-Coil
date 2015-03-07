@@ -35,7 +35,7 @@ const Exit* Portal::getLastGate() const
 
 void Portal::setDirected(bool directed)
 {
-	this->directed = directed;
+    this->directed = directed;
 }
 
 void Portal::setFirstGate(const Exit* fromExit)

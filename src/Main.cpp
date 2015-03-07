@@ -38,6 +38,7 @@
 #include "Component.h"
 #include "Analyzer.h"
 #include "Solver.h"
+#include "Deducer.h"
 
 static const char* INPUT_FILENAME = "mortal_coil.txt";
 static const char* OUTPUT_FILENAME = "output.txt";
@@ -140,11 +141,11 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef TRACE_MAIN_STEPS
-    Colorer::print<RED>("Creating Portals...\n");
+    Colorer::print<RED>("Deducing valid solution...\n");
 #endif
 
-	// TODO: replace with call to Deducer
-    //analyzer.createPortals();
+    Deducer deducer(&level);
+    auto endpoints = deducer.deduceSolutions();
 
 #ifdef TRACE_MAIN_STEPS
     Colorer::print<RED>("Solving...\n");
@@ -153,7 +154,26 @@ int main(int argc, char* argv[])
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
 
-    solver.solve(firstRow, firstCol, firstComponentId);
+    if (endpoints.size() == 0)
+    {
+        Colorer::print<YELLOW>("WARNING: no endpoints deduced!\n");
+        solver.solve(firstRow, firstCol, firstComponentId);
+    }
+    else
+    {
+        for (const auto& pair : endpoints)
+        {
+            Colorer::print<YELLOW>("Endpoints: %d --> %d\n", pair.first, pair.second);
+            solver.solve(firstRow, firstCol, (firstComponentId != -1) ? firstComponentId : pair.first);
+            if (level.Solved)
+            {
+                break;
+            }
+        }
+    }
+    
+    //solver.solve(firstRow, firstCol, (firstComponentId != -1) ? firstComponentId : endpoints.first);
+    //solver.solve(firstRow, firstCol, firstComponentId);
 
 #ifdef TRACE_STATISTICS
     /*printf("Got too many temporary ends %d times!\n", Debug::gotTooManyTemporaryEndsCounter);

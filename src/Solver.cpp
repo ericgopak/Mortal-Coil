@@ -533,8 +533,8 @@ level->traceComponent();
 
                 if (cellsVisited == level->Free) // TODO: consider using sort of a constant here // Assumption: cells are not being occupied in follow()
                 {
-//Colorer::print<WHITE>("SOLUTION FOUND!!!\n");
-//level->traceComponent();
+Colorer::print<WHITE>("SOLUTION FOUND!!!\n");
+level->traceComponent();
                     level->Solved = true;
 
                     level->Answer = body.solution + level->Answer;

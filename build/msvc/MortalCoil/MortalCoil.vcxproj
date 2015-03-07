@@ -83,6 +83,7 @@
     <ClCompile Include="..\..\..\src\Colorer.cpp" />
     <ClCompile Include="..\..\..\src\Common.cpp" />
     <ClCompile Include="..\..\..\src\Component.cpp" />
+    <ClCompile Include="..\..\..\src\Deducer.cpp" />
     <ClCompile Include="..\..\..\src\Level.cpp" />
     <ClCompile Include="..\..\..\src\Main.cpp" />
     <ClCompile Include="..\..\..\src\Obstacle.cpp" />
@@ -97,6 +98,7 @@
     <ClInclude Include="..\..\..\src\Colorer.h" />
     <ClInclude Include="..\..\..\src\Common.h" />
     <ClInclude Include="..\..\..\src\Component.h" />
+    <ClInclude Include="..\..\..\src\Deducer.h" />
     <ClInclude Include="..\..\..\src\Level.h" />
     <ClInclude Include="..\..\..\src\Obstacle.h" />
     <ClInclude Include="..\..\..\src\Portal.h" />

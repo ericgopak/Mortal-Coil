@@ -19,7 +19,7 @@ struct SolutionHead
     bool operator < (const SolutionHead& head) const;
     bool operator == (const SolutionHead& head) const;
 
-    size_t operator ()(const SolutionHead& head) const;
+    //size_t operator ()(const SolutionHead& head) const;
 };
 
 struct SolutionBody
@@ -33,7 +33,7 @@ struct SolutionBody
     bool operator < (const SolutionBody& body) const;
     bool operator == (const SolutionBody& body) const;
 
-    size_t operator ()(const SolutionBody& body) const;
+    //size_t operator ()(const SolutionBody& body) const;
 };
 
 class SolutionTree;
@@ -46,8 +46,8 @@ struct BodyToTree
 {
     friend class SolutionTree;
 
-//std::map<SolutionBody, SolutionTree> bodyToTree; // TODO: try unordered_map
-    std::unordered_map<SolutionBody, SolutionTree, SolutionBody> bodyToTree;
+    //std::map<SolutionBody, SolutionTree, SolutionBody> bodyToTree;
+    std::map<SolutionBody, SolutionTree> bodyToTree;
 
 public:
 
@@ -58,8 +58,8 @@ struct HeadToBody
 {
     friend class SolutionTree;
 
-    //std::map<SolutionHead, BodyToTree> headToBody;
-    std::unordered_map<SolutionHead, BodyToTree, SolutionHead> headToBody;
+    std::map<SolutionHead, BodyToTree> headToBody;
+    //std::map<SolutionHead, BodyToTree, SolutionHead> headToBody;
 
 public:
 
@@ -90,14 +90,20 @@ public:
     void addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding);
     void addSolution(SolutionTree* tree, const std::vector<SolutionRecord>& solution, int solutionIndex, bool isStarting, bool isEnding);
 
+    //void removeSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding);
+
     std::vector<SolutionRecord> firstSolutionToRecords() const;
-    void convertToRecords(std::vector<std::vector<SolutionRecord>>& solutions, int depth = 0) const;
+    std::vector<std::vector<SolutionRecord>> convertToRecords() const;
+
+    std::set<const Exit*> getAllInExits(Level* level) const;
+    std::set<const Exit*> getAllOutExits(Level* level) const;
 };
 
 class Component : public AbstractComponent
 {
     int occupied;
     SolutionTree startingSolutions;
+    SolutionTree endingSolutions;
     SolutionTree nonStartingSolutions;
     // TODO: consider copying only after checking if it actually will be used (i.e. if throughSolutionCount() == 2)
     SolutionTree throughSolutions; // Copy of all non-starting and non-ending solutions
@@ -121,6 +127,7 @@ public:
     int getTotalSolutionCount() const;
     SolutionTree* getNonStartingSolutions();
     SolutionTree* getStartingSolutions();
+    SolutionTree* getEndingSolutions();
     SolutionTree* getThroughSolutions();
     int getNonStartingSolutionCount() const;
     int getStartingSolutionCount() const;

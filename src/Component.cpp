@@ -1,8 +1,10 @@
 #include "Common.h"
 #include "Component.h"
 #include "Colorer.h"
+#include "Level.h"
 
 #include <string>
+#include <algorithm>
 
 bool SolutionHead::operator < (const SolutionHead& head) const
 {
@@ -18,10 +20,10 @@ bool SolutionHead::operator == (const SolutionHead& head) const
         && startDir == head.startDir;
 }
 
-size_t SolutionHead::operator ()(const SolutionHead& head) const
-{
-    return (((head.startY & 65535) << 15) ^ ((head.startX & 65535) << 2)) ^ head.startDir;
-}
+//size_t SolutionHead::operator ()(const SolutionHead& head) const
+//{
+//    return (((head.startY & 65535) << 15) ^ ((head.startX & 65535) << 2)) ^ head.startDir;
+//}
 
 bool SolutionBody::operator < (const SolutionBody& body) const
 {
@@ -46,10 +48,10 @@ bool SolutionBody::operator == (const SolutionBody& body) const
         && solution          == body.solution;
 }
 
-size_t SolutionBody::operator ()(const SolutionBody& body) const
-{
-    return (((body.endY & 65535) << 15) ^ ((body.endX & 65535) << 2)) ^ body.endDir;
-}
+//size_t SolutionBody::operator ()(const SolutionBody& body) const
+//{
+//    return (((body.endY & 65535) << 15) ^ ((body.endX & 65535) << 2)) ^ body.endDir;
+//}
 
 SolutionTree* BodyToTree::followBody(const SolutionBody& solutionBody)
 {
@@ -129,6 +131,43 @@ void SolutionTree::addSolution(const std::vector<SolutionRecord>& solution, bool
     addSolution(this, solution, 0, isStarting, isEnding);
 }
 
+//void SolutionTree::removeSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding)
+//{
+//    if (solution.size() == 0)
+//    {
+//        return;
+//    }
+//
+//    const SolutionHead& head = std::get<2>(solution[0]);
+//    const SolutionBody& body = std::get<3>(solution[0]);
+//
+//    auto& htb = tree.headToBody;
+//    if (htb.find(head) != htb.end())
+//    {
+//        auto& btt = htb[head].bodyToTree;
+//        if (btt.find(body) != btt.end())
+//        {
+//            auto& subtree = btt[body];
+//            auto subsolution = std::vector<SolutionRecord>(solution.begin() + 1, solution.end());
+//
+//            subtree.removeSolution(subsolution, isStarting, isEnding);
+//            solutionCount--;
+//            startingSolutionCount -= isStarting;
+//            endingSolutionCount -= isEnding;
+//
+//            if (subtree.solutionCount == 0) // No more subtrees left
+//            {
+//                btt.erase(body);
+//            }
+//        }
+//
+//        if (btt.size() == 0) // No more bodies left
+//        {
+//            htb.erase(head);
+//        }
+//    }
+//}
+
 std::vector<SolutionRecord> SolutionTree::firstSolutionToRecords() const
 {
     std::vector<SolutionRecord> records;
@@ -146,9 +185,94 @@ std::vector<SolutionRecord> SolutionTree::firstSolutionToRecords() const
     return records;
 }
 
-void SolutionTree::convertToRecords(std::vector<std::vector<SolutionRecord>>& solutions, int depth) const
+//void SolutionTree::convertToRecords(std::vector<std::vector<SolutionRecord>>& solutions, int depth) const
+std::vector<std::vector<SolutionRecord>> SolutionTree::convertToRecords() const
 {
-    // Do we need this? Maybe just traverse the tree instead?
+    std::vector<std::vector<SolutionRecord>> records;
+    FOREACH_CONST(tree.headToBody, htb)
+    {
+        const SolutionHead& head = htb->first;
+        FOREACH_CONST(htb->second.bodyToTree, btt)
+        {
+            const SolutionBody& body = btt->first;
+
+            SolutionRecord record(body.mustBeBlockedMask, body.mustBeFreeMask, head, body);
+            auto recordAsVector = std::vector<SolutionRecord>(1, record);
+            
+            auto nextRecords = btt->second.convertToRecords();
+            
+            if (nextRecords.size() == 0)
+            {
+                records.push_back(recordAsVector);
+            }
+            else
+            {
+                FOREACH(nextRecords, it)
+                {
+                    auto tmp = recordAsVector;
+                    tmp.insert(tmp.end(), it->begin(), it->end());
+                    records.push_back(tmp);
+                }
+            }
+        }
+    }
+
+    return records;
+}
+
+std::set<const Exit*> SolutionTree::getAllInExits(Level* level) const
+{
+    std::set<const Exit*> inExits;
+
+    FOREACH_CONST(tree.headToBody, htb)
+    {
+        const SolutionHead& head = htb->first;
+
+        const Exit* inExit = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
+        inExits.insert(inExit);
+
+        FOREACH_CONST(htb->second.bodyToTree, btt)
+        {
+            const SolutionBody& body = btt->first;
+
+            auto nextAllInExits = btt->second.getAllInExits(level);
+
+            std::vector<const Exit*> tmp(inExits.size() + nextAllInExits.size());
+            auto it = std::set_union(inExits.begin(), inExits.end(), nextAllInExits.begin(), nextAllInExits.end(), tmp.begin());
+            tmp.resize(it - tmp.begin());
+            inExits = std::set<const Exit*>(tmp.begin(), tmp.end());
+        }
+    }
+
+    return inExits;
+}
+
+std::set<const Exit*> SolutionTree::getAllOutExits(Level* level) const
+{
+    std::set<const Exit*> outExits;
+
+    FOREACH_CONST(tree.headToBody, htb)
+    {
+        const SolutionHead& head = htb->first;
+
+        FOREACH_CONST(htb->second.bodyToTree, btt)
+        {
+            const SolutionBody& body = btt->first;
+            
+            const Exit* outExit = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+
+            outExits.insert(outExit);
+
+            auto nextAllOutExits = btt->second.getAllOutExits(level);
+
+            std::vector<const Exit*> tmp(outExits.size() + nextAllOutExits.size());
+            auto it = std::set_union(outExits.begin(), outExits.end(), nextAllOutExits.begin(), nextAllOutExits.end(), tmp.begin());
+            tmp.resize(it - tmp.begin());
+            outExits = std::set<const Exit*>(tmp.begin(), tmp.end());
+        }
+    }
+
+    return outExits;
 }
 
 Component::Component()
@@ -168,6 +292,7 @@ Component::Component(const Component& c)
     , occupied(c.occupied)
     , startingSolutions(c.startingSolutions)
     , nonStartingSolutions(c.nonStartingSolutions)
+    , endingSolutions(c.endingSolutions)
     , exits(c.exits)
     //, currentStateMask(0)
     , portal(NULL)
@@ -185,6 +310,7 @@ int Component::getOccupiedCount() const
 
 int Component::getTotalSolutionCount() const
 {
+    //return startingSolutions.getSolutionCount() + throughSolutions.getSolutionCount() + endingSolutions.getSolutionCount();
     return startingSolutions.getSolutionCount() + nonStartingSolutions.getSolutionCount();
 }
 
@@ -196,6 +322,11 @@ SolutionTree* Component::getNonStartingSolutions()
 SolutionTree* Component::getStartingSolutions()
 {
     return &startingSolutions;
+}
+
+SolutionTree* Component::getEndingSolutions()
+{
+    return &endingSolutions;
 }
 
 SolutionTree* Component::getThroughSolutions()
@@ -215,13 +346,14 @@ int Component::getStartingSolutionCount() const
 
 int Component::getThroughSolutionCount() const
 {
-    assert(throughSolutions.getSolutionCount() == nonStartingSolutions.getSolutionCount() - nonStartingSolutions.getEndingSolutionCount());
-    return nonStartingSolutions.getSolutionCount() - nonStartingSolutions.getEndingSolutionCount();
+    assert(throughSolutions.getSolutionCount() == nonStartingSolutions.getSolutionCount() + nonStartingSolutions.getEndingSolutionCount());
+    return throughSolutions.getSolutionCount();
 }
 
 int Component::getEndingSolutionCount() const
 {
     return startingSolutions.getEndingSolutionCount() + nonStartingSolutions.getEndingSolutionCount();
+    //return endingSolutions.getSolutionCount();
 }
 
 const std::vector<const Exit*>& Component::getExits() const
