@@ -379,7 +379,6 @@ void Analyzer::analyzeComponent(Component& component)
 
                 if (!isStarting && !isEnding)
                 {
-level->traceComponent();
                     component.getThroughSolutions()->addSolution(solutionRecordHolder, 0, 0);
                 }
             }
