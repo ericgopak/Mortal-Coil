@@ -361,10 +361,10 @@ void Level::traceComponent(int id, unsigned int flags) const
         }
     }
 
-    x1--;
-    x2++;
-    y1--;
-    y2++;
+    x1 -= 3; x1 = std::max(x1, 0);
+    x2 += 3; x2 = std::min(x2, W + 1);
+    y1 -= 3; y1 = std::max(y1, 0);
+    y2 += 3; y2 = std::min(y2, H + 1);
 
     for (int i = y1; i <= y2; i++)
     {

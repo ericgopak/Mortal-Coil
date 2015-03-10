@@ -67,8 +67,10 @@ static void generateAllSimpleSolutions(Component* component)
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
                 std::vector<SolutionRecord> v(1, solution);
-                component->getNonStartingSolutions()->addSolution(v, 0, 0);
                 component->getThroughSolutions()->addSolution(v, 0, 0);
+                component->getNonStartingSolutions()->addSolution(v, 0, 0);
+                component->getNonEndingSolutions()->addSolution(v, 0, 0);
+                component->getSolutions()->addSolution(v, 0, 0);
             }
 
             // Starting solutions
@@ -88,8 +90,10 @@ static void generateAllSimpleSolutions(Component* component)
 
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
-                std::vector<SolutionRecord> v(1, solution);
-                component->getStartingSolutions()->addSolution(v, 1, 0); // Is starting, not ending
+                std::vector<SolutionRecord> v(1, solution); // Is starting, not ending
+                component->getStartingSolutions()->addSolution(v, 1, 0);
+                component->getNonEndingSolutions()->addSolution(v, 1, 0);
+                component->getSolutions()->addSolution(v, 1, 0);
             }
 
             // Ending solutions
@@ -108,9 +112,10 @@ static void generateAllSimpleSolutions(Component* component)
 
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
-                std::vector<SolutionRecord> v(1, solution);
-                component->getNonStartingSolutions()->addSolution(v, 0, 1); // Ending, not starting
-                component->getEndingSolutions()->addSolution(v, 0, 1); // Ending, not starting
+                std::vector<SolutionRecord> v(1, solution); // Ending, not starting
+                component->getNonStartingSolutions()->addSolution(v, 0, 1);
+                component->getEndingSolutions()->addSolution(v, 0, 1);
+                component->getSolutions()->addSolution(v, 0, 1);
             }
         }
     }
@@ -120,7 +125,7 @@ void Analyzer::analyzeComponents()
 {
     for (int i = 0; i < level->getComponentCount(); i++)
     {
-        uniqueSolutions.clear();
+        //uniqueSolutions.clear();
 
         Component& component = level->getComponents()[i];
 
@@ -161,8 +166,11 @@ void Analyzer::analyzeComponents()
                 std::vector<SolutionRecord> v2(1, solution2);
 
                 component.getStartingSolutions()->addSolution(v1, 1, 0);
+                component.getNonEndingSolutions()->addSolution(v1, 1, 0);
                 component.getNonStartingSolutions()->addSolution(v2, 0, 1);
                 component.getEndingSolutions()->addSolution(v2, 0, 1);
+                component.getSolutions()->addSolution(v1, 1, 0);
+                component.getSolutions()->addSolution(v2, 0, 1);
             }
             else if (exits.size() == 2)
             {
@@ -185,9 +193,25 @@ void Analyzer::analyzeComponents()
             TRACE(printf("CONSIDERING %d (size: %d  exits: %d  exitCells: %d)\n", i, component.getSize(), component.getExits().size(), component.getExitCells().size()));
 
             assert(solutionRecordHolder.size() == 0);
+
+//level->traceComponent(i);
+//printf("CONSIDERING %d (size: %d  exits: %d  exitCells: %d)\n", i, component.getSize(), component.getExits().size(), component.getExitCells().size());
+
             analyzeComponent(component);
 
             TRACE(Colorer::print<WHITE>("Component %d got %d through, %d starting, %d non-starting and %d ending solutions\n", i, component.getThroughSolutionCount(), component.getStartingSolutionCount(), component.getNonStartingSolutionCount(), component.getEndingSolutionCount()));
+//Colorer::print<WHITE>("Component %d got %d through, %d starting, %d non-starting and %d ending solutions\n", i, component.getThroughSolutionCount(), component.getStartingSolutionCount(), component.getNonStartingSolutionCount(), component.getEndingSolutionCount());
+//static int RECORD = 0;
+//
+//if (component.getSolutionCount() > RECORD)
+//{
+//    Colorer::print<RED>("Better --> %d got %d solutions!\n", i, component.getSolutionCount());
+//
+//    Colorer::print<RED>("Better --> %d got UNIQUE %d!\n", i, component.getUniqueSolutionCount());
+//
+//    //system("pause");
+//    RECORD = component.getSolutionCount();
+//}
 
             if (component.getStartingSolutionCount() == 0)
             {
@@ -218,6 +242,8 @@ void Analyzer::analyzeComponents()
             int bp = 0;
         }
 
+        component.setSolutionsAsOriginal();
+
 #ifdef TRACE_STATISTICS
         Debug::totalSolutionsCounter += component.getTotalSolutionCount();
         Debug::startingSolutionsCounter += component.getStartingSolutionCount();
@@ -247,8 +273,7 @@ bool Analyzer::solutionIsStarting(const std::vector<SolutionRecord>& solution) c
     const Component* comp = &level->getComponents()[cell->getComponentId()];
 
     // Exit behind and this exit must not be free
-    if (cell->hasExit(startDir ^ 2)
-        && (mustBeFreeMask & (1 << comp->getIndexByExit(level->getCell(startY, startX)->getExit(startDir ^ 2)))) == 0)
+    if (cell->hasExit(startDir ^ 2) && (mustBeFreeMask & (1 << comp->getIndexByExit(cell->getExit(startDir ^ 2)))) == 0)
     {
         isStarting = false;
     }
@@ -383,11 +408,17 @@ void Analyzer::analyzeComponent(Component& component)
                 {
                     component.getEndingSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
                 }
+                else
+                {
+                    component.getNonEndingSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
+                }
 
                 if (!isStarting && !isEnding)
                 {
-                    component.getThroughSolutions()->addSolution(solutionRecordHolder, 0, 0);
+                    component.getThroughSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
                 }
+
+                component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
             }
 #ifdef TRACE_STATISTICS
             else
@@ -535,12 +566,12 @@ void Analyzer::analyzeComponent(Component& component)
     }
 }
 
-void Analyzer::createPortals()
-{
-    initializeSimplePortals();
-
-    expandPortals();
-}
+//void Analyzer::createPortals()
+//{
+//    initializeSimplePortals();
+//
+//    expandPortals();
+//}
 
 //  States of outer components' portal
 //  o Unknown (no portals found yet)
@@ -550,40 +581,40 @@ void Analyzer::createPortals()
 //  o Uniderectional (directed) portal
 //      1 sharing exit (incoming / outgoing)
 //      2 not sharing exit
-void Analyzer::initializeSimplePortals()
-{
-    bool createdNewPortals = false;
+//void Analyzer::initializeSimplePortals()
+//{
+//    bool createdNewPortals = false;
+//
+//    for (int i = 0; i < level->getComponentCount(); i++)
+//    {
+//        Component* comp = &level->getComponents()[i];
+//
+//        SolutionTree possibleSolutions;
+//        //comp->getThroughSolutions()->getValidThroughSolutions(possibleSolutions);
+//
+//        /*std::vector<std::vector<SolutionRecord>> solutions;
+//        comp->getThroughSolutions()->firstSolutionToRecords*/
+//    }
+//}
 
-    for (int i = 0; i < level->getComponentCount(); i++)
-    {
-        Component* comp = &level->getComponents()[i];
-
-        SolutionTree possibleSolutions;
-        comp->getThroughSolutions()->getValidThroughSolutions(possibleSolutions);
-
-        /*std::vector<std::vector<SolutionRecord>> solutions;
-        comp->getThroughSolutions()->firstSolutionToRecords*/
-    }
-}
-
-void Analyzer::expandPortals()
-{
-    bool foundNewPortals = true;
-    while (foundNewPortals)
-    {
-        foundNewPortals = false;
-
-        for (int i = 0; i < level->getComponentCount(); i++)
-        {
-            Component* comp = &level->getComponents()[i];
-
-            // Plan:
-            // 1. Take a list of all component's exits
-            // 2. For every exit decude whether it can/cannot be a part of a valid solution
-            // 3. Find all solutions that make use of only allowed exits
-            // 4. If only one solution exists then it's a Portal
-
-
+//void Analyzer::expandPortals()
+//{
+//    bool foundNewPortals = true;
+//    while (foundNewPortals)
+//    {
+//        foundNewPortals = false;
+//
+//        for (int i = 0; i < level->getComponentCount(); i++)
+//        {
+//            Component* comp = &level->getComponents()[i];
+//
+//            // Plan:
+//            // 1. Take a list of all component's exits
+//            // 2. For every exit decude whether it can/cannot be a part of a valid solution
+//            // 3. Find all solutions that make use of only allowed exits
+//            // 4. If only one solution exists then it's a Portal
+//
+//
 
 //            if (comp->getThroughSolutionCount() == 1)
 //            {
@@ -687,9 +718,9 @@ void Analyzer::expandPortals()
 //                level->traceComponent();
 //                int bp = 0;
 //            }
-        }
-    }
-}
+//        }
+//    }
+//}
 
 // Create components, preprocess them
 void Analyzer::preprocess()

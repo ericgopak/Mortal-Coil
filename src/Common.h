@@ -2,7 +2,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-//#define TRACE_STATISTICS
+#define TRACE_STATISTICS
 #define TRACE_MAIN_STEPS
 
 #ifdef _DEBUG

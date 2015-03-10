@@ -79,6 +79,50 @@ bool readArguments(int argc, char* argv[], int* row, int* col, int* firstCompone
     return true;
 }
 
+static void prepareSolutions(Level* level)
+{
+    for (int i = 0; i < level->getComponentCount(); i++)
+    {
+        Component& comp = level->getComponents()[i];
+        comp.restoreOriginalSolutions();
+        comp.chooseSolution(comp.getNonStartingSolutions());
+    }
+}
+
+static void prepareSolutions(Level* level, SolutionListMap& cleanerSolutions, int componentFirst, int componentLast)
+{
+    for (int i = 0; i < level->getComponentCount(); i++)
+    {
+        Component& comp = level->getComponents()[i];
+
+        comp.clearRemainingSolutions();
+
+        comp.assignSolutions(level, cleanerSolutions[i]);
+
+        if (i == componentFirst)
+        {
+            comp.chooseSolution(comp.getStartingSolutions());
+        }
+        else if (i == componentLast)
+        {
+            comp.chooseSolution(comp.getEndingSolutions());
+        }
+        else
+        {
+            comp.chooseSolution(comp.getThroughSolutions());
+        }
+    }
+}
+
+static void restoreSolutions(Level* level)
+{
+    for (int i = 0; i < level->getComponentCount(); i++)
+    {
+        Component& comp = level->getComponents()[i];
+        comp.restoreOriginalSolutions();
+    }
+}
+
 int main(int argc, char* argv[])
 {
     clock_t start_time = clock();
@@ -102,12 +146,12 @@ int main(int argc, char* argv[])
     Solver solver(&level, "output.txt");
     analyzer.preprocess();
 
+    level.traceComponent();
+
     TRACE
     (
         printf("Free cells: %d\n", level.Free);
         printf("Components: %d\n", level.getObstacleCount());
-
-        //level.traceComponent();
 
         if (level.initialEnds.size() > 0)
         {
@@ -141,36 +185,80 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef TRACE_MAIN_STEPS
-    Colorer::print<RED>("Deducing valid solution...\n");
-#endif
-
-    Deducer deducer(&level);
-    auto endpoints = deducer.deduceSolutions();
-
-#ifdef TRACE_MAIN_STEPS
     Colorer::print<RED>("Solving...\n");
 #endif
 
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
 
-    if (endpoints.size() == 0)
+#ifdef DEDUCE_SOLUTIONS
+    SolutionListMap cleanerSolutions;
+    std::set<EndPoints> endpointHistory;
+    EndPoints newCandidate = { -1, -1 };
+    int comp1 = -1, comp2 = -1;
+
+    Deducer deducer(&level);
+
+int total = 0;
+int total2 = 0;
+FOREACH_CONST(level.getComponents(), it) total += it->getSolutionCount();
+
+    while (deducer.deduceSolutions(endpointHistory, newCandidate, cleanerSolutions, comp1, comp2))
     {
-        Colorer::print<YELLOW>("WARNING: no endpoints deduced!\n");
+        endpointHistory.insert(newCandidate);
+
+        //Assign new solutions
+        prepareSolutions(&level, cleanerSolutions, newCandidate.first, newCandidate.second);
+
+FOREACH_CONST(level.getComponents(), it) total2 += it->getSolutionCount();
+
+Colorer::print<RED>("!!!!!!!!!!!!!! %d vs %d\n", total, total2);
+
+        Colorer::print<YELLOW>("Endpoints: %d --> %d\n", newCandidate.first, newCandidate.second);
+
+        solver.solve(firstRow, firstCol, (firstComponentId != -1) ? firstComponentId : newCandidate.first);
+
+        if (level.Solved)
+        {
+            break;
+        }
+
+        restoreSolutions(&level);
+    }
+#endif
+
+    if (level.Solved == false)
+    {
+        Colorer::print<YELLOW>("WARNING: Endpoints not deduced!\n");
+        
+        //Assign initial solutions
+        prepareSolutions(&level);
+
         solver.solve(firstRow, firstCol, firstComponentId);
     }
-    else
-    {
-        for (const auto& pair : endpoints)
-        {
-            Colorer::print<YELLOW>("Endpoints: %d --> %d\n", pair.first, pair.second);
-            solver.solve(firstRow, firstCol, (firstComponentId != -1) ? firstComponentId : pair.first);
-            if (level.Solved)
-            {
-                break;
-            }
-        }
-    }
+
+    //if (endpoints.size() == 0)
+    //{
+    //    Colorer::print<YELLOW>("WARNING: No endpoints deduced!\n");
+    //    //Assign all solutions
+    //    prepareSolutions(&level);
+    //    solver.solve(firstRow, firstCol, firstComponentId);
+    //}
+    //else
+    //{
+    //    for (const auto& pair : endpoints)
+    //    {
+    //        //Assign new solutions
+    //        prepareSolutions(&level, cleanerSolutions, pair.first, pair.second);
+
+    //        Colorer::print<YELLOW>("Endpoints: %d --> %d\n", pair.first, pair.second);
+    //        solver.solve(firstRow, firstCol, (firstComponentId != -1) ? firstComponentId : pair.first);
+    //        if (level.Solved)
+    //        {
+    //            break;
+    //        }
+    //    }
+    //}
     
     //solver.solve(firstRow, firstCol, (firstComponentId != -1) ? firstComponentId : endpoints.first);
     //solver.solve(firstRow, firstCol, firstComponentId);
@@ -186,7 +274,10 @@ int main(int argc, char* argv[])
     if (level.Solved)
     {
 #ifdef TRACE_MAIN_STEPS
-    Colorer::print<YELLOW>("Solution: x=%d y=%d\n%s\n", level.getSolutionStartX(), level.getSolutionStartY(), level.Answer.c_str());
+        int compID = level.getCell(level.getSolutionStartY(), level.getSolutionStartX())->getComponentId();
+        Colorer::print<WHITE>("Started in component %d\n", compID);
+        level.traceComponent(compID);
+        Colorer::print<YELLOW>("Solution: x=%d y=%d\n%s\n", level.getSolutionStartX(), level.getSolutionStartY(), level.Answer.c_str());
 #endif
         level.outputToFile(OUTPUT_FILENAME);
     }

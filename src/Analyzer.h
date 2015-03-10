@@ -47,9 +47,9 @@ public:
     void analyzeComponents();
     void analyzeComponent(Component& component);
 
-    void createPortals();
+    /*void createPortals();
     void initializeSimplePortals();
-    void expandPortals();
+    void expandPortals();*/
 
     void preprocess();
 

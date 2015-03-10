@@ -2,11 +2,16 @@
 
 #include "Level.h"
 
-typedef std::vector<std::vector<SolutionRecord>> SolutionList;
-typedef std::map<int, SolutionList> SolutionListMap;
-typedef std::map<int, SolutionTree> SolutionMap;
+//typedef std::pair<int, int> EndPoints;
+class EndPoints : public std::pair < int, int >
+{
+public:
 
-typedef std::pair<int, int> EndPoints;
+    EndPoints(int a, int b);
+
+    bool operator < (const EndPoints& ep) const;
+};
+
 
 class Deducer
 {
@@ -16,8 +21,8 @@ public:
 
     Deducer(Level* level);
 
-    std::vector<EndPoints> deduceSolutions();
-    bool deduceSolution(int componentFirst, int componentLast);
+    bool deduceSolutions(std::set<EndPoints>& endpointHistory, EndPoints& endpoints, SolutionListMap& cleanerSolutions, int comp1, int comp2);
+    bool deduceEndpoints(int componentFirst, int componentLast, SolutionListMap& cleanerSolutions, int& componentCandidate);
 
-    bool checkCompatibility(int componentID, SolutionListMap& validSolutions, bool& solutionsUpdated) const;
+    bool checkCompatibility(int componentID, SolutionListMap& validSolutions, bool& solutionsUpdated, int& componentCandidate) const;
 };

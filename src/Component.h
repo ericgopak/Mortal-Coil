@@ -11,6 +11,19 @@ typedef int StateMask;
 typedef StateMask MustBeBlockedMask;
 typedef StateMask MustBeFreeMask;
 
+struct SolutionHead;
+struct SolutionBody;
+struct BodyToTree;
+struct HeadToBody;
+class SolutionTree;
+
+// TODO: first 2 masks don't seem to be required - remove
+typedef std::tuple<MustBeBlockedMask, MustBeFreeMask, SolutionHead, SolutionBody> SolutionRecord;
+
+typedef std::vector<std::vector<SolutionRecord>> SolutionList;
+typedef std::map<int, SolutionList> SolutionListMap;
+typedef std::map<int, SolutionTree> SolutionMap;
+
 // Component -> StateMask -> SolutionHead -> SolutionBody -> [ StateMask -> ... ]
 struct SolutionHead
 {
@@ -35,11 +48,6 @@ struct SolutionBody
 
     //size_t operator ()(const SolutionBody& body) const;
 };
-
-class SolutionTree;
-
-// TODO: first 2 masks don't seem to be required - remove
-typedef std::tuple<MustBeBlockedMask, MustBeFreeMask, SolutionHead, SolutionBody> SolutionRecord;
 
 // Solution tree implementation
 struct BodyToTree
@@ -80,12 +88,14 @@ public:
 
     SolutionTree();
 
+    void clear();
+
     BodyToTree* followHead(const SolutionHead& solutionHead);
     int getSolutionCount() const;
     int getStartingSolutionCount() const;
     int getEndingSolutionCount() const;
 
-    void getValidThroughSolutions(SolutionTree& res) const;
+    //void getValidThroughSolutions(SolutionTree& res) const;
 
     void addSolution(const std::vector<SolutionRecord>& solution, bool isStarting, bool isEnding);
     void addSolution(SolutionTree* tree, const std::vector<SolutionRecord>& solution, int solutionIndex, bool isStarting, bool isEnding);
@@ -103,10 +113,21 @@ class Component : public AbstractComponent
 {
     int occupied;
     SolutionTree startingSolutions;
+    SolutionTree throughSolutions;
     SolutionTree endingSolutions;
     SolutionTree nonStartingSolutions;
-    // TODO: consider copying only after checking if it actually will be used (i.e. if throughSolutionCount() == 2)
-    SolutionTree throughSolutions; // Copy of all non-starting and non-ending solutions
+    SolutionTree nonEndingSolutions;
+    SolutionTree solutions;
+
+    bool originalSolutionsAssigned;
+
+    SolutionTree originalStartingSolutions;
+    SolutionTree originalThroughSolutions;
+    SolutionTree originalEndingSolutions;
+    SolutionTree originalNonStartingSolutions;
+    SolutionTree originalNonEndingSolutions;
+    SolutionTree originalSolutions;
+
     // Arranged counter-clockwise along the perimeter
     std::vector<const Exit*> exits;
     // Arranged clockwise along the perimeter
@@ -125,14 +146,21 @@ public:
 
     int getOccupiedCount() const;
     int getTotalSolutionCount() const;
-    SolutionTree* getNonStartingSolutions();
     SolutionTree* getStartingSolutions();
-    SolutionTree* getEndingSolutions();
     SolutionTree* getThroughSolutions();
-    int getNonStartingSolutionCount() const;
+    SolutionTree* getEndingSolutions();
+    SolutionTree* getNonStartingSolutions();
+    SolutionTree* getNonEndingSolutions();
+    SolutionTree* getSolutions();
     int getStartingSolutionCount() const;
     int getThroughSolutionCount() const;
     int getEndingSolutionCount() const;
+    int getNonStartingSolutionCount() const;
+    int getNonEndingSolutionCount() const;
+    int getSolutionCount() const;
+    
+    int getUniqueSolutionCount() const;
+
     const std::vector<const Exit*>& getExits() const;
     const std::vector<const Cell*>& getExitCells() const;
     SolutionTree* getRemainingSolutions() const;
@@ -162,4 +190,11 @@ public:
     void decrementOccupied(int num = 1);
 
     //void toggleExitState(const SolutionHead& head);
+
+    std::set<int> getNeighbours() const;
+
+    void clearRemainingSolutions();
+    void assignSolutions(Level* level, const SolutionList& solutionList);
+    void setSolutionsAsOriginal();
+    void restoreOriginalSolutions();
 };

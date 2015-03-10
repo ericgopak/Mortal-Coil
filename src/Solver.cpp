@@ -458,6 +458,8 @@ void changeExitCellsState(Component* comp, bool block, StateMask stateChange)
 
 void Solver::follow(const SolutionHead& head)
 {
+static int depth = 1;
+
     // Get opposing exit
     Cell* fromCell = level->getCell(head.startY, head.startX);
 
@@ -521,10 +523,21 @@ void Solver::follow(const SolutionHead& head)
             StateMask toBeChangedMask = ~originalInnerState & body.stateChangeMask;
             changeExitCellsState(comp, true, toBeChangedMask);
 
-#ifdef TRACE_SOLUTIONS
-            fromCell->setFree(false);
-            toCell->setFree(false);
+#ifdef TRACE_SOLUTIONS // TODO: uncomment
+            //fromCell->setFree(false);
+            //toCell->setFree(false);
+depth++;
+comp->setPortal((const Portal*)1); // just a temporary visualizing tool
+
+static int BEST = 906;
+if (cellsVisited > BEST){
+    printf("BETTER -> %d (comp --> %d)\n", BEST, toCell->getComponentId());
 level->traceComponent();
+printf("Trying (%d, %d, %d) --> (%d, %d, %d)\n", head.startX, head.startY, head.startDir, body.endX, body.endY, body.endDir);
+level->traceComponent(toCell->getComponentId());
+system("pause");
+BEST = cellsVisited;
+}
 #endif
 
             if (subtree->getSolutionCount() == 0) // Current component traversed completely
@@ -533,8 +546,9 @@ level->traceComponent();
 
                 if (cellsVisited == level->Free) // TODO: consider using sort of a constant here // Assumption: cells are not being occupied in follow()
                 {
-Colorer::print<WHITE>("SOLUTION FOUND!!!\n");
+Colorer::print<WHITE>("SOLUTION FOUND!!! Ended in component %d\n", toCell->getComponentId());
 level->traceComponent();
+level->traceComponent(toCell->getComponentId());
                     level->Solved = true;
 
                     level->Answer = body.solution + level->Answer;
@@ -558,9 +572,11 @@ level->traceComponent();
                 }
             }
 
-#ifdef TRACE_SOLUTIONS
-            fromCell->setFree(true);
-            toCell->setFree(true);
+#ifdef TRACE_SOLUTIONS // TODO: uncomment
+            //fromCell->setFree(true);
+            //toCell->setFree(true);
+comp->setPortal(NULL); // just a temporary visualizing tool
+depth--;
 #endif
             changeExitCellsState(comp, false, toBeChangedMask);
                 
@@ -576,6 +592,8 @@ level->traceComponent();
 
 void Solver::trySolving(int startX, int startY)
 {
+    Colorer::print<WHITE>("Trying to solve from (%d,%d)\n", startX, startY);
+
     Cell* cell = level->getCell(startY, startX);
     Component* comp = &level->getComponents()[cell->getComponentId()];
 

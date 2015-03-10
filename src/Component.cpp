@@ -84,6 +84,16 @@ SolutionTree::SolutionTree()
 {
 }
 
+void SolutionTree::clear()
+{
+    tree.headToBody.clear();
+    solutionCount = 0;
+    startingSolutionCount = 0;
+    endingSolutionCount = 0;
+    mustBeBlockedMask = 0;
+    mustBeFreeMask = 0;
+}
+
 int SolutionTree::getSolutionCount() const
 {
     return solutionCount;
@@ -114,7 +124,7 @@ void SolutionTree::addSolution(SolutionTree* tree, const std::vector<SolutionRec
 
     const SolutionRecord& record = solution[solutionIndex];
 
-    subtree->mustBeBlockedMask &= std::get<0>(record);
+    subtree->mustBeBlockedMask &= std::get<0>(record); // TODO: investigate - this does not seem alright to me...
     subtree->mustBeFreeMask    &= std::get<1>(record);
 
     HeadToBody* headToBody = &subtree->tree;
@@ -280,27 +290,30 @@ Component::Component()
     , occupied(0)
     //, currentStateMask(0)
     , portal(NULL)
+    , originalSolutionsAssigned(false)
 {
     // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
-    remainingSolutions.push(&startingSolutions);
 }
 
 Component::Component(const Component& c)
     : AbstractComponent(c)
     , occupied(c.occupied)
     , startingSolutions(c.startingSolutions)
-    , nonStartingSolutions(c.nonStartingSolutions)
+    , throughSolutions(c.throughSolutions)
     , endingSolutions(c.endingSolutions)
+    , nonStartingSolutions(c.nonStartingSolutions)
+    , nonEndingSolutions(c.nonEndingSolutions)
+    , solutions(c.solutions)
     , exits(c.exits)
     //, currentStateMask(0)
     , portal(NULL)
+    , originalSolutionsAssigned(false)
 {
     // TODO: test performance
     exits.reserve(MAX_EXPECTED_COMPONENT_EXITS);
     exitCells.reserve(MAX_EXPECTED_COMPONENT_EXITS);
-    remainingSolutions.push(&nonStartingSolutions); // TODO: choose starting solutions for the first ones only
 }
 
 int Component::getOccupiedCount() const
@@ -314,19 +327,9 @@ int Component::getTotalSolutionCount() const
     return startingSolutions.getSolutionCount() + nonStartingSolutions.getSolutionCount();
 }
 
-SolutionTree* Component::getNonStartingSolutions()
-{
-    return &nonStartingSolutions;
-}
-
 SolutionTree* Component::getStartingSolutions()
 {
     return &startingSolutions;
-}
-
-SolutionTree* Component::getEndingSolutions()
-{
-    return &endingSolutions;
 }
 
 SolutionTree* Component::getThroughSolutions()
@@ -334,9 +337,24 @@ SolutionTree* Component::getThroughSolutions()
     return &throughSolutions;
 }
 
-int Component::getNonStartingSolutionCount() const
+SolutionTree* Component::getEndingSolutions()
 {
-    return nonStartingSolutions.getSolutionCount();
+    return &endingSolutions;
+}
+
+SolutionTree* Component::getNonStartingSolutions()
+{
+    return &nonStartingSolutions;
+}
+
+SolutionTree* Component::getNonEndingSolutions()
+{
+    return &nonEndingSolutions;
+}
+
+SolutionTree* Component::getSolutions()
+{
+    return &solutions;
 }
 
 int Component::getStartingSolutionCount() const
@@ -346,7 +364,7 @@ int Component::getStartingSolutionCount() const
 
 int Component::getThroughSolutionCount() const
 {
-    assert(throughSolutions.getSolutionCount() == nonStartingSolutions.getSolutionCount() + nonStartingSolutions.getEndingSolutionCount());
+    assert(throughSolutions.getSolutionCount() == nonStartingSolutions.getSolutionCount() - nonStartingSolutions.getEndingSolutionCount());
     return throughSolutions.getSolutionCount();
 }
 
@@ -354,6 +372,91 @@ int Component::getEndingSolutionCount() const
 {
     return startingSolutions.getEndingSolutionCount() + nonStartingSolutions.getEndingSolutionCount();
     //return endingSolutions.getSolutionCount();
+}
+
+int Component::getNonStartingSolutionCount() const
+{
+    return nonStartingSolutions.getSolutionCount();
+}
+
+int Component::getNonEndingSolutionCount() const
+{
+    return nonEndingSolutions.getSolutionCount();
+}
+
+int Component::getSolutionCount() const
+{
+    return solutions.getSolutionCount();
+}
+
+struct SolutionTrait
+{
+    int exit1;
+    int exit2;
+    MustBeBlockedMask mustBeBlockedMask;
+    MustBeFreeMask mustBeFreeMask;
+
+    bool operator < (const SolutionTrait& st) const
+    {
+        if (exit1 != st.exit1) return exit1 < st.exit1;
+        if (exit2 != st.exit2) return exit2 < st.exit2;
+        if (mustBeBlockedMask != st.mustBeBlockedMask) return mustBeBlockedMask < st.mustBeBlockedMask;
+        return mustBeFreeMask < st.mustBeFreeMask;
+    }
+};
+
+typedef std::vector<SolutionTrait> SolutionTraits;
+
+int Component::getUniqueSolutionCount() const
+{
+    // TODO: finish
+    std::set<SolutionTraits> res;
+
+    auto s = solutions.convertToRecords();
+
+    FOREACH_CONST(s, it)
+    {
+        SolutionTraits sts;
+        FOREACH_CONST(*it, it2)
+        {
+            const auto& record = *it2;
+            const auto& bmask = std::get<0>(record);
+            const auto& fmask = std::get<1>(record);
+            const auto& head = std::get<2>(record);
+            const auto& body = std::get<3>(record);
+            int exit1 = -1;
+            int exit2 = -1;
+            FOREACH_CONST(exits, e)
+            {
+                const Exit* e1 = *e;
+                if (e1->getX() == head.startX && e1->getY() == head.startY && e1->getDir() == (head.startDir ^ 2))
+                {
+                    exit1 = getIndexByExit(e1);
+                    break;
+                }
+            }
+
+            FOREACH_CONST(exits, e)
+            {
+                const Exit* e2 = *e;
+                if (e2->getX() == body.endX && e2->getY() == body.endY && e2->getDir() == body.endDir)
+                {
+                    exit2 = getIndexByExit(e2);
+                    break;
+                }
+            }
+
+            SolutionTrait st = {exit1, exit2, bmask, fmask};
+            sts.push_back(st);
+        }
+
+        /*FOREACH_CONST(sts, z) printf("(%d,%d,%d,%d)-->", z->exit1, z->exit2, z->mustBeBlockedMask, z->mustBeFreeMask);
+        printf("\n");*/
+
+        res.insert(sts);
+    }
+
+    return res.size();
 }
 
 const std::vector<const Exit*>& Component::getExits() const
@@ -386,9 +489,8 @@ int Component::getIndexByExit(const Exit* exit) const
 {
     // TODO: this must be slow! Rewrite!
     size_t x = std::distance(exits.begin(), std::find(exits.begin(), exits.end(), exit));
-    assert(x < exits.size() && "Exit not found!");
 
-    return x;
+    return x < exits.size() ? x : -1;
 }
 
 int Component::getIndexByExitCell(const Cell* exitCell) const
@@ -438,49 +540,49 @@ int Component::getCurrentExitCellStateMask() const
     return mask;
 }
 
-#include "Level.h" // TODO: remove
-
-void SolutionTree::getValidThroughSolutions(SolutionTree& res) const
-{
-    const SolutionTree* subtree = this;
-
-    FOREACH(subtree->tree.headToBody, htb)
-    {
-        const SolutionHead& head = htb->first;
-
-        const Cell* fromCell = Debug::level->getCell(head.startY, head.startX);
-        const Exit* fromExit = fromCell->getExit(head.startDir ^ 2);
-        const Exit* opposingExit = fromExit->getOpposingExit();
-
-        // Good if incoming
-
-        // Restricting if bidirectional
-
-        // Bad otherwise
-
-        int counter1 = 0;
-
-        //FOREACH(htb->second.bodyToTree, btt)
-        //{
-        //    const SolutionBody& body = btt->first;
-        //    int counter2 = 0;
-
-
-        //    // TODO: check if children got any solutions
-        //    // if child->solutionCount == 0 then remove it
-        //}
-    }
-
-    //HeadToBody* headToBody = &subtree->tree;
-    //BodyToTree* bodyToTree = &headToBody->headToBody[head];
-    //subtree = &bodyToTree->bodyToTree[body];
-
-    //addSolution(subtree, solution, solutionIndex + 1, isStarting, isEnding);
-
-    ////FOREACH()
-    //{
-    //}
-}
+//#include "Level.h" // TODO: remove
+//
+//void SolutionTree::getValidThroughSolutions(SolutionTree& res) const
+//{
+//    const SolutionTree* subtree = this;
+//
+//    FOREACH(subtree->tree.headToBody, htb)
+//    {
+//        const SolutionHead& head = htb->first;
+//
+//        const Cell* fromCell = Debug::level->getCell(head.startY, head.startX);
+//        const Exit* fromExit = fromCell->getExit(head.startDir ^ 2);
+//        const Exit* opposingExit = fromExit->getOpposingExit();
+//
+//        // Good if incoming
+//
+//        // Restricting if bidirectional
+//
+//        // Bad otherwise
+//
+//        int counter1 = 0;
+//
+//        //FOREACH(htb->second.bodyToTree, btt)
+//        //{
+//        //    const SolutionBody& body = btt->first;
+//        //    int counter2 = 0;
+//
+//
+//        //    // TODO: check if children got any solutions
+//        //    // if child->solutionCount == 0 then remove it
+//        //}
+//    }
+//
+//    //HeadToBody* headToBody = &subtree->tree;
+//    //BodyToTree* bodyToTree = &headToBody->headToBody[head];
+//    //subtree = &bodyToTree->bodyToTree[body];
+//
+//    //addSolution(subtree, solution, solutionIndex + 1, isStarting, isEnding);
+//
+//    ////FOREACH()
+//    //{
+//    //}
+//}
 
 const Portal* Component::getPortal() const
 {
@@ -559,3 +661,232 @@ void Component::decrementOccupied(int num)
 //    assert(index != -1);
 //    currentStateMask ^= 1 << index;
 //}
+
+std::set<int> Component::getNeighbours() const
+{
+    std::set<int> ind;
+
+    FOREACH_CONST(getExits(), e)
+    {
+        const auto& exit = *e;
+        int compID = exit->getOpposingExit()->getHostCell()->getComponentId();
+        ind.insert(compID);
+    }
+
+    return ind;
+}
+
+void Component::clearRemainingSolutions()
+{
+    remainingSolutions = std::stack<SolutionTree*>();
+}
+
+void Component::assignSolutions(Level* level, const SolutionList& solutionList)
+{
+    if (originalSolutionsAssigned == true)
+    {
+        originalSolutionsAssigned = false;
+
+        originalStartingSolutions = startingSolutions;
+        originalThroughSolutions = throughSolutions;
+        originalEndingSolutions = endingSolutions;
+        originalNonStartingSolutions = nonStartingSolutions;
+        originalNonEndingSolutions = nonEndingSolutions;
+        originalSolutions = solutions;
+    }
+
+    startingSolutions.clear();
+    throughSolutions.clear();
+    endingSolutions.clear();
+    nonStartingSolutions.clear();
+    nonEndingSolutions.clear();
+    solutions.clear();
+
+    for (int i = 0; i < (int)solutionList.size(); i++)
+    {
+        const auto& solution = solutionList[i];
+
+        bool isStarting = true;
+        bool isEnding = true;
+
+        const Exit* exit1 = NULL;
+        const Exit* exit2 = NULL;
+
+        const auto& mustBeBlockedMask = std::get<0>(solution[0]);
+        const auto& mustBeFreeMask = std::get<1>(solution[0]);
+
+        const auto& head = std::get<2>(solution[0]);
+        FOREACH_CONST(exits, e)
+        {
+            const Exit* e1 = *e;
+            if (e1->getX() == head.startX && e1->getY() == head.startY && e1->getDir() == (head.startDir ^ 2))
+            {
+                exit1 = e1;
+                if (!((1 << getIndexByExit(e1)) & mustBeBlockedMask))
+                {
+                    // Cannot be through. Leave it alone
+                    break;
+                }
+                isStarting = false;
+                break;
+            }
+        }
+
+        const auto& body = std::get<3>(solution.back());
+        FOREACH_CONST(exits, e)
+        {
+            const Exit* e2 = *e;
+            if (e2->getX() == body.endX && e2->getY() == body.endY && e2->getDir() == body.endDir)
+            {
+                exit2 = e2;
+                if ((1 << getIndexByExit(e2)) & mustBeBlockedMask)
+                {
+                    // Cannot be through. Leave it alone
+                    break;
+                }
+                isEnding = false;
+                break;
+            }
+        }
+
+        if (exit1 && exit1->getHostCell()->getComponentId() == 289)
+        {
+            int bp = 0;
+        }
+
+        if (isStarting)
+        {
+            startingSolutions.addSolution(solution, isStarting, isEnding);
+        }
+        else
+        {
+            nonStartingSolutions.addSolution(solution, isStarting, isEnding);
+            // Can also be starting?
+            //if (!((1 << getIndexByExit(exit1)) & mustBeFreeMask))
+            if (mustBeBlockedMask == 0)
+            {
+                startingSolutions.addSolution(solution, true, isEnding);
+            }
+        }
+
+        if (isEnding)
+        {
+            endingSolutions.addSolution(solution, isStarting, isEnding);
+        }
+        else
+        {
+            nonEndingSolutions.addSolution(solution, isStarting, isEnding);
+            // Can also be ending?
+            if (!((1 << getIndexByExit(exit2)) & mustBeFreeMask))
+            {
+                endingSolutions.addSolution(solution, isStarting, true);
+            }
+        }
+
+        if (!isStarting && !isEnding)
+        {
+            throughSolutions.addSolution(solution, isStarting, isEnding);
+        }
+
+        solutions.addSolution(solution, isStarting, isEnding);
+/*
+        // -----------------------------------------
+        {
+            //bool isStarting = true;
+
+            //MustBeBlockedMask mustBeBlockedMask = std::get<0>(solution[0]);
+            MustBeBlockedMask mustBeFreeMask = std::get<1>(solution[0]);
+
+            const int& startX = std::get<2>(solution[0]).startX;
+            const int& startY = std::get<2>(solution[0]).startY;
+            const int& startDir = std::get<2>(solution[0]).startDir;
+
+            const Cell* cell = level->getCell(startY, startX);
+            //const Component* comp = &level->getComponents()[cell->getComponentId()];
+
+            // Exit behind and this exit must not be free
+            if (cell->hasExit(startDir ^ 2) && (mustBeFreeMask & (1 << getIndexByExit(cell->getExit(startDir ^ 2)))) == 0)
+            {
+                isStarting = false;
+            }
+        }
+
+        //bool isEnding = true;
+        {
+            const SolutionRecord& lastRecord = solution[solution.size() - 1];
+            const int& endX = std::get<3>(lastRecord).endX;
+            const int& endY = std::get<3>(lastRecord).endY;
+            const int& endDir = std::get<3>(lastRecord).endDir;
+
+            MustBeBlockedMask mustBeFreeMask = std::get<1>(solution[solution.size() - 1]);
+
+            const Cell* cell = level->getCell(endY, endX);
+            const Component* comp = &level->getComponents()[cell->getComponentId()];
+
+            // Exit in front and it must be free
+            if (cell->hasExit(endDir) && (mustBeFreeMask & (1 << comp->getIndexByExit(cell->getExit(endDir)))) != 0)
+            {
+                isEnding = false;
+            }
+        }
+        // ----------------------------------------------
+*/
+
+        //bool isStarting = solutionIsStarting(solutionRecordHolder);
+        //bool isEnding = solutionIsEnding(solutionRecordHolder);
+        //component.getSolutions()->addSolution(solutionRecordHolder, isStarting, isEnding);
+        //if (isStarting)
+        //{
+        //    startingSolutions.addSolution(solution, isStarting, isEnding);
+        //}
+        //else
+        //{
+        //    nonStartingSolutions.addSolution(solution, isStarting, isEnding);
+        //}
+
+        //if (isEnding)
+        //{
+        //    endingSolutions.addSolution(solution, isStarting, isEnding);
+        //}
+        //else
+        //{
+        //    nonEndingSolutions.addSolution(solution, isStarting, isEnding);
+        //}
+
+        //if (!isStarting && !isEnding)
+        //{
+        //    throughSolutions.addSolution(solution, isStarting, isEnding);
+        //}
+
+        //solutions.addSolution(solution, isStarting, isEnding);
+    }
+}
+
+void Component::setSolutionsAsOriginal()
+{
+    originalStartingSolutions = startingSolutions;
+    originalThroughSolutions = throughSolutions;
+    originalEndingSolutions = endingSolutions;
+    originalNonStartingSolutions = nonStartingSolutions;
+    originalNonEndingSolutions = nonEndingSolutions;
+    originalSolutions = solutions;
+
+    originalSolutionsAssigned = true;
+}
+
+void Component::restoreOriginalSolutions()
+{
+    if (originalSolutionsAssigned)
+    {
+        return;
+    }
+
+    startingSolutions = originalStartingSolutions;
+    throughSolutions = originalThroughSolutions;
+    endingSolutions = originalEndingSolutions;
+    nonStartingSolutions = originalNonStartingSolutions;
+    nonEndingSolutions = originalNonEndingSolutions;
+    solutions = originalSolutions;
+
+    originalSolutionsAssigned = true;
+}
