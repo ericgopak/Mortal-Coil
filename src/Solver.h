@@ -7,6 +7,7 @@ class Solver : public Simulator
     const char* outputFilename;
 
     int cellsVisited;
+    int endingComponentID;
 
 public:
     Solver(Level* currentLevel, const char* outputFilename);

@@ -12,6 +12,7 @@ Solver::Solver(Level* currentLevel, const char* _outputFilename)
     : Simulator(currentLevel)
     , outputFilename(_outputFilename)
     , cellsVisited(0)
+    , endingComponentID(-1)
 {
 }
 
@@ -637,16 +638,14 @@ static int depth = 0;
 
     // Get opposing exit
     Cell* fromCell = level->getCell(head.startY, head.startX);
-
-    Component* comp = &level->getComponents()[fromCell->getComponentId()];
+    int componentID = fromCell->getComponentId();
+    Component* comp = &level->getComponents()[componentID];
 
     if (comp->isPortal())
     {
         // Try taking the portal
         //TODO: ...
     }
-
-
 
     SolutionTree* solutions = comp->getRemainingSolutions();
 
@@ -674,6 +673,7 @@ static int depth = 0;
     }
     else
     {
+        // TODO: if component is not the last one, avoid using ending solutions
         FOREACH(bodyToTree->bodyToTree, btt)
         {
             const SolutionBody& body = btt->first;
@@ -689,6 +689,25 @@ static int depth = 0;
             }
 
             SolutionTree* subtree = &btt->second;
+
+            bool iveBeenTheEndingOne = false;
+
+            if (subtree->getSolutionCount() > 0 && subtree->getSolutionCount() == subtree->getEndingSolutionCount())
+            {
+                if (endingComponentID == -1)
+                {
+                    endingComponentID = fromCell->getComponentId();
+                    iveBeenTheEndingOne = true;
+                }
+                else if (endingComponentID != componentID)
+                {
+                    // Only ending solutions left, pruning
+#ifdef TRACE_STATISTICS
+                    Debug::endingOnlySolutionsDetected++;
+#endif
+                    continue;
+                }
+            }
 
             TRACE(printf("Trying (%d, %d, %d) --> (%d, %d, %d)\n", head.startX, head.startY, head.startDir, body.endX, body.endY, body.endDir));
 
@@ -725,7 +744,7 @@ if (cellsVisited > BEST)
             {
                 cellsVisited += comp->getSize();
 
-                if (cellsVisited == level->Free) // TODO: consider using sort of a constant here // Assumption: cells are not being occupied in follow()
+                if (cellsVisited == level->Free)
                 {
 Colorer::print<WHITE>("SOLUTION FOUND!!! Ended in component %d\n", toCell->getComponentId());
 level->traceComponent();
@@ -774,6 +793,11 @@ comp->setPortal(NULL); // just a temporary visualizing tool
             updateTouchingComponents(fromCell, head.startDir, body.solution.c_str(), depth, false);
             }
 #endif
+
+            if (iveBeenTheEndingOne)
+            {
+                endingComponentID = -1;
+            }
         }
     }
 

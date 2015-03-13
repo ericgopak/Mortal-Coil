@@ -72,7 +72,8 @@ namespace Debug
     extern int avoidedEndingSolutionCounter;
     extern int similarSolutionsCounter;
     extern int invalidTouchDetected;
-
+    
+    extern long long int endingOnlySolutionsDetected;
     extern long long int numberOfCallsToFollow;
 #endif
 #ifdef TRACE_SOLUTIONS

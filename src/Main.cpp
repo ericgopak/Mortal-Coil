@@ -229,7 +229,9 @@ Colorer::print<RED>("!!!!!!!!!!!!!! %d vs %d\n", total, total2);
 
     if (level.Solved == false)
     {
+#ifdef DEDUCE_SOLUTIONS
         Colorer::print<YELLOW>("WARNING: Endpoints not deduced!\n");
+#endif
         
         //Assign initial solutions
         prepareSolutions(&level);
@@ -269,8 +271,9 @@ Colorer::print<RED>("!!!!!!!!!!!!!! %d vs %d\n", total, total2);
     printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
     printf("Got too many temporary end blocks %d times!\n", Debug::gotTooManyTemporaryEndBlocksCounter);*/
     printf("Avoided ending solutions %d times!\n", Debug::avoidedEndingSolutionCounter);
-    printf("Prunning: detected invalid touches %d times!\n", Debug::invalidTouchDetected);
-
+    printf("Pruning: detected invalid touches %d times!\n", Debug::invalidTouchDetected);
+    
+    printf("Pruning: detected ending-only remaining solutions %I64d times!\n", Debug::endingOnlySolutionsDetected);
     printf("Number of calls to follow() :  %I64d times!\n", Debug::numberOfCallsToFollow);
 #endif
 

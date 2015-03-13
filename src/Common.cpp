@@ -27,6 +27,7 @@ namespace Debug
     int similarSolutionsCounter = 0;
     int invalidTouchDetected = 0;
 
+    long long int endingOnlySolutionsDetected = 0;
     long long int numberOfCallsToFollow = 0;
 #endif
 #ifdef TRACE_SOLUTIONS
