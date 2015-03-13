@@ -6,6 +6,8 @@
 //#define MAX_CAN_TOUCH  4 // Max # of components one cell can touch
 #define MAX_NEXT_TOUCH 8 // Max # of neighbouring cells touching the same component
 
+#define DEFAULT_TAG -1
+
 class Cell;
 class Exit;
 typedef std::map<int, std::set<const Cell*> > NextTouchMap;
@@ -25,6 +27,7 @@ class Cell
     int obstacleId; // Index of an obstacle cell belongs to. 0 for the 'border'
     int componentId; // Index of the component the cell belongs to
     int exitMask;
+    int tag; // Magic number
 
     std::vector<Exit> exits;
     const Exit* exitsByDirection[4];
@@ -73,6 +76,8 @@ public:
     //const Portal** getPortals() const;
     const Portal* getPortal() const;
 
+    int getTag() const;
+
     void addExit(const Exit& exit);
     void setOpposingExit(const Exit* exit, const Exit* opposingExit);
     void addNextTouch(int obstacleId, const Cell* cell);
@@ -86,6 +91,8 @@ public:
     void setNextCell(int dir, Cell* ncell);
 
     void setPortal(const Portal* p);
+
+    void setTag(int value);
     
 #ifdef TRACE_SOLUTIONS
     int getDepth() const;

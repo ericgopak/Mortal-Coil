@@ -259,6 +259,10 @@ void Level::printCell(const Cell* cell, int id) const
     {
         background = BACKGROUND_RED;
     }
+    /*else if (cell->getTag() != DEFAULT_TAG)
+    {
+        background = BACKGROUND_INTENSITY | BACKGROUND_ONE * (2 + cell->getTag() % 10);
+    }*/
     else
 #ifdef TRACE_SOLUTIONS
         if (cell->getLayer() != -1)

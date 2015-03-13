@@ -456,9 +456,116 @@ void changeExitCellsState(Component* comp, bool block, StateMask stateChange)
     }
 }
 
+static void makeTouch(Cell* cell, bool touch)
+{
+    // TODO: implement
+}
+
+static bool updateTouchingComponents(Cell* cell, int dir, const char* path, int depth, bool touch)
+{
+    // Special case: starting solution
+    if (Direction[dir] == path[0]) path++;
+
+    if (cell->hasExit(dir))
+    {
+        if (cell->getNextCell(dir)->isFree() == true)
+        //if (cell->getNextCell(dir)->isFree() == !touch) // Finished traversing
+        //if (cell->getNextCell(dir)->isFree() == touch) // Finished traversing
+        {
+if (*path != 0)
+{
+    Debug::level->traceComponent();
+}
+            assert(*path == 0);
+
+Debug::ctr1 += touch ? 1 : -1;
+            cell->setFree(!touch);
+            cell->setTag(touch ? depth : DEFAULT_TAG);
+            makeTouch(cell, touch);
+
+            return true;
+        }
+//        else if (*path == 0) // Seems to duplicate behaviour on turn
+//        {
+//Debug::ctr1 += touch ? 1 : -1;
+//            cell->setFree(!touch);
+//            cell->setTag(touch ? depth : DEFAULT_TAG);
+//            makeTouch(cell, touch);
+//
+//            return true;
+//        }
+        // Otherwise proceed with turning
+    }
+
+    //if (!(cell->getNextCell(dir)->isObstacle() || cell->getComponentId() == cell->getNextCell(dir)->getComponentId()))
+    //{
+    //    Debug::level->traceComponent();
+    //}
+    //assert(cell->getNextCell(dir)->isObstacle() || cell->getComponentId() == cell->getNextCell(dir)->getComponentId());
+
+    /*if (cell->getX() == 9 && cell->getY() == 2)
+    {
+Debug::level->traceComponent();
+        int bp = 0;
+    }*/
+
+    if (cell->getNextCell(dir)->isObstacle()
+        || cell->getNextCell(dir)->isFree() == !touch
+        || cell->getNextCell(dir)->getTag() != DEFAULT_TAG && cell->getTag() != cell->getNextCell(dir)->getTag())
+    {
+        if (*path == 0) // Finished
+        {
+Debug::ctr1 += touch ? 1 : -1;
+            cell->setFree(!touch);
+            cell->setTag(touch ? depth : DEFAULT_TAG);
+            makeTouch(cell, touch);
+            return true;
+        }
+
+        // Change direction
+        int newDir = -1;
+        for (int i = 0; i < 4; i++)
+        {
+            if (path[0] == Direction[i])
+            {
+                newDir = i;
+                break;
+            }
+        }
+
+        //if (cell->hasExit(newDir) && cell->getNextCell(newDir)->isFree()) // Finished traversing
+        //{
+        //    assert(path == NULL);
+        //    return true;
+        //}
+
+        return updateTouchingComponents(cell, newDir, path + 1, depth, touch);
+    }
+    //TODO... still need to figure out why 9, 2 goes back to 9, 1 before turning left (solution: LUL)
+    makeTouch(cell, touch);
+Debug::ctr1 += touch ? 1 : -1;
+    cell->setFree(!touch);
+    cell->setTag(touch ? depth : DEFAULT_TAG);
+    bool res = updateTouchingComponents(cell->getNextCell(dir), dir, path, depth, touch);
+
+    if (res == false) // Unsuccessful, recover
+    {
+        makeTouch(cell, !touch);
+Debug::ctr1 += touch ? -1 : 1;
+        cell->setFree(touch);
+        cell->setTag(!touch ? depth : DEFAULT_TAG);
+    }
+
+    return res;
+}
+
+//#undef PRUNE_FOLLOW // TODO: remove!
+
 void Solver::follow(const SolutionHead& head)
 {
-static int depth = 1;
+static int depth = 0;
+    
+    depth++;
 
     // Get opposing exit
     Cell* fromCell = level->getCell(head.startY, head.startX);
@@ -489,7 +596,7 @@ static int depth = 1;
 //        }
 //    }
 
-    const int outerExitsStateMask = comp->getOuterExitStateMask();
+    const int outerExitsStateMask = comp->getOuterExitStateMask(); // TODO: this does not really work, see level 33 (x=13,y=9)
 
     BodyToTree* bodyToTree = solutions->followHead(head);
     if (bodyToTree == NULL)
@@ -519,19 +626,23 @@ static int depth = 1;
 
             Cell* toCell = level->getCell(body.endY, body.endX);
 
+#ifdef PRUNE_FOLLOW
+            if (updateTouchingComponents(fromCell, head.startDir, body.solution.c_str(), depth, true))
+            {
+#endif
+
             const StateMask originalInnerState = comp->getCurrentExitCellStateMask();
             StateMask toBeChangedMask = ~originalInnerState & body.stateChangeMask;
             changeExitCellsState(comp, true, toBeChangedMask);
 
 #ifdef TRACE_SOLUTIONS // TODO: uncomment
-            //fromCell->setFree(false);
+            //fromCell->setFree(false); // WARNING: touching this may result in undefined behaviour
             //toCell->setFree(false);
-depth++;
-comp->setPortal((const Portal*)1); // just a temporary visualizing tool
+//comp->setPortal((const Portal*)1); // just a temporary visualizing tool
 
-static int BEST = 906;
+static int BEST = 100;
 if (cellsVisited > BEST){
-    printf("BETTER -> %d (comp --> %d)\n", BEST, toCell->getComponentId());
+    printf("BETTER -> %d (comp --> %d)\n", cellsVisited, toCell->getComponentId());
 level->traceComponent();
 printf("Trying (%d, %d, %d) --> (%d, %d, %d)\n", head.startX, head.startY, head.startDir, body.endX, body.endY, body.endDir);
 level->traceComponent(toCell->getComponentId());
@@ -553,6 +664,7 @@ level->traceComponent(toCell->getComponentId());
 
                     level->Answer = body.solution + level->Answer;
 
+                    depth--;
                     return;
                 }
             }
@@ -568,19 +680,25 @@ level->traceComponent(toCell->getComponentId());
                 if (level->Solved)
                 {
                     level->Answer = body.solution + level->Answer;
+                    depth--;
                     return;
                 }
             }
 
 #ifdef TRACE_SOLUTIONS // TODO: uncomment
-            //fromCell->setFree(true);
+            //fromCell->setFree(true); // WARNING: touching this may result in undefined behaviour
             //toCell->setFree(true);
 comp->setPortal(NULL); // just a temporary visualizing tool
-depth--;
 #endif
+
             changeExitCellsState(comp, false, toBeChangedMask);
                 
             comp->unchooseSolution();
+
+#ifdef PRUNE_FOLLOW
+            updateTouchingComponents(fromCell, head.startDir, body.solution.c_str(), depth, false);
+            }
+#endif
 
             if (subtree->getSolutionCount() == 0)
             {
@@ -588,6 +706,8 @@ depth--;
             }
         }
     }
+
+    depth--;
 }
 
 void Solver::trySolving(int startX, int startY)
@@ -599,10 +719,16 @@ void Solver::trySolving(int startX, int startY)
 
     for (int d = 0; d < 4; d++)
     {
+        //if (cell->getX() != 4 || cell->getY() != 13 || d != 1) // TODO: remove
+        //    continue;
+
         SolutionHead head = {startX, startY, d};
         if (comp->getStartingSolutionCount() > 0)
         {
             comp->chooseSolution(comp->getStartingSolutions());
+
+            //cell->setFree(false);
+            assert(Debug::ctr1 == 0);
 
             follow(head);
             if (level->Solved)
@@ -610,6 +736,10 @@ void Solver::trySolving(int startX, int startY)
                 level->setSolutionStartXY(startX, startY);
                 return;
             }
+
+            assert(Debug::ctr1 == 0);
+
+            //cell->setFree(true);
 
             comp->unchooseSolution();
         }

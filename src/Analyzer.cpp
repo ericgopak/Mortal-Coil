@@ -37,31 +37,48 @@ void Analyzer::setComponentCurrentIndex(int index)
 // Get all solutions for 1-sized components
 static void generateAllSimpleSolutions(Component* component)
 {
-    for (size_t i = 0; i < component->getExits().size(); i++)
+    size_t exitsCount = component->getExits().size();
+    int allBits = ((1 << exitsCount) - 1);
+
+    for (size_t i = 0; i < exitsCount; i++)
     {
-        for (size_t j = 0; j < component->getExits().size(); j++)
+        for (size_t j = 0; j < exitsCount; j++)
         {
             if (i == j)
             {
                 continue;
             }
 
+            const Exit* e1 = component->getExits()[i];
+            const Exit* e2 = component->getExits()[j];
+            SolutionHead head = { e1->getX(), e1->getY(), e1->getDir() ^ 2 };
+
             // Through solutions
             {
-                const Exit* e1 = component->getExits()[i];
-                const Exit* e2 = component->getExits()[j];
-                SolutionHead head = {e1->getX(), e1->getY(), e1->getDir() ^ 2};
                 std::string decision;
                 if ((e1->getDir() ^ 2) != e2->getDir())
                 {
                     decision = Direction[e2->getDir()];
                 }
-                // TODO: consider mask ~((1 << i) | (1 << j))
+
                 MustBeBlockedMask mustBeBlockedMask = 1 << i; // TODO: could also be 0 -> unify with Solver & Analyzer
                 MustBeFreeMask mustBeFreeMask = 1 << j;
 
+                // Opposite exit must be blocked
+                if (exitsCount == 3 && (e1->getDir() ^ 2) != e2->getDir())
+                {
+                    int thirdExitMask = allBits ^ (1 << i) ^ (1 << j);
+                    int thirdExit = 0;
+                    for (int t = thirdExitMask; t >> 1; t >>= 1) thirdExit++; // log(thirdExitMask)
+
+                    if (component->getExitByIndex(thirdExit)->getDir() == (e1->getDir() ^ 2)) // Opposite exit
+                    {
+                        mustBeBlockedMask |= thirdExitMask;
+                    }
+                }
+
                 //SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), decision};
-                StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
+                StateMask stateChange = allBits; // ~0. All exit cells are getting blocked
                 SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
 
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
@@ -75,39 +92,34 @@ static void generateAllSimpleSolutions(Component* component)
 
             // Starting solutions
             {
-                const Exit* e1 = component->getExits()[i];
-                const Exit* e2 = component->getExits()[j];
-
-                SolutionHead head = {e1->getX(), e1->getY(), e1->getDir() ^ 2};
                 std::string decision;
                 decision += Direction[e2->getDir()];
 
                 MustBeBlockedMask mustBeBlockedMask = 0;
                 MustBeFreeMask mustBeFreeMask = (1 << j) | (1 << i); // This distinguishes starting from through solutions
 
-                StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
+                StateMask stateChange = allBits; // ~0. All exit cells are getting blocked
                 SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
 
-                SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
+                if (exitsCount != 3 || e1->getDir() == (e2->getDir() ^ 2)) // Special case: can only go straight
+                {
+                    SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
-                std::vector<SolutionRecord> v(1, solution); // Is starting, not ending
-                component->getStartingSolutions()->addSolution(v, 1, 0);
-                component->getNonEndingSolutions()->addSolution(v, 1, 0);
-                component->getSolutions()->addSolution(v, 1, 0);
+                    std::vector<SolutionRecord> v(1, solution); // Is starting, not ending
+                    component->getStartingSolutions()->addSolution(v, 1, 0);
+                    component->getNonEndingSolutions()->addSolution(v, 1, 0);
+                    component->getSolutions()->addSolution(v, 1, 0);
+                }
             }
 
             // Ending solutions
             {
-                const Exit* e1 = component->getExits()[i];
-                const Exit* e2 = component->getExits()[j];
-
-                SolutionHead head = {e1->getX(), e1->getY(), e1->getDir() ^ 2};
                 std::string decision; // Do nothing
 
-                MustBeBlockedMask mustBeBlockedMask = (1 << component->getExits().size()) - 1; // ~0
+                MustBeBlockedMask mustBeBlockedMask = allBits; // ~0
                 MustBeFreeMask mustBeFreeMask = 0;
 
-                StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
+                StateMask stateChange = allBits; // ~0. All exit cells are getting blocked
                 SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
 
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);

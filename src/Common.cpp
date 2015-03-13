@@ -9,6 +9,9 @@ namespace Debug
     int depth = 0;
     bool traceFlag = false;
 
+    int ctr1 = 0;
+    int ctr2 = 0;
+
 #ifdef TRACE_STATISTICS
     int mostSolutions = 0;
     int totalSolutionsCounter = 0;

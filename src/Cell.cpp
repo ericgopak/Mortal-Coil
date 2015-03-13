@@ -16,6 +16,7 @@ Cell::Cell(int x, int y)
     , depth(-1)
     , layer(-1)
 #endif
+    , tag(DEFAULT_TAG)
 {
     exits.reserve(4); // Mandatory! Otherwise pointers are gonna be invalidated
     nextCell[0] = nextCell[1] = nextCell[2] = nextCell[3] = NULL;
@@ -288,3 +289,13 @@ void Cell::setLayer(int layer)
     this->layer = layer;
 }
 #endif
+
+int Cell::getTag() const
+{
+    return tag;
+}
+
+void Cell::setTag(int value)
+{
+    tag = value;
+}

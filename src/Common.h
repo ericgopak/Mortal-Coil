@@ -15,6 +15,9 @@
 #   define TRACE(x)
 #endif
 
+//#define DEDUCE_SOLUTIONS
+#define PRUNE_FOLLOW
+
 #define MAX_EXPECTED_COMPONENTS 50000 // Max number of components
 #define MAX_EXPECTED_COMPONENT_EXITS 30 // Max number of exits in a single component
 //#define MAX_EXPECTED_SOLUTION_COUNT > 300'000... // Max number of unique solutions of a component
@@ -51,6 +54,9 @@ namespace Debug
 
     extern int depth;
     extern bool traceFlag;
+
+    extern int ctr1;
+    extern int ctr2;
 
 #ifdef TRACE_STATISTICS
     extern int mostSolutions;
