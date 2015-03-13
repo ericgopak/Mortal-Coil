@@ -407,7 +407,7 @@ struct SolutionTrait
 
 typedef std::vector<SolutionTrait> SolutionTraits;
 
-int Component::getUniqueSolutionCount() const
+size_t Component::getUniqueSolutionCount() const
 {
     // TODO: finish
     std::set<SolutionTraits> res;
@@ -488,15 +488,15 @@ const Cell* Component::getExitCellByIndex(int index) const
 int Component::getIndexByExit(const Exit* exit) const
 {
     // TODO: this must be slow! Rewrite!
-    size_t x = std::distance(exits.begin(), std::find(exits.begin(), exits.end(), exit));
+    int x = (int)std::distance(exits.begin(), std::find(exits.begin(), exits.end(), exit));
 
-    return x < exits.size() ? x : -1;
+    return x < (int)exits.size() ? x : -1;
 }
 
 int Component::getIndexByExitCell(const Cell* exitCell) const
 {
     // TODO: this must be slow! Rewrite!
-    size_t x = std::distance(exitCells.begin(), std::find(exitCells.begin(), exitCells.end(), exitCell));
+    int x = (int)std::distance(exitCells.begin(), std::find(exitCells.begin(), exitCells.end(), exitCell));
     assert(x < exitCells.size() && "ExitCell not found!");
 
     return x;
@@ -515,7 +515,7 @@ int Component::getFreeExitCellsMask() const
 int Component::getOuterExitStateMask() const
 {
     int mask = 0;
-    for (size_t i = 0; i < exits.size(); i++)
+    for (int i = 0; i < (int)exits.size(); i++)
     {
         const Exit* exit = getExitByIndex(i)->getOpposingExit();
         if (exit->getHostCell()->isFree() == false)
@@ -529,7 +529,7 @@ int Component::getOuterExitStateMask() const
 int Component::getCurrentExitCellStateMask() const
 {
     int mask = 0;
-    for (size_t i = 0; i < exitCells.size(); i++)
+    for (int i = 0; i < (int)exitCells.size(); i++)
     {
         const Cell* exitCell = getExitCellByIndex(i);
         if (exitCell->isFree() == false)

@@ -124,12 +124,12 @@ Cell* Level::getCell(int row, int col) const
 
 int Level::getComponentCount() const
 {
-    return components.size();
+    return (int)components.size();
 }
 
 int Level::getObstacleCount() const
 {
-    return obstacles.size();
+    return (int)obstacles.size();
 }
 
 const std::vector<const Cell*>& Level::getTemporaryEnds() const

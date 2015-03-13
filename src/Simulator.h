@@ -54,10 +54,10 @@ public:
     void createBonds() const;
     void countEnds() const;
     
-    void touchObstacles(Cell* cell) const;
+    /*void touchObstacles(Cell* cell) const;
     bool checkTouchingObstacles(Cell* cell) const;
     void untouchObstacles(Cell* cell) const;
-
+*/
     //void backtrack(Cell* cell, int direction);
 
     //virtual void trySolving(int startX, int startY);

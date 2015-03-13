@@ -427,52 +427,52 @@ void Simulator::floodComponent(int x, int y, int num) const
     }
 }
 
-void Simulator::touchObstacles(Cell* cell) const
-{
-    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
-    {
-        level->getObstacles()[it->first].touch();
-    }
-}
+//void Simulator::touchObstacles(Cell* cell) const
+//{
+//    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
+//    {
+//        level->getObstacles()[it->first].touch();
+//    }
+//}
 
-bool Simulator::checkTouchingObstacles(Cell* cell) const
-{
-    int x = cell->getX();
-    int y = cell->getY();
+//bool Simulator::checkTouchingObstacles(Cell* cell) const
+//{
+//    int x = cell->getX();
+//    int y = cell->getY();
+//
+//    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
+//    {
+//        const Obstacle& o = level->getObstacles()[it->first];
+//
+//        if (o.getTouchCount() > 0)
+//        {
+//            bool ok = false;
+//
+//            FOREACH_CONST(it->second, it2)
+//            {
+//                if ((*it2)->isFree() == false)
+//                {
+//                    ok = true;
+//                    break;
+//                }
+//            }
+//            if (ok == false)
+//            {
+//                return false;
+//            }
+//        }
+//    }
+//
+//    return true;
+//}
 
-    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
-    {
-        const Obstacle& o = level->getObstacles()[it->first];
-
-        if (o.getTouchCount() > 0)
-        {
-            bool ok = false;
-
-            FOREACH_CONST(it->second, it2)
-            {
-                if ((*it2)->isFree() == false)
-                {
-                    ok = true;
-                    break;
-                }
-            }
-            if (ok == false)
-            {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-void Simulator::untouchObstacles(Cell* cell) const
-{
-    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
-    {
-        level->getObstacles()[it->first].untouch();
-    }
-}
+//void Simulator::untouchObstacles(Cell* cell) const
+//{
+//    FOREACH_CONST(cell->getNeighboursTouchingSameObstacle(), it)
+//    {
+//        level->getObstacles()[it->first].untouch();
+//    }
+//}
 
 bool Simulator::mayStartFrom(Cell* cell, int dir) const
 {

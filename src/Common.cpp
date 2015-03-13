@@ -25,6 +25,9 @@ namespace Debug
     int gotTooManyTemporaryEndBlocksCounter = 0;
     int avoidedEndingSolutionCounter = 0;
     int similarSolutionsCounter = 0;
+    int invalidTouchDetected = 0;
+
+    long long int numberOfCallsToFollow = 0;
 #endif
 #ifdef TRACE_SOLUTIONS
     int currentX = -1;

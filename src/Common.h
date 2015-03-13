@@ -71,6 +71,9 @@ namespace Debug
     extern int gotTooManyTemporaryEndBlocksCounter;
     extern int avoidedEndingSolutionCounter;
     extern int similarSolutionsCounter;
+    extern int invalidTouchDetected;
+
+    extern long long int numberOfCallsToFollow;
 #endif
 #ifdef TRACE_SOLUTIONS
     extern int currentX;

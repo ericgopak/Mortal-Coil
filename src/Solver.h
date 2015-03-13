@@ -28,6 +28,9 @@ public:
     void addTemporaryEndBlocks(Cell* cell, int dir) const;
     void removeTemporaryEndBlocks(Cell* cell, int dir) const;
 
+    bool makeTouch(Cell* cell, bool touch) const;
+    bool updateTouchingComponents(Cell* cell, int dir, const char* path, int depth, bool touch) const;
+
     void solve(int row, int col, int firstComponentId);
     void follow(const SolutionHead& head);
     void trySolving(int startX, int startY);

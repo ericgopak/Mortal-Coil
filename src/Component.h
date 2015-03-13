@@ -159,7 +159,7 @@ public:
     int getNonEndingSolutionCount() const;
     int getSolutionCount() const;
     
-    int getUniqueSolutionCount() const;
+    size_t getUniqueSolutionCount() const;
 
     const std::vector<const Exit*>& getExits() const;
     const std::vector<const Cell*>& getExitCells() const;

@@ -5,7 +5,7 @@
 
 int AbstractComponent::getSize() const
 {
-    return cells.size();
+    return (int)cells.size();
 }
 
 const std::set<const Cell*>& AbstractComponent::getCells() const

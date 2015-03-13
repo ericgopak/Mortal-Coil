@@ -534,7 +534,7 @@ void Analyzer::analyzeComponent(Component& component)
         }
         else // Consider non-starting solutions.
         {
-            for (size_t i = 0; i < component.getExits().size(); i++)
+            for (int i = 0; i < (int)component.getExits().size(); i++)
             {
                 if (component.getExits()[i]->getHostCell()->isFree())
                 {

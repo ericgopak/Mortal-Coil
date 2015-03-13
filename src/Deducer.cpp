@@ -22,13 +22,8 @@ Deducer::Deducer(Level* level)
 
 bool Deducer::deduceSolutions(std::set<EndPoints>& endpointHistory, EndPoints& endpoints, SolutionListMap& cleanerSolutions, int comp1, int comp2)
 {
-//if (endpointHistory.size() == 0)
-//{
-//    deduceEndpoints(289, 254, cleanerSolutions, comp1);
-//    endpoints = EndPoints(289, 254);
-//    return true;
-//}
-//return false;
+    // TODO: rewrite
+
     //if (comp1 == -1) // No need to repeat once it's deduced
     {
         if (deduceEndpoints(-1, -1, cleanerSolutions, comp1))
@@ -151,7 +146,7 @@ bool Deducer::deduceEndpoints(int componentFirst, int componentLast, SolutionLis
         solutionLists[it->first] = it->second.convertToRecords();
     }
 
-    int total = 0;
+    size_t total = 0;
     for (int i = 0; i < level->getComponentCount(); i++)
     {
         //Colorer::print<GREEN>("Solutions BEFORE: %3d -> %d\n", i, solutionLists[i].size());
@@ -175,7 +170,7 @@ bool Deducer::deduceEndpoints(int componentFirst, int componentLast, SolutionLis
         }
     }
 
-    int total2 = 0;
+    size_t total2 = 0;
     for (int i = 0; i < level->getComponentCount(); i++)
     {
         //Colorer::print<GREEN>("Solutions AFTER: %3d -> %d\n", i, solutionLists[i].size());

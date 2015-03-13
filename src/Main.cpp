@@ -269,6 +269,9 @@ Colorer::print<RED>("!!!!!!!!!!!!!! %d vs %d\n", total, total2);
     printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
     printf("Got too many temporary end blocks %d times!\n", Debug::gotTooManyTemporaryEndBlocksCounter);*/
     printf("Avoided ending solutions %d times!\n", Debug::avoidedEndingSolutionCounter);
+    printf("Prunning: detected invalid touches %d times!\n", Debug::invalidTouchDetected);
+
+    printf("Number of calls to follow() :  %I64d times!\n", Debug::numberOfCallsToFollow);
 #endif
 
     if (level.Solved)
