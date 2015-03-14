@@ -218,7 +218,7 @@ static std::set<const Exit*> getOutExits(Level* level, const SolutionList& solut
         for (const auto& record : sol)
         {
             const auto& body = std::get<3>(record);
-            const auto outExit = level->getCell(body.endY, body.endX)->getExit(body.endDir);
+            const auto& outExit = level->getCell(body.endY, body.endX)->getExit(body.endDir);
             exits.insert(outExit);
         }
     }
@@ -235,7 +235,7 @@ static std::set<const Exit*> getInExits(Level* level, const SolutionList& soluti
         for (const auto& record : sol)
         {
             const auto& head = std::get<2>(record);
-            const auto inExit = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
+            const auto& inExit = level->getCell(head.startY, head.startX)->getExit(head.startDir ^ 2);
             exits.insert(inExit);
         }
     }
@@ -329,4 +329,33 @@ bool Deducer::checkCompatibility(int componentID, SolutionListMap& validSolution
     }
 
     return true;
+}
+
+static bool isPerfectlyValidSolution(const SolutionList& solution, const SolutionListMap& solutions)
+{
+    
+}
+
+void Deducer::reduceSolutions(SolutionListMap& reducedSolutions)
+{
+    std::map<int, SolutionTree> validSolutions;
+
+    for (int i = 0; i < level->getComponentCount(); i++)
+    {
+        validSolutions[i] = *level->getComponents()[i].getSolutions();
+    }
+
+    SolutionListMap solutionLists;
+    FOREACH_CONST(validSolutions, it)
+    {
+        solutionLists[it->first] = it->second.convertToRecords();
+    }
+
+    size_t total = 0;
+    for (int i = 0; i < level->getComponentCount(); i++)
+    {
+        //Colorer::print<GREEN>("Solutions BEFORE: %3d -> %d\n", i, solutionLists[i].size());
+        total += solutionLists[i].size();
+    }
+    Colorer::print<GREEN>("Total Solutions BEFORE: %d\n", total);
 }

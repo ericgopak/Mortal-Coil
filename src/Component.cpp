@@ -497,7 +497,7 @@ int Component::getIndexByExitCell(const Cell* exitCell) const
 {
     // TODO: this must be slow! Rewrite!
     int x = (int)std::distance(exitCells.begin(), std::find(exitCells.begin(), exitCells.end(), exitCell));
-    assert(x < exitCells.size() && "ExitCell not found!");
+    assert(x < (int)exitCells.size() && "ExitCell not found!");
 
     return x;
 }

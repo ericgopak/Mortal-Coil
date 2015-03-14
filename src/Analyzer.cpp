@@ -260,6 +260,7 @@ void Analyzer::analyzeComponents()
         Debug::totalSolutionsCounter += component.getTotalSolutionCount();
         Debug::startingSolutionsCounter += component.getStartingSolutionCount();
         Debug::nonStartingSolutionsCounter += component.getNonStartingSolutionCount();
+        Debug::nonEndingSolutionsCounter += component.getNonEndingSolutionCount();
         Debug::throughSolutionsCounter += component.getThroughSolutionCount();
         Debug::endingSolutionsCounter += component.getEndingSolutionCount();
         if (component.getTotalSolutionCount() > Debug::mostSolutions)
@@ -381,7 +382,7 @@ void Analyzer::analyzeComponent(Component& component)
         if (solutionRecordHolder.size() > 0)
         {
             int solutionNumber = component.getTotalSolutionCount() + 1;
-            /*TRACE(
+            TRACE(
                 level->traceComponent(componentCurrentIndex);
                 Colorer::print<WHITE>("Oh yeah! Found full solution %d:    ", solutionNumber);
                 for (size_t i = 0; i < solutionRecordHolder.size(); i++)
@@ -396,7 +397,7 @@ void Analyzer::analyzeComponent(Component& component)
                     );
                 }
                 printf("\n");
-            );*/
+            );
 
             auto newSolution = getUniqueSolutionFragments(solutionRecordHolder);
 

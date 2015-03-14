@@ -11,6 +11,8 @@
 Solver::Solver(Level* currentLevel, const char* _outputFilename)
     : Simulator(currentLevel)
     , outputFilename(_outputFilename)
+    , depth(0)
+    , stepCounter(0)
     , cellsVisited(0)
     , endingComponentID(-1)
 {
@@ -56,12 +58,41 @@ void Solver::preAction(Cell* cell, int dir)
 
 void Solver::postAction(Cell* cell, int dir)
 {
-    if (level->Solved)
-    {
-        // Accumulate answer
-        level->prependSolutionCell(cell, dir);
-    }
 }
+
+//bool Solver::preAction(Cell* cell, int dir, bool flag)
+//{
+//    if (flag && makeTouch(cell, flag) == false)
+//    {
+//#ifdef TRACE_STATISTICS
+//        Debug::invalidTouchDetected++;
+//#endif
+//        return false;
+//    }
+//
+//    if (flag)
+//    {
+//        addTemporaryEnds(cell, dir);
+//    }
+//
+//    return true;
+//}
+//
+//bool Solver::postAction(Cell* cell, int dir, bool flag)
+//{
+//    if (!flag && makeTouch(cell, flag) == false)
+//    {
+//        assert(false && "Should be failure-free!");
+//        return false;
+//    }
+//
+//    if (!flag)
+//    {
+//        removeTemporaryEnds(cell, dir);
+//    }
+//
+//    return true;
+//}
 
 bool Solver::reachedFinalCell(Cell* cell, int dir) const
 {
@@ -139,14 +170,17 @@ void Solver::addTemporaryEnds(Cell* cell, int dir) const
     const Cell* behind = cell->getNextCell(dir ^ 2);
     if (left->isTemporaryEnd())
     {
+level->traceComponent();
         level->addTemporaryEnd(left);
     }
     if (right->isTemporaryEnd())
     {
+level->traceComponent();
         level->addTemporaryEnd(right);
     }
     if (behind->isTemporaryEnd())
     {
+level->traceComponent();
         level->addTemporaryEnd(behind);
     }
 }
@@ -158,14 +192,17 @@ void Solver::removeTemporaryEnds(Cell* cell, int dir) const
     const Cell* behind = cell->getNextCell(dir ^ 2);
     if (left->isTemporaryEnd())
     {
+level->traceComponent();
         level->removeTemporaryEnd(left);
     }
     if (right->isTemporaryEnd())
     {
+level->traceComponent();
         level->removeTemporaryEnd(right);
     }
     if (behind->isTemporaryEnd())
     {
+level->traceComponent();
         level->removeTemporaryEnd(behind);
     }
 }
@@ -509,9 +546,14 @@ bool Solver::makeTouch(Cell* cell, bool touch) const
     return ok;
 }
 
-// TODO: remove depth from arguments
-bool Solver::updateTouchingComponents(Cell* cell, int dir, const char* path, int depth, bool touch) const
+bool Solver::traversePath(Cell* cell, int dir, const char* path, bool flag)
 {
+static int calls = 0;
+calls++;
+
+//printf("Traversing... (%d,%d)  %d\n", cell->getX(), cell->getY(), flag);
+//level->traceComponent();
+//int bp = 0;
     // Special case: starting solution
     if (Direction[dir] == path[0]) path++;
 
@@ -525,39 +567,7 @@ if (*path != 0)
 }
             assert(*path == 0);
 
-            if (touch && makeTouch(cell, touch) == false)
-            {
-                return false;
-            }
-
-Debug::ctr1 += touch ? 1 : -1;
-assert(cell->isFree() != !touch);
-            cell->setFree(!touch);
-            cell->setTag(touch ? depth : DEFAULT_TAG);
-
-            if (!touch && makeTouch(cell, touch) == false)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        // Otherwise proceed with turning
-    }
-
-    /*if (cell->getX() == 9 && cell->getY() == 2)
-    {
-Debug::level->traceComponent();
-        int bp = 0;
-    }*/
-
-    if (cell->getNextCell(dir)->isObstacle()
-        || cell->getNextCell(dir)->isFree() == !touch
-        || cell->getNextCell(dir)->getTag() != DEFAULT_TAG && cell->getTag() != cell->getNextCell(dir)->getTag())
-    {
-        if (*path == 0) // Finished
-        {
-            if (touch && makeTouch(cell, touch) == false)
+            if (flag && makeTouch(cell, flag) == false)
             {
 #ifdef TRACE_STATISTICS
                 Debug::invalidTouchDetected++;
@@ -565,14 +575,66 @@ Debug::level->traceComponent();
                 return false;
             }
 
-Debug::ctr1 += touch ? 1 : -1;
-assert(cell->isFree() != !touch);
-            cell->setFree(!touch);
-            cell->setTag(touch ? depth : DEFAULT_TAG);
+            //if (!flag)
+            //{
+            //    removeTemporaryEnds(cell, dir);
+            //}
 
-            if (!touch && makeTouch(cell, touch) == false)
+            Debug::ctr1 += flag ? 1 : -1;
+            assert(cell->isFree() != !flag);
+            cell->setFree(!flag);
+            //cell->setTag(flag ? depth : DEFAULT_TAG);
+            cell->setTag(flag ? stepCounter : DEFAULT_TAG);
+            stepCounter += flag ? 1 : -1;
+
+            //if (flag)
+            //{
+            //    addTemporaryEnds(cell, dir);
+            //}
+
+            if (!flag && makeTouch(cell, flag) == false)
+            {
+                assert(false && "Supposed to be failure-free! (in order for post-recovery to work)");
+            }
+
+            return true;
+        }
+        // Otherwise proceed with turning
+    }
+
+    if (cell->getNextCell(dir)->isObstacle()
+        || (flag && (cell->getNextCell(dir)->isFree() == false || cell->getNextCell(dir)->getTag() != DEFAULT_TAG))
+        || (!flag && cell->getNextCell(dir)->getTag() != cell->getTag() + 1))
+        /*||  cell->getNextCell(dir)->getTag() != DEFAULT_TAG && cell->getTag() != cell->getNextCell(dir)->getTag())*/
+        //|| (!flag && (cell->getNextCell(dir)->getTag() == DEFAULT_TAG || cell->getTag() != cell->getNextCell(dir)->getTag())))
+    {
+        if (*path == 0) // Finished
+        {
+            if (flag && makeTouch(cell, flag) == false)
             {
                 return false;
+            }
+
+            //if (!flag)
+            //{
+            //    removeTemporaryEnds(cell, dir);
+            //}
+
+            Debug::ctr1 += flag ? 1 : -1;
+            assert(cell->isFree() != !flag);
+            cell->setFree(!flag);
+            //cell->setTag(flag ? depth : DEFAULT_TAG);
+            cell->setTag(flag ? stepCounter : DEFAULT_TAG);
+            stepCounter += flag ? 1 : -1;
+
+            //if (flag)
+            //{
+            //    addTemporaryEnds(cell, dir);
+            //}
+
+            if (!flag && makeTouch(cell, flag) == false)
+            {
+                assert(false && "Supposed to be failure-free! (in order for post-recovery to work)");
             }
 
             return true;
@@ -589,50 +651,72 @@ assert(cell->isFree() != !touch);
             }
         }
 
-        return updateTouchingComponents(cell, newDir, path + 1, depth, touch);
+        return traversePath(cell, newDir, path + 1, flag);
     }
 
-    if (touch && makeTouch(cell, touch) == false)
+    if (flag && makeTouch(cell, flag) == false)
     {
-#ifdef TRACE_STATISTICS
-        Debug::invalidTouchDetected++;
-#endif
         return false;
     }
 
-Debug::ctr1 += touch ? 1 : -1;
-assert(cell->isFree() != !touch);
-    cell->setFree(!touch);
-    cell->setTag(touch ? depth : DEFAULT_TAG);
-    bool res = updateTouchingComponents(cell->getNextCell(dir), dir, path, depth, touch);
-
-    // Untouching obstacles on the way back
-    if (!touch && makeTouch(cell, touch) == false)
+    if (flag)
     {
-        return false;
+        Debug::ctr1 += flag ? 1 : -1;
+        assert(cell->isFree() != !flag);
+        cell->setFree(!flag);
+        //cell->setTag(flag ? depth : DEFAULT_TAG);
+        cell->setTag(flag ? stepCounter : DEFAULT_TAG);
+        stepCounter += flag ? 1 : -1;
+    }
+    
+    //if (flag)
+    //{
+    //    addTemporaryEnds(cell, dir);
+    //}
+
+    bool res = traversePath(cell->getNextCell(dir), dir, path, flag);
+
+    if (!flag)
+    {
+        Debug::ctr1 += flag ? 1 : -1;
+        assert(cell->isFree() != !flag);
+        cell->setFree(!flag);
+        //cell->setTag(flag ? depth : DEFAULT_TAG);
+        cell->setTag(flag ? stepCounter : DEFAULT_TAG);
+        stepCounter += flag ? 1 : -1;
+    }
+
+    //if (!flag)
+    //{
+    //    removeTemporaryEnds(cell, dir);
+    //}
+
+    if (!flag && makeTouch(cell, flag) == false)
+    {
+        assert(false && "Supposed to be failure-free! (in order for post-recovery to work)");
     }
 
     if (res == false) // Unsuccessful, recover
     {
-        makeTouch(cell, !touch);
-Debug::ctr1 += touch ? -1 : 1;
-assert(cell->isFree() != touch);
-        cell->setFree(touch);
-        cell->setTag(!touch ? depth : DEFAULT_TAG);
+        assert(flag == true);
+
+        makeTouch(cell, !flag);
+        Debug::ctr1 += flag ? -1 : 1;
+        assert(cell->isFree() != flag);
+        cell->setFree(flag);
+        //cell->setTag(!flag ? depth : DEFAULT_TAG);
+        cell->setTag(!flag ? stepCounter : DEFAULT_TAG);
+        stepCounter += !flag ? 1 : -1;
     }
 
     return res;
 }
-
-//#undef PRUNE_FOLLOW // TODO: remove!
 
 void Solver::follow(const SolutionHead& head)
 {
 #ifdef TRACE_STATISTICS
     Debug::numberOfCallsToFollow++;
 #endif
-
-static int depth = 0;
     
     depth++;
 
@@ -649,20 +733,6 @@ static int depth = 0;
 
     SolutionTree* solutions = comp->getRemainingSolutions();
 
-    // Does not work - we can only find out if a component will be ending
-    // (it makes this component 'special' starting from this move)
-//    if (solutions->getSolutionCount() == solutions->getEndingSolutionCount())
-//    {
-//        // Only ending solutions remained - check if this truly is the last component
-//        if (level->Free - cellsVisited > comp->getSize())
-//        {
-//#ifdef TRACE_STATISTICS
-//            Debug::avoidedEndingSolutionCounter++;
-//#endif
-//            return;
-//        }
-//    }
-
     const int outerExitsStateMask = comp->getOuterExitStateMask(); // TODO: this does not really work, see level 33 (x=13,y=9)
 
     BodyToTree* bodyToTree = solutions->followHead(head);
@@ -673,7 +743,6 @@ static int depth = 0;
     }
     else
     {
-        // TODO: if component is not the last one, avoid using ending solutions
         FOREACH(bodyToTree->bodyToTree, btt)
         {
             const SolutionBody& body = btt->first;
@@ -714,7 +783,8 @@ static int depth = 0;
             Cell* toCell = level->getCell(body.endY, body.endX);
 
 #ifdef PRUNE_FOLLOW
-            if (updateTouchingComponents(fromCell, head.startDir, body.solution.c_str(), depth, true))
+            int prevStepCounter = stepCounter;
+            if (traversePath(fromCell, head.startDir, body.solution.c_str(), true))
             {
 #endif
 
@@ -727,7 +797,7 @@ static int depth = 0;
             //toCell->setFree(false);
 //comp->setPortal((const Portal*)1); // just a temporary visualizing tool
 
-static int BEST = 10;
+static int BEST = 0;
 if (cellsVisited > BEST)
 {
     //printf("BETTER -> %d (comp --> %d)\n", cellsVisited, toCell->getComponentId());
@@ -790,7 +860,8 @@ comp->setPortal(NULL); // just a temporary visualizing tool
             }
 
 #ifdef PRUNE_FOLLOW
-            updateTouchingComponents(fromCell, head.startDir, body.solution.c_str(), depth, false);
+            traversePath(fromCell, head.startDir, body.solution.c_str(), false);
+            assert(stepCounter == prevStepCounter);
             }
 #endif
 

@@ -25,4 +25,6 @@ public:
     bool deduceEndpoints(int componentFirst, int componentLast, SolutionListMap& cleanerSolutions, int& componentCandidate);
 
     bool checkCompatibility(int componentID, SolutionListMap& validSolutions, bool& solutionsUpdated, int& componentCandidate) const;
+
+    void reduceSolutions(SolutionListMap& reducedSolutions);
 };

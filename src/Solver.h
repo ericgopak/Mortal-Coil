@@ -8,6 +8,8 @@ class Solver : public Simulator
 
     int cellsVisited;
     int endingComponentID;
+    int depth;
+    int stepCounter;
 
 public:
     Solver(Level* currentLevel, const char* outputFilename);
@@ -18,6 +20,9 @@ public:
     virtual void postRestoreAction(Cell* cell, int dir);
     virtual void preAction(Cell* cell, int dir);
     virtual void postAction(Cell* cell, int dir);
+
+    //bool preAction(Cell* cell, int dir, bool flag);
+    //bool postAction(Cell* cell, int dir, bool flag);
 
     virtual bool reachedFinalCell(Cell* cell, int dir) const;
     virtual bool potentialSolution(Cell* cell, int dir) const;
@@ -30,7 +35,7 @@ public:
     void removeTemporaryEndBlocks(Cell* cell, int dir) const;
 
     bool makeTouch(Cell* cell, bool touch) const;
-    bool updateTouchingComponents(Cell* cell, int dir, const char* path, int depth, bool touch) const;
+    bool traversePath(Cell* cell, int dir, const char* path, bool flag);
 
     void solve(int row, int col, int firstComponentId);
     void follow(const SolutionHead& head);

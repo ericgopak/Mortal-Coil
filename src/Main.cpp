@@ -184,12 +184,58 @@ int main(int argc, char* argv[])
     Colorer::print<WHITE>("Found %d similar solutions!\n", Debug::similarSolutionsCounter);
 #endif
 
+#ifdef REDUCE_SOLUTIONS
+    SolutionListMap reducedSolutions;
+    
+    Deducer deducer(&level);
+
+    int total = 0;
+    int total2 = 0;
+    FOREACH_CONST(level.getComponents(), it)
+    {
+        int componentID = (*it->getCells().begin())->getComponentId();
+        printf("comp %d --> %d solutions (through: %d)\n", componentID, it->getSolutionCount(), it->getThroughSolutionCount());
+//level.traceComponent(componentID);
+        total += it->getSolutionCount();
+    }
+
+    deducer.reduceSolutions(reducedSolutions);
+
+    for (int i = 0; i < level.getComponentCount(); i++)
+    {
+        Component& comp = level.getComponents()[i];
+        comp.clearRemainingSolutions();
+        comp.assignSolutions(&level, reducedSolutions[i]);
+
+        //if (i == componentFirst)
+        //{
+        //    comp.chooseSolution(comp.getStartingSolutions());
+        //}
+        //else if (i == componentLast)
+        //{
+        //    comp.chooseSolution(comp.getEndingSolutions());
+        //}
+        //else
+        //{
+        //    comp.chooseSolution(comp.getThroughSolutions());
+        //}
+        comp.chooseSolution(comp.getNonStartingSolutions());
+    }
+
+    FOREACH_CONST(level.getComponents(), it) total2 += it->getSolutionCount();
+
+    Colorer::print<RED>("!!!!!!!!!!!!!! %d vs %d\n", total, total2);
+
+    restoreSolutions(&level);
+#endif
+
 #ifdef TRACE_MAIN_STEPS
     Colorer::print<RED>("Solving...\n");
 #endif
 
     int firstRow = (row != -1) ? row : 1;
     int firstCol = (col != -1) ? col : 1;
+
 
 #ifdef DEDUCE_SOLUTIONS
     SolutionListMap cleanerSolutions;
@@ -270,7 +316,6 @@ Colorer::print<RED>("!!!!!!!!!!!!!! %d vs %d\n", total, total2);
     printf("Got invalid next touches %d times!\n", Debug::gotInvalidNextTouchesCounter);
     printf("Got isolated cells %d times!\n", Debug::gotIsolatedCellsCounter);
     printf("Got too many temporary end blocks %d times!\n", Debug::gotTooManyTemporaryEndBlocksCounter);*/
-    printf("Avoided ending solutions %d times!\n", Debug::avoidedEndingSolutionCounter);
     printf("Pruning: detected invalid touches %d times!\n", Debug::invalidTouchDetected);
     
     printf("Pruning: detected ending-only remaining solutions %I64d times!\n", Debug::endingOnlySolutionsDetected);

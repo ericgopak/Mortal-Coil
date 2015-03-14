@@ -16,6 +16,7 @@
 #endif
 
 //#define DEDUCE_SOLUTIONS
+//#define REDUCE_SOLUTIONS
 #define PRUNE_FOLLOW
 
 #define MAX_EXPECTED_COMPONENTS 50000 // Max number of components
@@ -63,13 +64,13 @@ namespace Debug
     extern int totalSolutionsCounter;
     extern int startingSolutionsCounter;
     extern int nonStartingSolutionsCounter;
+    extern int nonEndingSolutionsCounter;
     extern int throughSolutionsCounter;
     extern int endingSolutionsCounter;
     extern int gotTooManyTemporaryEndsCounter;
     extern int gotInvalidNextTouchesCounter;
     extern int gotIsolatedCellsCounter;
     extern int gotTooManyTemporaryEndBlocksCounter;
-    extern int avoidedEndingSolutionCounter;
     extern int similarSolutionsCounter;
     extern int invalidTouchDetected;
     

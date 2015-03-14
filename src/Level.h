@@ -28,9 +28,7 @@ class Level
     std::set<const Component*> specialComponents;
     std::set<int> specialComponentsIds;
 
-    //std::set<const Cell*> temporaryEnds;
-    std::vector<const Cell*> temporaryEnds;
-    //std::set<const Cell*> temporaryEndsInCurrentComponent;
+    std::deque<const Cell*> temporaryEnds;
     std::vector<const Cell*> temporaryEndsInCurrentComponent;
     std::deque<const Component*> temporaryEndBlocks;
 
@@ -70,9 +68,7 @@ public:
     int getComponentCount() const;
     int getObstacleCount() const;
 
-    //const std::set<const Cell*>& getTemporaryEnds() const;
-    const std::vector<const Cell*>& getTemporaryEnds() const;
-    //const std::set<const Cell*>& getTemporaryEndsInCurrentComponent() const;
+    const std::deque<const Cell*>& getTemporaryEnds() const;
     const std::vector<const Cell*>& getTemporaryEndsInCurrentComponent() const;
     const std::deque<const Component*>& getTemporaryEndBlocks() const;
 

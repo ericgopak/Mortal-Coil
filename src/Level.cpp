@@ -132,7 +132,7 @@ int Level::getObstacleCount() const
     return (int)obstacles.size();
 }
 
-const std::vector<const Cell*>& Level::getTemporaryEnds() const
+const std::deque<const Cell*>& Level::getTemporaryEnds() const
 {
     return temporaryEnds;
 }
@@ -185,12 +185,14 @@ void Level::setBiggest(int index)
 
 void Level::addTemporaryEnd(const Cell* cell)
 {
+//printf("addTemporaryEnd (%d,%d)  ends count: %d\n", cell->getX(), cell->getY(), temporaryEnds.size());
     assert(std::find(temporaryEnds.begin(), temporaryEnds.end(), cell) == temporaryEnds.end());
     temporaryEnds.push_back(cell);
 }
 
 void Level::removeTemporaryEnd(const Cell* cell)
 {
+//printf("removeTemporaryEnd (%d,%d)  ends count: %d\n", cell->getX(), cell->getY(), temporaryEnds.size());
     assert(cell == temporaryEnds.back());
     temporaryEnds.pop_back();
 }
@@ -259,10 +261,11 @@ void Level::printCell(const Cell* cell, int id) const
     {
         background = BACKGROUND_RED;
     }
-    /*else if (cell->getTag() != DEFAULT_TAG)
+    else if (cell->getTag() != DEFAULT_TAG)
     {
-        background = BACKGROUND_INTENSITY | BACKGROUND_ONE * (2 + cell->getTag() % 10);
-    }*/
+        //background = BACKGROUND_INTENSITY | BACKGROUND_ONE * (2 + cell->getTag() % 10);
+        background = 0; // BLACK
+    }
     else
 #ifdef TRACE_SOLUTIONS
         if (cell->getLayer() != -1)

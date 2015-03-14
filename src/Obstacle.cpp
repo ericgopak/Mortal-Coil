@@ -62,6 +62,8 @@ bool Obstacle::touch(const Cell* cell)
     return false;
 }
 
+#include "Level.h" // TODO: remove
+
 void Obstacle::untouch(const Cell* cell)
 {
 //Colorer::print<GREEN>("untouching... (%d,%d)\n", cell->getX(), cell->getY());
@@ -77,6 +79,7 @@ void Obstacle::untouch(const Cell* cell)
     }
     else
     {
+Debug::level->traceComponent();
         assert(false && "Should never happen!");
     }
 }
