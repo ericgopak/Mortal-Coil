@@ -37,7 +37,8 @@
 #include "Analyzer.h"
 #include "Solver.h"
 
-static const char* INPUT_FILENAME = "mortal_coil.txt";
+//static const char* INPUT_FILENAME = "mortal_coil.txt";
+static const char* INPUT_FILENAME = "..\\..\\..\\data\\levels\\Level33";
 static const char* OUTPUT_FILENAME = "output.txt";
 
 void printUsage()

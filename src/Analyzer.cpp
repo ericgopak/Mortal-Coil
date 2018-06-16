@@ -51,18 +51,26 @@ static void generateAllSimpleSolutions(Component* component)
                 const Exit* e1 = component->getExits()[i];
                 const Exit* e2 = component->getExits()[j];
                 SolutionHead head = {e1->getX(), e1->getY(), e1->getDir() ^ 2};
-                std::string decision;
+				std::string decision;
+				//std::string qdecision;
                 if ((e1->getDir() ^ 2) != e2->getDir())
                 {
                     decision = Direction[e2->getDir()];
+					/*if (e2->getHostCell()->hasExit(e2->getDir() ^ 2))
+						qdecision = Direction[e2->getDir()];*/
                 }
+
+				/*std::vector<const Exit*> exitSequence;
+				exitSequence.push_back(e1);
+				exitSequence.push_back(e2);*/
+
                 // TODO: consider mask ~((1 << i) | (1 << j))
                 MustBeBlockedMask mustBeBlockedMask = 1 << i; // TODO: could also be 0 -> unify with Solver & Analyzer
                 MustBeFreeMask mustBeFreeMask = 1 << j;
 
                 //SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), decision};
                 StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
-                SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
+				SolutionBody body = { e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision };
 
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
@@ -77,13 +85,18 @@ static void generateAllSimpleSolutions(Component* component)
 
                 SolutionHead head = {e1->getX(), e1->getY(), e1->getDir() ^ 2};
                 std::string decision;
-                decision += Direction[e2->getDir()];
+				decision += Direction[e2->getDir()];
+				/*std::string qdecision;
+				qdecision += Direction[e2->getDir()];*/
+
+				/*std::vector<const Exit*> exitSequence;
+				exitSequence.push_back(e2);*/
 
                 MustBeBlockedMask mustBeBlockedMask = 0;
                 MustBeFreeMask mustBeFreeMask = (1 << j) | (1 << i); // This distinguishes starting from through solutions
 
                 StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
-                SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
+				SolutionBody body = { e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision };
 
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
@@ -98,12 +111,16 @@ static void generateAllSimpleSolutions(Component* component)
 
                 SolutionHead head = {e1->getX(), e1->getY(), e1->getDir() ^ 2};
                 std::string decision; // Do nothing
+				//std::string qdecision; // Do nothing
+
+				std::vector<const Exit*> exitSequence;
+				/*exitSequence.push_back(e1);*/
 
                 MustBeBlockedMask mustBeBlockedMask = (1 << component->getExits().size()) - 1; // ~0
                 MustBeFreeMask mustBeFreeMask = 0;
 
                 StateMask stateChange = (1 << component->getExitCells().size()) - 1; // ~0. All exit cells are getting blocked
-                SolutionBody body = {e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision};
+				SolutionBody body = { e2->getX(), e2->getY(), e2->getDir(), mustBeBlockedMask, mustBeFreeMask, stateChange, decision };
 
                 SolutionRecord solution(mustBeBlockedMask, mustBeFreeMask, head, body);
 
@@ -135,6 +152,9 @@ void Analyzer::analyzeComponents()
                 std::string decision1;
                 decision1 += Direction[e->getDir()];
                 std::string decision2; // Do nothing
+				/*std::vector<const Exit*> exitSequence1;
+				std::vector<const Exit*> exitSequence2;
+				exitSequence1.push_back(e);*/
 
                 SolutionHead h1 = {e->getX(), e->getY(), e->getDir()};
                 SolutionHead h2 = {e->getX(), e->getY(), e->getDir() ^ 2};
@@ -147,8 +167,8 @@ void Analyzer::analyzeComponents()
                 StateMask stateChange1 = 1 << 0; // ~0
                 StateMask stateChange2 = 1 << 0; // ~0
 
-                SolutionBody b1 = {e->getX(), e->getY(), e->getDir()    , mustBeBlockedMask1, mustBeFreeMask1, stateChange1, decision1};
-                SolutionBody b2 = {e->getX(), e->getY(), e->getDir() ^ 2, mustBeBlockedMask2, mustBeFreeMask2, stateChange2, decision2};
+				SolutionBody b1 = { e->getX(), e->getY(), e->getDir(), mustBeBlockedMask1, mustBeFreeMask1, stateChange1, decision1 };
+				SolutionBody b2 = { e->getX(), e->getY(), e->getDir() ^ 2, mustBeBlockedMask2, mustBeFreeMask2, stateChange2, decision2 };
 
                 // Starting solution
                 SolutionRecord solution1(mustBeBlockedMask1, mustBeFreeMask1, h1, b1); // Exit must be free
@@ -378,7 +398,7 @@ void Analyzer::analyzeComponent(Component& component)
         }
         else
         {
-            assert(false && "Not supposed to happen!");
+            throw "Not supposed to happen!";
         }
     }
     else
@@ -599,30 +619,37 @@ void Analyzer::backtrack(Cell* cell, int direction)
             {
                 // Turn left
                 int leftDirection = Left[direction];
+				int rightDirection = Right[direction];
+
                 if (cell->getNextCell(leftDirection)->isFree())
                 {
-                    decisionHolder[decisionHolder.size() - 1].push_back(Direction[leftDirection]);
+					//bool automaticDecision = !cell->getNextCell(rightDirection)->isFree();
+					//if (!automaticDecision)
+						decisionHolder[decisionHolder.size() - 1].push_back(Direction[leftDirection]);
 
                     cell = moveForward(cell, leftDirection);
                     backtrack(cell, leftDirection);
                     cell = moveBackwards(cell, leftDirection);
 
-                    decisionHolder[decisionHolder.size() - 1].pop_back();
+					//if (!automaticDecision)
+						decisionHolder[decisionHolder.size() - 1].pop_back();
                 }
 
                 if (stopBacktracking() == false) // Do not terminate in order to guarantee proper postAction()
                 {
                     // Turn right
-                    int rightDirection = Right[direction];
                     if (cell->getNextCell(rightDirection)->isFree())
                     {
-                        decisionHolder[decisionHolder.size() - 1].push_back(Direction[rightDirection]);
+						//bool automaticDecision = !cell->getNextCell(leftDirection)->isFree();
+						//if (!automaticDecision)
+							decisionHolder[decisionHolder.size() - 1].push_back(Direction[rightDirection]);
 
                         cell = moveForward(cell, rightDirection);
                         backtrack(cell, rightDirection);
                         cell = moveBackwards(cell, rightDirection);
 
-                        decisionHolder[decisionHolder.size() - 1].pop_back();
+						//if (!automaticDecision)
+							decisionHolder[decisionHolder.size() - 1].pop_back();
                     }
                 }
             }
@@ -824,7 +851,9 @@ void Analyzer::proceedAnalyzing(Cell* cell, int dir)
     mustBeFreeStateMask.pop_back();
     mustBeFreeStateMask.push_back(prevMask | (1 << outExitIndex));
 
-    SolutionBody body = {outExit->getX(), outExit->getY(), outExit->getDir(), mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), stateChangeStack.back(), decisionHolder.back()};
+	SolutionBody body = { outExit->getX(), outExit->getY(), outExit->getDir(), mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), stateChangeStack.back(), decisionHolder.back() };
+	// TODO: restore the line above
+	//SolutionBody body = { outExit->getX(), outExit->getY(), outExit->getDir(), mustBeBlockedStateMask.back(), mustBeFreeStateMask.back(), stateChangeStack.back(), decisionHolder.back() + "|" };
     const SolutionHead& head = previousHead.back();
 
     collectResults(head, body);
@@ -852,7 +881,10 @@ void Analyzer::solutionFound(Cell* cell, int dir)
             mustBeFreeMask |= 1 << comp.getIndexByExit(cell->getExit(dir));
         }
 
-        SolutionBody body = {cell->getX(), cell->getY(), dir, mustBeBlockedStateMask.back(), mustBeFreeMask, stateChangeStack.back(), decisionHolder.back()};
+		SolutionBody body = { cell->getX(), cell->getY(), dir, mustBeBlockedStateMask.back(), mustBeFreeMask, stateChangeStack.back(), decisionHolder.back() };
+		// TODO: restore the line above
+		//SolutionBody body = { cell->getX(), cell->getY(), dir, mustBeBlockedStateMask.back(), mustBeFreeMask, stateChangeStack.back(), decisionHolder.back() + "/"};
+		
         const SolutionHead& head = previousHead.back();
 
         // TODO: consider updating masks here
@@ -898,9 +930,13 @@ void Analyzer::solutionFound(Cell* cell, int dir)
     {
         // Try left / right
         int leftDirection = Left[dir];
+		int rightDirection = Right[dir];
         if (cell->getNextCell(leftDirection)->isFree())
         {
-            decisionHolder[decisionHolder.size() - 1].push_back(Direction[leftDirection]);
+			/*bool automaticDecision = !cell->getNextCell(rightDirection)->isFree();
+			if (!automaticDecision)*/
+				decisionHolder[decisionHolder.size() - 1].push_back(Direction[leftDirection]);
+			//exitHolder[exitHolder.size() - 1].push_back(cell->getExit(leftDirection));
 
             if (cell->hasExit(leftDirection))
             {
@@ -917,13 +953,16 @@ void Analyzer::solutionFound(Cell* cell, int dir)
                 TRACE(tracer.depth++);
             }
 
-            decisionHolder[decisionHolder.size() - 1].pop_back();
+			//if (!automaticDecision)
+				decisionHolder[decisionHolder.size() - 1].pop_back();
         }
             
-        int rightDirection = Right[dir];
         if (cell->getNextCell(rightDirection)->isFree())
         {
-            decisionHolder[decisionHolder.size() - 1].push_back(Direction[rightDirection]);
+			//bool automaticDecision = !cell->getNextCell(leftDirection)->isFree();
+			//if (!automaticDecision)
+				decisionHolder[decisionHolder.size() - 1].push_back(Direction[rightDirection]);
+				//decisionHolder[decisionHolder.size() - 1].push_back(tolower(Direction[rightDirection])); // TODO: restore this
 
             if (cell->hasExit(rightDirection))
             {
@@ -939,7 +978,8 @@ void Analyzer::solutionFound(Cell* cell, int dir)
                 TRACE(tracer.depth++);
             }
 
-            decisionHolder[decisionHolder.size() - 1].pop_back();
+			//if (!automaticDecision)
+				decisionHolder[decisionHolder.size() - 1].pop_back();
         }
     }
     else
@@ -970,23 +1010,29 @@ void Analyzer::solutionFound(Cell* cell, int dir)
 
                 if (cell->getNextCell(leftDirection)->isFree())
                 {
-                    decisionHolder[decisionHolder.size() - 1].push_back(Direction[leftDirection]);
+					//bool automaticDecision = !cell->getNextCell(rightDirection)->isFree();
+					//if (!automaticDecision)
+						decisionHolder[decisionHolder.size() - 1].push_back(Direction[leftDirection]);
 
                     TRACE(tracer.depth--);
                     backtrack(cell, leftDirection);
                     TRACE(tracer.depth++);
 
-                    decisionHolder[decisionHolder.size() - 1].pop_back();
+					//if (!automaticDecision)
+						decisionHolder[decisionHolder.size() - 1].pop_back();
                 }
                 if (cell->getNextCell(rightDirection)->isFree())
                 {
-                    decisionHolder[decisionHolder.size() - 1].push_back(Direction[rightDirection]);
+					//bool automaticDecision = !cell->getNextCell(leftDirection)->isFree();
+					//if (!automaticDecision)
+						decisionHolder[decisionHolder.size() - 1].push_back(Direction[rightDirection]);
 
                     TRACE(tracer.depth--);
                     backtrack(cell, rightDirection);
                     TRACE(tracer.depth++);
 
-                    decisionHolder[decisionHolder.size() - 1].pop_back();
+					//if (!automaticDecision)
+						decisionHolder[decisionHolder.size() - 1].pop_back();
                 }
 
                 mustBeBlockedStateMask.pop_back();

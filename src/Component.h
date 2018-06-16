@@ -28,7 +28,9 @@ struct SolutionBody
     MustBeBlockedMask mustBeBlockedMask;
     MustBeFreeMask mustBeFreeMask;
     StateMask stateChangeMask;
-    std::string solution; // TODO: consider compressing (1 bit per decision)
+    //std::string solution; // TODO: consider compressing (1 bit per decision)
+	std::string qsolution;
+	//std::vector<const Exit*> exitSequence;
 
     bool operator < (const SolutionBody& body) const;
     bool operator == (const SolutionBody& body) const;

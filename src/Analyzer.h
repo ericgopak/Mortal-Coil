@@ -22,12 +22,13 @@ class Analyzer : public Simulator
     //std::set<std::vector<SolutionRecord>> uniqueSolutions;
 
     //std::vector<const Exit*> previousExit;
-    std::vector<const SolutionHead> previousHead;
+    std::vector<SolutionHead> previousHead;
     std::vector<MustBeBlockedMask> mustBeBlockedStateMask; // Mask of must-be-previously-blocked exits for current solution fragment
     std::vector<MustBeFreeMask> mustBeFreeStateMask; // Mask of must-be-previously-blocked exits for current solution fragment
     std::vector<StateMask> stateChangeStack; // Mask of blocked exit cells
     std::vector<SolutionRecord> solutionRecordHolder;
     std::vector<std::string> decisionHolder;
+	//std::vector<std::vector<const Exit*>> exitHolder;
     int componentCurrentIndex;
 
     static int depth;

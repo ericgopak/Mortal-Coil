@@ -3,6 +3,7 @@
 #include "Obstacle.h"
 #include "Component.h"
 #include "Solver.h"
+#include <intrin.h>
 
 #include <sstream>
 #include <iostream>
@@ -529,7 +530,8 @@ level->traceComponent();
 //level->traceComponent();
                     level->Solved = true;
 
-                    level->Answer = body.solution + level->Answer;
+					//level->Answer = body.solution + level->Answer;
+					level->Answer = body.qsolution + level->Answer;
 
                     return;
                 }
@@ -545,7 +547,8 @@ level->traceComponent();
                 follow(nextHead);
                 if (level->Solved)
                 {
-                    level->Answer = body.solution + level->Answer;
+					//level->Answer = body.solution + level->Answer;
+					level->Answer = body.qsolution + level->Answer;
                     return;
                 }
             }

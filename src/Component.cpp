@@ -32,7 +32,8 @@ bool SolutionBody::operator < (const SolutionBody& body) const
     if (mustBeFreeMask    != body.mustBeFreeMask   ) return mustBeFreeMask    < body.mustBeFreeMask   ;
     if (stateChangeMask   != body.stateChangeMask  ) return stateChangeMask   < body.stateChangeMask  ;
 
-    return solution < body.solution;
+	//return solution < body.solution;
+	return qsolution < body.qsolution;
 }
 
 bool SolutionBody::operator == (const SolutionBody& body) const
@@ -43,7 +44,9 @@ bool SolutionBody::operator == (const SolutionBody& body) const
         && mustBeBlockedMask == body.mustBeBlockedMask
         && mustBeFreeMask    == body.mustBeFreeMask
         && stateChangeMask   == body.stateChangeMask
-        && solution          == body.solution;
+		//&& solution == body.solution
+		&& qsolution == body.qsolution
+		;
 }
 
 size_t SolutionBody::operator ()(const SolutionBody& body) const
